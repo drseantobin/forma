@@ -2,7 +2,7 @@
 // Renders views into #app and persists everything locally via profile.js.
 
 import { DOMAINS, getDomain, bandFor, activeDomainIds } from './src/domains.js';
-import { LIKERT_SCALE, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
+import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
 import { pickExercise } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
 import {
@@ -205,7 +205,7 @@ function itemHtml(item) {
 }
 
 async function finishBaseline() {
-  const scores = domainScoresFromBaseline(ALL_ITEMS, state.onboard.responses);
+  const scores = domainScoresFromBaseline(ALL_ITEMS, state.onboard.responses, LIKERT_POINTS);
   state.profile = state.profile || Profile.createProfile();
   state.profile.settings.faithTrack = !!state.onboard.faithTrack;
   state.profile = Profile.applyBaseline(state.profile, scores, state.onboard.responses);
@@ -1300,7 +1300,7 @@ function renderSettings() {
     if (confirm('Erase all Forma data on this device and start over? This cannot be undone.')) {
       localStorage.removeItem(Profile.STORAGE_KEY);
       state.profile = null;
-      state.onboard = { step: 0, responses: {} };
+      state.onboard = { step: 0, responses: {}, mode: null, showKey: false, faithTrack: false };
       go('home');
     }
   };

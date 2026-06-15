@@ -10,20 +10,22 @@ export function round(n) {
   return Math.round(n);
 }
 
-// --- Self-report Likert (1..5) → 0..100, with reverse scoring ---
-export function scoreLikert(value, reverse = false) {
-  const v = reverse ? 6 - value : value; // reverse: 1↔5, 2↔4, 3↔3
-  return clamp(((v - 1) / 4) * 100);
+// --- Self-report Likert → 0..100, with reverse scoring ---
+// `points` = number of scale options (5 for daily self-ratings, 7 for the
+// baseline). Reverse flips around the midpoint regardless of scale length.
+export function scoreLikert(value, reverse = false, points = 5) {
+  const v = reverse ? (points + 1) - value : value;
+  return clamp(((v - 1) / (points - 1)) * 100);
 }
 
 // Baseline: average each domain's item scores → { domainId: 0..100 }
-export function domainScoresFromBaseline(items, responses) {
+export function domainScoresFromBaseline(items, responses, points = 5) {
   const sums = {};
   const counts = {};
   for (const item of items) {
     const raw = responses[item.id];
     if (raw == null) continue;
-    const s = scoreLikert(raw, item.reverse);
+    const s = scoreLikert(raw, item.reverse, points);
     sums[item.domain] = (sums[item.domain] || 0) + s;
     counts[item.domain] = (counts[item.domain] || 0) + 1;
   }

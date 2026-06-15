@@ -9,13 +9,18 @@
 // be honest with yourself, in plain language, the way a thoughtful coach would
 // ask — never to label or diagnose.
 
+// 7-point scale for the baseline — finer gradation ("slightly…") gives more
+// sensitivity to change, which matters for a longitudinal measurement instrument.
 export const LIKERT_SCALE = [
   { value: 1, label: 'Strongly disagree' },
   { value: 2, label: 'Disagree' },
-  { value: 3, label: 'Neutral' },
-  { value: 4, label: 'Agree' },
-  { value: 5, label: 'Strongly agree' },
+  { value: 3, label: 'Slightly disagree' },
+  { value: 4, label: 'Neutral' },
+  { value: 5, label: 'Slightly agree' },
+  { value: 6, label: 'Agree' },
+  { value: 7, label: 'Strongly agree' },
 ];
+export const LIKERT_POINTS = LIKERT_SCALE.length;
 
 export const BASELINE_ITEMS = [
   // Attention & Focus
