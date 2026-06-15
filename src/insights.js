@@ -8,7 +8,7 @@
 // genuinely useful interpretive feedback even with no API key. Every line here
 // obeys the guardrails — growth framing only, never shame, never diagnose.
 
-import { DOMAINS, domainName, bandFor, getDomain } from './domains.js';
+import { DOMAINS, domainName, bandFor, getDomain, activeDomainIds } from './domains.js';
 import { domainTrend } from './progress.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
@@ -161,7 +161,8 @@ function timeOfDayPattern(sessions) {
 export function recommendFocus(profile) {
   const scores = profile.domainScores || {};
   const recent = (profile.history || []).slice(-2).map((h) => h.domain);
-  const candidates = DOMAIN_ORDER.filter((id) => scores[id] != null);
+  const order = activeDomainIds(profile.settings && profile.settings.faithTrack);
+  const candidates = order.filter((id) => scores[id] != null);
   if (!candidates.length) return DOMAIN_ORDER[0];
   const fresh = candidates.filter((id) => !recent.includes(id));
   const pool = fresh.length ? fresh : candidates;

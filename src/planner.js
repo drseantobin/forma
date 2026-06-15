@@ -10,7 +10,7 @@
 // optional live narrative (planNarrative) adds a coach's framing when a key
 // is present.
 
-import { DOMAINS, getDomain } from './domains.js';
+import { DOMAINS, getDomain, activeDomainIds } from './domains.js';
 import { todayStr, daysBetween } from './progress.js';
 import { complete, hasKey } from './coach.js';
 
@@ -50,9 +50,10 @@ export function generatePlan(profile, opts = {}) {
   const now = opts.now ? new Date(opts.now) : new Date();
   const start = todayStr(now);
   const scores = profile.domainScores || {};
+  const order = activeDomainIds(profile.settings && profile.settings.faithTrack);
 
   // Rank weakest-first; unseen domains treated as mid (50).
-  const ranked = ORDER.slice().sort((a, b) => (scores[a] ?? 50) - (scores[b] ?? 50));
+  const ranked = order.slice().sort((a, b) => (scores[a] ?? 50) - (scores[b] ?? 50));
   const pick = (i) => ranked[i] || ranked[0] || ORDER[0];
 
   // Emphasize the weakest: it gets 3 of 7 days, next gets 2, then 1 each.

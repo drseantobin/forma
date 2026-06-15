@@ -1,8 +1,8 @@
 // app.js — Forma UI controller. Vanilla JS SPA, no build step.
 // Renders views into #app and persists everything locally via profile.js.
 
-import { DOMAINS, getDomain, bandFor } from './src/domains.js';
-import { LIKERT_SCALE, baselineByDomain, BASELINE_ITEMS } from './src/assessments.js';
+import { DOMAINS, getDomain, bandFor, activeDomainIds } from './src/domains.js';
+import { LIKERT_SCALE, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
 import { pickExercise } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
 import {
@@ -17,6 +17,11 @@ import * as Planner from './src/planner.js';
 import * as Orchestrator from './src/orchestrator.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
+// The domains to display for the current user (adds Interior Life when the
+// opt-in faith track is on).
+function domainOrder() {
+  return activeDomainIds(state.profile && state.profile.settings && state.profile.settings.faithTrack);
+}
 const app = document.getElementById('app');
 const tabbar = document.getElementById('tabbar');
 
@@ -24,7 +29,7 @@ const state = {
   profile: Profile.loadProfile(),
   route: 'home',
   // transient view state
-  onboard: { step: 0, responses: {}, mode: null, showKey: false },
+  onboard: { step: 0, responses: {}, mode: null, showKey: false, faithTrack: false },
   diag: { messages: [], ready: false, busy: false, error: '' },
   session: null, // active exercise flow
 };
@@ -85,7 +90,7 @@ tabbar.addEventListener('click', (e) => {
 function renderOnboarding() {
   if (state.onboard.mode === 'conversation') { renderConversationalOnboarding(); return; }
 
-  const groups = baselineByDomain(DOMAIN_ORDER);
+  const groups = baselineByDomain(activeDomainIds(state.onboard.faithTrack));
   const step = state.onboard.step;
 
   if (step === 0) {
@@ -108,6 +113,14 @@ function renderOnboarding() {
           <button class="btn ghost" id="talk">Talk it through with the coach →</button>
         </div>
         <p class="muted small center" style="margin-top:12px;">The quick check is a short self-assessment and works offline. The conversation is an adaptive interview that writes your profile — it uses your own Claude key.</p>
+        <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
+          <span style="font-size:1.3rem;">🕊️</span>
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:.95rem;">Add the Interior Life track</div>
+            <div class="muted small">Optional, faith-based: measure and tend your spiritual life alongside the rest. You can change this anytime.</div>
+          </div>
+          <button class="opt ${state.onboard.faithTrack ? 'selected' : ''}" id="faithtoggle" style="width:auto; padding:8px 14px; font-weight:700;">${state.onboard.faithTrack ? 'On' : 'Off'}</button>
+        </div>
         ${needKey ? `
           <div class="card" style="margin-top:12px;">
             <p class="small"><strong>The conversation needs your Claude key.</strong> Paste it to talk it through, or just use the quick check above. Your key stays on this device.</p>
@@ -116,6 +129,7 @@ function renderOnboarding() {
           </div>` : ''}
         <p class="muted small center" style="margin-top:14px;">Everything stays on this device. Nothing is uploaded except your own optional Claude calls.</p>
       </div>`;
+    document.getElementById('faithtoggle').onclick = () => { state.onboard.faithTrack = !state.onboard.faithTrack; render(); };
     document.getElementById('start').onclick = () => { state.onboard.step = 1; render(); };
     document.getElementById('talk').onclick = () => {
       if (Coach.hasKey(state.profile)) startConversation();
@@ -191,8 +205,9 @@ function itemHtml(item) {
 }
 
 async function finishBaseline() {
-  const scores = domainScoresFromBaseline(BASELINE_ITEMS, state.onboard.responses);
+  const scores = domainScoresFromBaseline(ALL_ITEMS, state.onboard.responses);
   state.profile = state.profile || Profile.createProfile();
+  state.profile.settings.faithTrack = !!state.onboard.faithTrack;
   state.profile = Profile.applyBaseline(state.profile, scores, state.onboard.responses);
   save();
   renderBaselineResult();
@@ -311,6 +326,10 @@ async function finishConversation() {
   state.profile = Profile.applyBaseline(state.profile, scored.domainScores, {});
   state.profile.baseline.method = 'conversation';
   state.profile.baseline.notes = scored.notes;
+  if (state.onboard.faithTrack) {
+    state.profile.settings.faithTrack = true;
+    if (state.profile.domainScores.interior == null) state.profile.domainScores.interior = 50;
+  }
   state.onboard.mode = null;
   save();
   renderBaselineResult();
@@ -396,10 +415,11 @@ function weekStripCard(p) {
 }
 
 function radarCard(scores) {
+  const order = domainOrder();
   const size = 300, cx = size / 2, cy = size / 2 + 6, r = 96;
-  const geo = radarGeometry(scores, DOMAIN_ORDER, cx, cy, r);
+  const geo = radarGeometry(scores, order, cx, cy, r);
   const rings = [25, 50, 75, 100].map((pct) => {
-    const g = radarGeometry(Object.fromEntries(DOMAIN_ORDER.map((id) => [id, pct])), DOMAIN_ORDER, cx, cy, r);
+    const g = radarGeometry(Object.fromEntries(order.map((id) => [id, pct])), order, cx, cy, r);
     return `<polygon points="${g.points}" fill="none" stroke="var(--line)" stroke-width="1" />`;
   }).join('');
   const axes = geo.axes.map((a) => `<line x1="${cx}" y1="${cy}" x2="${a.axisX}" y2="${a.axisY}" stroke="var(--line)" stroke-width="1"/>`).join('');
@@ -421,7 +441,7 @@ function radarCard(scores) {
         </svg>
       </div>
       <div class="domain-list">
-        ${DOMAIN_ORDER.map((id) => domainRow(id, scores[id])).join('')}
+        ${order.map((id) => domainRow(id, scores[id])).join('')}
       </div>
     </div>`;
 }
@@ -447,7 +467,11 @@ function renderSession() {
     // The Orchestrator picks the focus domain (via the weekly plan) AND the
     // exercise modality for it (e.g. n-back vs recall, CRT vs decision scenario).
     const ex = Orchestrator.chooseExercise(state.profile);
-    const initPhase = ex.type === 'memory' ? 'memo-show' : ex.type === 'nback' ? 'nback-intro' : 'play';
+    const initPhase = ex.type === 'memory' ? 'memo-show'
+      : ex.type === 'nback' ? 'nback-intro'
+      : ex.type === 'stream' ? 'stream-intro'
+      : ex.type === 'contemplation' ? 'contempl-intro'
+      : 'play';
     state.session = { exercise: ex, phase: initPhase, response: {}, started: Date.now() };
   }
   const s = state.session;
@@ -457,13 +481,16 @@ function renderSession() {
     case 'decision': return renderDecision();
     case 'crt': return renderCRT();
     case 'nback': return renderNBack();
+    case 'stream': return renderStream();
+    case 'stay': return renderStay();
+    case 'contemplation': return renderContemplation();
     case 'reflection': return renderReflection();
   }
 }
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', crt: 'Reflection Test', nback: 'Working Memory', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', crt: 'Reflection Test', nback: 'Working Memory', stream: 'Sustained Attention', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
@@ -695,6 +722,128 @@ function renderNBack() {
   }
 }
 
+// The Stream — SART go/no-go. Tap GO for every symbol except the rare target.
+function renderStream() {
+  const s = state.session;
+  const ex = s.exercise;
+  if (s.phase === 'stream-intro') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="card">
+          <p>Symbols will flash by, about one per second. Tap <strong>GO</strong> for every one — <em>except</em> when you see <strong>${esc(ex.targetSymbol)}</strong>. For ${esc(ex.targetSymbol)}, do nothing.</p>
+          <p class="muted small">It sounds easy. The rhythm lulls you — catching yourself before you tap on ${esc(ex.targetSymbol)} is the whole test.</p>
+        </div>
+        <button class="btn amber" id="begin">Begin</button>
+      </div>`;
+    document.getElementById('begin').onclick = () => { s.phase = 'stream-run'; s.idx = -1; s.response.tapped = []; render(); };
+    return;
+  }
+  const idx = s.idx;
+  const item = idx >= 0 ? ex.items[idx] : null;
+  const tappedThis = s.response.tapped && s.response.tapped.includes(idx);
+  app.innerHTML = `
+    <div class="fade-in">
+      <p class="muted small center">${ex.title} · ${Math.max(0, idx + 1)}/${ex.items.length} · withhold on “${esc(ex.targetSymbol)}”</p>
+      <div style="height:200px; display:grid; place-items:center;">
+        <div style="font-size:5.5rem; font-weight:800; color:${item && item.nogo ? 'var(--red)' : 'var(--accent)'};">${esc(item ? item.symbol : '·')}</div>
+      </div>
+      <button class="btn ${tappedThis ? 'green' : 'amber'}" id="go">${tappedThis ? 'GO ✓' : 'GO'}</button>
+    </div>`;
+  const goBtn = document.getElementById('go');
+  if (goBtn) goBtn.onclick = () => {
+    if (s.idx >= 0 && !s.response.tapped.includes(s.idx)) {
+      s.response.tapped.push(s.idx);
+      goBtn.classList.remove('amber'); goBtn.classList.add('green'); goBtn.textContent = 'GO ✓';
+    }
+  };
+  if (!s._timer) {
+    const advance = () => {
+      if (state.session !== s || state.route !== 'session') { clearInterval(s._timer); s._timer = null; return; }
+      s.idx++;
+      if (s.idx >= ex.items.length) { clearInterval(s._timer); s._timer = null; completeSession(); return; }
+      render();
+    };
+    s._timer = setInterval(advance, ex.stepMs);
+    advance();
+  }
+}
+
+// Stay — behavioral persistence. Staying with the hard item is the signal.
+function renderStay() {
+  const s = state.session;
+  const ex = s.exercise;
+  const phase = s.stayPhase || 'puzzle';
+  if (phase === 'puzzle') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="passage">${esc(ex.prompt)}</div>
+        <p class="muted small">No tools, no searching. Work it in your head. The point isn’t getting it — it’s staying in the not-knowing.</p>
+        <div class="stack" style="margin-top:8px;">
+          <button class="btn amber" id="stayed">I stuck with it →</button>
+          <button class="btn ghost" id="skipped">This is too hard — skip</button>
+        </div>
+      </div>`;
+    document.getElementById('stayed').onclick = () => { s.response.stayed = true; s.stayPhase = 'rate'; render(); };
+    document.getElementById('skipped').onclick = () => { s.response.stayed = false; s.stayPhase = 'rate'; render(); };
+    return;
+  }
+  // rate + reveal
+  const rating = s.response.selfRating;
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <div class="rationale"><strong>The answer:</strong> ${esc(ex.answer)}<br/>${esc(ex.explanation)}</div>
+      <p class="muted small" style="margin-top:14px;">Honestly — how well did you tolerate the difficulty just now?</p>
+      <div class="rating">
+        ${[1, 2, 3, 4, 5].map((n) => `<button class="${rating === n ? 'on' : ''}" data-n="${n}">${n}</button>`).join('')}
+      </div>
+      <button class="btn" id="fin" ${rating == null ? 'disabled' : ''}>Complete session</button>
+    </div>`;
+  app.querySelectorAll('.rating button').forEach((b) => b.onclick = () => { s.response.selfRating = Number(b.dataset.n); render(); });
+  document.getElementById('fin').onclick = completeSession;
+}
+
+// Contemplation — a timed silence practice (Interior Life).
+function renderContemplation() {
+  const s = state.session;
+  const ex = s.exercise;
+  if (s.phase === 'contempl-intro') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="card"><p>${esc(ex.prompt)}</p>
+        <p class="muted small">${ex.targetSeconds} seconds. If your mind wanders, just come back. Coming back <em>is</em> the practice.</p></div>
+        <button class="btn amber" id="begin">Begin the silence</button>
+      </div>`;
+    document.getElementById('begin').onclick = () => { s.phase = 'contempl-run'; s.remaining = ex.targetSeconds; s.response.seconds = 0; render(); };
+    return;
+  }
+  app.innerHTML = `
+    <div class="fade-in center">
+      <p class="muted small" style="margin-top:20px;">${esc(getDomain('interior').icon)} Be still.</p>
+      <div class="memo-countdown" id="cd" style="font-size:3.4rem; margin-top:30px;">${s.remaining}</div>
+      <p class="muted small" style="margin-top:30px;">Put the phone down. Look up. Breathe.</p>
+      <button class="btn ghost sm" id="endearly" style="width:auto; margin-top:24px;">End early</button>
+    </div>`;
+  const finish = () => {
+    if (s._timer) { clearInterval(s._timer); s._timer = null; }
+    s.response.seconds = ex.targetSeconds - s.remaining;
+    completeSession();
+  };
+  document.getElementById('endearly').onclick = finish;
+  if (!s._timer) {
+    s._timer = setInterval(() => {
+      if (state.session !== s || state.route !== 'session') { clearInterval(s._timer); s._timer = null; return; }
+      s.remaining--;
+      const cd = document.getElementById('cd');
+      if (cd) cd.textContent = s.remaining;
+      if (s.remaining <= 0) { s.response.seconds = ex.targetSeconds; clearInterval(s._timer); s._timer = null; completeSession(); }
+    }, 1000);
+  }
+}
+
 function renderReflection() {
   const s = state.session;
   const ex = s.exercise;
@@ -770,7 +919,7 @@ function renderProgress() {
       <h2 style="margin-top:6px;">Your scales</h2>
       <div class="card">
         <div class="domain-list">
-          ${DOMAIN_ORDER.map((id) => progressRow(id)).join('')}
+          ${domainOrder().map((id) => progressRow(id)).join('')}
         </div>
       </div>
 
@@ -1084,6 +1233,17 @@ function renderSettings() {
       </div>
 
       <div class="card">
+        <div class="row">
+          <span style="font-size:1.3rem;">🕊️</span>
+          <div style="flex:1;">
+            <h2 style="font-size:1.05rem; margin:0;">Interior Life track</h2>
+            <p class="muted small" style="margin:2px 0 0;">Optional, faith-based. Adds a spiritual-formation scale, daily reflections, and a contemplative-silence practice. Kept private — never shown to any employer view.</p>
+          </div>
+          <button class="opt ${p.settings.faithTrack ? 'selected' : ''}" id="faith" style="width:auto; padding:8px 16px; font-weight:700;">${p.settings.faithTrack ? 'On' : 'Off'}</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 style="font-size:1.05rem;">Live AI coaching</h2>
         <p class="muted small">Optional. Paste your own Anthropic (Claude) API key to turn on live, personalized coaching. Your key is stored only in this browser and is sent only to Anthropic — never to any Forma server (there isn't one).</p>
         <div class="field">
@@ -1115,6 +1275,13 @@ function renderSettings() {
     </div>`;
 
   document.getElementById('name').onchange = (e) => { p.settings.name = e.target.value.trim(); save(); };
+  document.getElementById('faith').onclick = () => {
+    state.profile = p.settings.faithTrack ? Profile.disableFaithTrack(p) : Profile.enableFaithTrack(p);
+    // Regenerate the plan so the change takes effect immediately.
+    state.profile.plan = Planner.generatePlan(state.profile);
+    save();
+    render();
+  };
   document.getElementById('savekey').onclick = () => {
     p.settings.apiKey = document.getElementById('key').value.trim();
     p.settings.model = document.getElementById('model').value;

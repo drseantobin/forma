@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { todayStr } from './progress.js';
 
@@ -59,16 +59,36 @@ export function chooseExercise(profile, opts = {}) {
 
   if (focus === 'judgment') {
     // Alternate cognitive-reflection ("The Lure") with decision scenarios.
-    if (!recentTypes.includes('crt')) return pickCRT(seen, rng);
+    if (!recentTypes.includes('crt')) return pickFrom(CRT, seen, rng);
     return pickExercise('judgment', { seenIds: seen, rng });
+  }
+
+  if (focus === 'attention') {
+    // Alternate the SART "Stream" with deep-reading (which also trains attention).
+    const level = Math.max(1, Math.round(score / 25));
+    if (!recentTypes.includes('stream')) return makeStreamExercise(level, rng);
+    return pickExercise('attention', { seenIds: seen, rng });
+  }
+
+  if (focus === 'persistence') {
+    // Alternate the behavioral "Stay" drill with a frustration-tolerance reflection.
+    if (!recentTypes.includes('stay')) return pickFrom(STAY, seen, rng);
+    return pickExercise('persistence', { seenIds: seen, rng });
+  }
+
+  if (focus === 'interior') {
+    // Alternate the contemplative-silence timer with a spiritual reflection.
+    const level = Math.max(1, Math.round(score / 25));
+    if (!recentTypes.includes('contemplation')) return makeContemplation(level);
+    return pickExercise('interior', { seenIds: seen, rng });
   }
 
   const level = Math.max(1, Math.round(score / 20));
   return pickExercise(focus, { level, seenIds: seen, rng });
 }
 
-function pickCRT(seenIds, rng = Math.random) {
-  const fresh = CRT.filter((c) => !seenIds.includes(c.id));
-  const pool = fresh.length ? fresh : CRT;
+function pickFrom(list, seenIds, rng = Math.random) {
+  const fresh = list.filter((c) => !seenIds.includes(c.id));
+  const pool = fresh.length ? fresh : list;
   return pool[Math.floor(rng() * pool.length)];
 }

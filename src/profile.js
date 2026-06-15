@@ -21,7 +21,7 @@ export function createProfile() {
   return {
     version: VERSION,
     createdAt: new Date().toISOString(),
-    settings: { apiKey: '', model: 'claude-opus-4-8', name: '' },
+    settings: { apiKey: '', model: 'claude-opus-4-8', name: '', faithTrack: false },
     baseline: null, // { date, domainScores, responses }
     domainScores: {}, // current EMA scale per domain (0..100)
     sessions: [], // raw daily-loop results
@@ -149,6 +149,23 @@ function summarizeResponse(exercise, response) {
   }
 }
 
+// Opt-in / opt-out of the Interior Life track. Enabling seeds a neutral interior
+// score (if not already baselined) so it appears on the scales and gets trained;
+// disabling removes it from the scored set so it leaves the Formation Index and
+// the radar entirely.
+export function enableFaithTrack(profile) {
+  const p = clone(profile);
+  p.settings.faithTrack = true;
+  if (p.domainScores.interior == null) p.domainScores.interior = 50;
+  return p;
+}
+export function disableFaithTrack(profile) {
+  const p = clone(profile);
+  p.settings.faithTrack = false;
+  delete p.domainScores.interior;
+  return p;
+}
+
 export function addGoal(profile, domain, text) {
   const p = clone(profile);
   p.goals.push({ id: `g-${Date.now()}`, domain, text, createdAt: new Date().toISOString(), done: false });
@@ -198,7 +215,8 @@ export function exportProfile(profile) {
 function migrate(p) {
   if (!p.version) p.version = VERSION;
   // Defensive defaults for older/partial saves.
-  p.settings = p.settings || { apiKey: '', model: 'claude-opus-4-8', name: '' };
+  p.settings = p.settings || { apiKey: '', model: 'claude-opus-4-8', name: '', faithTrack: false };
+  if (p.settings.faithTrack == null) p.settings.faithTrack = false;
   p.domainScores = p.domainScores || {};
   p.sessions = p.sessions || [];
   p.history = p.history || [];

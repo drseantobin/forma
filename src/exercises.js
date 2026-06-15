@@ -742,6 +742,96 @@ export function makeNBackExercise(level = 1, rng = Math.random) {
   };
 }
 
+// ----- INTERIOR LIFE: spiritual-formation reflections + contemplation (opt-in) -----
+// DSES-lineage daily-experience prompts. Type 'reflection' so they reuse the
+// reflection UI; domain 'interior'.
+export const INTERIOR_REFLECTIONS = [
+  {
+    id: 'int-presence', type: 'reflection', domain: 'interior', title: 'Where You Sensed Him',
+    prompt: 'Where today did you sense God’s presence — even faintly — in an ordinary moment? If you didn’t, where might you have, had you been paying attention?',
+    selfRatingLabel: 'How attentive were you to God’s presence today?',
+  },
+  {
+    id: 'int-gratitude', type: 'reflection', domain: 'interior', title: 'Lifted Out of Yourself',
+    prompt: 'Name one thing today that drew gratitude or awe out of you — something that briefly lifted you beyond your own concerns.',
+    selfRatingLabel: 'How much gratitude or awe did you experience today?',
+  },
+  {
+    id: 'int-desire', type: 'reflection', domain: 'interior', title: 'The Desire Itself',
+    prompt: 'Did you feel any desire to be closer to God today? What did you do with it — follow it, or let it pass?',
+    selfRatingLabel: 'How much did you act on your desire for God today?',
+  },
+  {
+    id: 'int-mercy', type: 'reflection', domain: 'interior', title: 'Given and Received',
+    prompt: 'Was there a moment today you needed to forgive, or to receive forgiveness? What happened in you?',
+    selfRatingLabel: 'How freely did mercy move through you today?',
+  },
+];
+
+// Contemplative-silence practice — sit without input. Both a formation practice
+// and a behavioral signal that bridges to Attention.
+export function makeContemplation(level = 1) {
+  const seconds = level <= 1 ? 60 : level <= 3 ? 90 : 120;
+  return {
+    id: `contemplation-${seconds}`,
+    type: 'contemplation',
+    domain: 'interior',
+    title: 'A Minute of Silence',
+    prompt: 'Sit still, put the screen down, and simply be present — to God, to your own breath, to the quiet. No goal but to stay. The timer will tell you when.',
+    targetSeconds: seconds,
+  };
+}
+
+// ----- THE STREAM: SART go/no-go sustained-attention drill (Attention) -----
+const STREAM_LETTERS = ['A', 'E', 'O', 'U', 'M', 'R', 'S', 'T', 'L', 'N'];
+export function makeStreamExercise(level = 1, rng = Math.random) {
+  const len = 18 + Math.min(6, level * 2);
+  const target = STREAM_LETTERS[Math.floor(rng() * STREAM_LETTERS.length)];
+  const others = STREAM_LETTERS.filter((l) => l !== target);
+  const items = [];
+  for (let i = 0; i < len; i++) {
+    // ~18% no-go (the rare target you must withhold on).
+    if (rng() < 0.18) items.push({ symbol: target, nogo: true });
+    else items.push({ symbol: others[Math.floor(rng() * others.length)], nogo: false });
+  }
+  // Guarantee at least 2 no-go trials.
+  if (items.filter((it) => it.nogo).length < 2) {
+    items[3] = { symbol: target, nogo: true };
+    items[len - 4] = { symbol: target, nogo: true };
+  }
+  return {
+    id: `stream-${Date.now()}`,
+    type: 'stream',
+    domain: 'attention',
+    title: 'The Stream',
+    targetSymbol: target,
+    items,
+    stepMs: Math.max(900, 1400 - level * 80),
+  };
+}
+
+// ----- STAY: behavioral persistence drill (Frustration Tolerance) -----
+export const STAY = [
+  {
+    id: 'stay-sequence', type: 'stay', domain: 'persistence', title: 'Stay With It',
+    prompt: 'Work out the next number, in your head, before you decide anything: 2, 6, 12, 20, 30, …  What comes next?',
+    answer: '42',
+    explanation: 'The gaps grow by 2 each time (4, 6, 8, 10 → next gap 12), so 30 + 12 = 42. The point wasn’t the answer — it was whether you stayed in the discomfort of not-yet-knowing instead of bailing.',
+  },
+  {
+    id: 'stay-riddle', type: 'stay', domain: 'persistence', title: 'Stay With It',
+    prompt: 'Sit with this before moving: a man pushes his car to a hotel and realizes he is bankrupt. What happened?',
+    answer: 'He’s playing Monopoly.',
+    explanation: 'It only resolves if you let go of the literal frame and keep turning it over. Frustration tolerance is exactly this willingness to stay past the first wave of “I don’t know.”',
+  },
+  {
+    id: 'stay-count', type: 'stay', domain: 'persistence', title: 'Stay With It',
+    prompt: 'Without writing anything down, hold this: how many times does the digit 7 appear in the numbers 1 to 100? Work it through.',
+    answer: '20',
+    explanation: 'Ten 7s in the ones place (7, 17, … 97) and ten in the tens place (70–79) = 20. The discipline is doing the count internally instead of reaching for a tool.',
+  },
+];
+
 // Pick an exercise for a given target domain. Objective domains get their
 // matching family; reflective domains get a reflection prompt. `seen` lets the
 // caller rotate variety (avoid repeating the last exercise).
@@ -767,6 +857,8 @@ export function pickExercise(targetDomain, opts = {}) {
     case 'presence':
     case 'values':
       return notSeen(REFLECTIONS.filter((r) => r.domain === targetDomain));
+    case 'interior':
+      return notSeen(INTERIOR_REFLECTIONS);
     default:
       return notSeen(READING);
   }
