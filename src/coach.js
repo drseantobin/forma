@@ -1,0 +1,229 @@
+// coach.js — the agentic coaching layer.
+//
+// This is the "Insight & Coaching Agent" of the Forma spec, scoped for the MVP.
+// It complements the tests: it reads the user's own scores and history and
+// returns interpretive, growth-framed feedback — the thing the spec calls the
+// moment "the system notices something true about you."
+//
+// Two modes, automatically:
+//   • With a Claude API key → live, personalized coaching from claude-opus-4-8,
+//     called DIRECTLY from the browser to Anthropic (no Forma server exists).
+//   • Without a key → a genuinely useful rule-based fallback (insights.js), so
+//     Forma is fully usable the moment it loads, before any setup.
+//
+// Guardrails are written into the system prompt: formation not diagnosis,
+// growth framing only, never shame, route genuine distress to a human.
+
+import { DOMAINS, domainName, bandFor } from './domains.js';
+import {
+  dailyInsight as ruleDailyInsight,
+  interpretBaseline as ruleInterpretBaseline,
+  weeklyPatterns,
+} from './insights.js';
+import { domainTrend } from './progress.js';
+
+export const DEFAULT_MODEL = 'claude-opus-4-8';
+const API_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_VERSION = '2023-06-01';
+
+export const FORMA_SYSTEM = `You are the Forma Coach — the formation guide inside Forma, an app that helps people strengthen the human capacities that matter most in an age of abundant AI: attention, working memory, deep reading, frustration tolerance, judgment, AI independence, relational presence, and values alignment.
+
+Your stance: a wise, warm, honest coach. Think of the best spiritual director or formation mentor — someone who sees the person clearly, names what's true without flattery, and always points toward growth. You are perceptive and a little prophetic, but never cold and never preachy.
+
+Hard rules you never break:
+1. FORMATION, NOT DIAGNOSIS. You never diagnose, label, or use clinical/medical language ("disorder," "deficit," "ADHD," "depression," etc.). You speak about capacities, habits, and trajectories. If a person's message suggests real distress, self-harm, or crisis, you gently and directly encourage them to reach out to a trusted person or a professional, and you do not try to be their therapist.
+2. GROWTH FRAMING ONLY. Even a low score is a starting line, never a deficiency. You surface strengths and trajectories, never shame.
+3. GROUND EVERYTHING IN THEIR DATA. You are given the person's actual scores, trends, and recent sessions. Refer to specifics. The whole value is that you see THEM, not a generic user.
+4. BE BRIEF AND CONCRETE. Coaches don't lecture. Two to five short paragraphs at most, usually less. End with one concrete, doable next step when it fits — never a bulleted list of platitudes.
+5. NEVER pretend to certainty you don't have. One session is noise; patterns are signal. Say so.
+
+Voice: plain, vivid, unhurried. No corporate wellness-speak. No "journey," "lean into," "sit with," "powerful," "transformative." Talk like a real person who has thought hard about this.`;
+
+export function hasKey(profile) {
+  return !!(profile?.settings?.apiKey && profile.settings.apiKey.trim());
+}
+
+// Compact, model-readable summary of the person's current state.
+export function profileSummary(profile) {
+  const lines = [];
+  const name = profile.settings?.name;
+  if (name) lines.push(`Name: ${name}`);
+  const scores = profile.domainScores || {};
+  lines.push('Current domain scales (0-100):');
+  for (const d of DOMAINS) {
+    const s = scores[d.id];
+    if (s == null) continue;
+    const t = domainTrend(profile.history || [], d.id);
+    const trend = t.first != null && t.delta !== 0 ? ` (${t.delta > 0 ? '+' : ''}${t.delta} since start)` : '';
+    lines.push(`  - ${d.name}: ${s} [${bandFor(s).label}]${trend}`);
+  }
+  const recent = (profile.sessions || []).slice(-5);
+  if (recent.length) {
+    lines.push('Recent sessions:');
+    for (const s of recent) {
+      lines.push(`  - ${s.date}: ${domainName(s.domain)} (${s.type}) scored ${s.rawScore}`);
+    }
+  }
+  if (profile.streak?.current) lines.push(`Current streak: ${profile.streak.current} day(s).`);
+  const openGoals = (profile.goals || []).filter((g) => !g.done);
+  if (openGoals.length) lines.push(`Active goals: ${openGoals.map((g) => g.text).join(' | ')}`);
+  return lines.join('\n');
+}
+
+// Low-level call to Claude, directly from the browser.
+async function callClaude({ apiKey, model, system, messages, maxTokens = 1024 }) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': ANTHROPIC_VERSION,
+      // Opt-in flag that allows calling the API from a browser. The user has
+      // explicitly entered their own key; nothing is proxied through us.
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({ model, max_tokens: maxTokens, system, messages }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Claude API ${res.status}: ${body.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  return (data.content || [])
+    .filter((b) => b.type === 'text')
+    .map((b) => b.text)
+    .join('')
+    .trim();
+}
+
+function model(profile) {
+  return profile.settings?.model || DEFAULT_MODEL;
+}
+
+// --- Interpretive feedback on the baseline (onboarding) ---
+export async function interpretBaseline(profile) {
+  const offline = ruleInterpretBaseline(profile.baseline.domainScores, profile.settings?.name);
+  if (!hasKey(profile)) return { text: offline, live: false };
+  try {
+    const text = await callClaude({
+      apiKey: profile.settings.apiKey,
+      model: model(profile),
+      system: FORMA_SYSTEM,
+      maxTokens: 900,
+      messages: [
+        {
+          role: 'user',
+          content: `This person just completed their baseline Forma assessment. Here is their data:\n\n${profileSummary(profile)}\n\nWrite their opening interpretation: warm, honest, specific to these numbers. Name their clearest strength and their biggest growth opening, and frame the whole thing as a starting line. 3-4 short paragraphs.`,
+        },
+      ],
+    });
+    return { text: text || offline, live: !!text };
+  } catch (e) {
+    return { text: offline, live: false, error: e.message };
+  }
+}
+
+// --- The single daily insight after a session ---
+export async function dailyInsight(session, profile) {
+  const offline = ruleDailyInsight(session, profile);
+  if (!hasKey(profile)) return { text: offline, live: false };
+  try {
+    const text = await callClaude({
+      apiKey: profile.settings.apiKey,
+      model: model(profile),
+      system: FORMA_SYSTEM,
+      maxTokens: 400,
+      messages: [
+        {
+          role: 'user',
+          content: `The person just finished today's session: ${domainName(session.domain)} (${session.type}), scoring ${session.rawScore}/100. Their broader picture:\n\n${profileSummary(profile)}\n\nReturn ONE insight about today's session relative to their pattern — two or three sentences, specific and encouraging, no preamble.`,
+        },
+      ],
+    });
+    return { text: text || offline, live: !!text };
+  } catch (e) {
+    return { text: offline, live: false, error: e.message };
+  }
+}
+
+// --- Conversational coaching ---
+// Human-escalation guardrail. If a message shows clear signs of genuine crisis,
+// Forma does NOT try to coach it — and does NOT route the content to the API.
+// It steps back and points the person to a real human. This applies in BOTH
+// live and offline modes.
+const CRISIS_PATTERN = /\b(kill myself|killing myself|suicid|end (my|it) (life|all)|want to die|wanna die|don'?t want to (live|be here|exist)|hurt myself|harm myself|self[-\s]?harm|cut(ting)? myself|no reason to live|better off dead|can'?t go on)\b/i;
+
+export function looksLikeDistress(text) {
+  return CRISIS_PATTERN.test(text || '');
+}
+
+const ESCALATION_MESSAGE =
+  "I'm really glad you said that to me — and I want to be honest: what you're describing is heavier than a formation app should carry, and you deserve a real person for it, not an algorithm.\n\n" +
+  'Please reach out right now to someone you trust, or to a trained human who can help. In the US you can call or text 988 (the Suicide & Crisis Lifeline), any time, day or night. Anywhere else, your local emergency number or a crisis line in your country can connect you with someone immediately. If you are in immediate danger, please call emergency services.\n\n' +
+  "I'll be here for the formation work whenever you're ready — but let a real person be with you in this first.";
+
+export async function coachReply(userText, profile) {
+  // Safety first, before anything else — and before any network call.
+  if (looksLikeDistress(userText)) {
+    return { text: ESCALATION_MESSAGE, live: false, escalated: true };
+  }
+
+  if (!hasKey(profile)) {
+    return {
+      text: offlineCoachReply(userText, profile),
+      live: false,
+    };
+  }
+  try {
+    // Prior conversation for continuity. NOTE: the caller appends the current
+    // user turn to coachLog only AFTER this call returns, so coachLog here holds
+    // only prior turns — we add the current userText exactly once below.
+    const priorTurns = (profile.coachLog || []).slice(-8).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    const text = await callClaude({
+      apiKey: profile.settings.apiKey,
+      model: model(profile),
+      system: `${FORMA_SYSTEM}\n\n--- THE PERSON YOU ARE COACHING ---\n${profileSummary(profile)}`,
+      maxTokens: 1024,
+      messages: [...priorTurns, { role: 'user', content: userText }],
+    });
+    return { text: text || offlineCoachReply(userText, profile), live: !!text };
+  } catch (e) {
+    // Don't surface the raw API error body in the chat UI (it can echo request
+    // content). Show a calm, generic note; keep the detail on the object for
+    // the console only.
+    return {
+      text: `${offlineCoachReply(userText, profile)}\n\n(Live coaching is paused — I couldn't reach Claude just now. Your data and the read above still work.)`,
+      live: false,
+      error: e.message,
+    };
+  }
+}
+
+// A useful-but-honest fallback when there's no API key. It points the person at
+// their own real data rather than pretending to be a conversational AI.
+function offlineCoachReply(userText, profile) {
+  const patterns = weeklyPatterns(profile);
+  const intro =
+    'Live AI coaching turns on once you add your own Claude API key in Settings. In the meantime, here is what Forma can already see in your own data:';
+  const body = patterns.map((p) => `• ${p}`).join('\n');
+  const close =
+    'When you add a key, I can talk this through with you properly — reading your full history and responding to exactly what you ask.';
+  return `${intro}\n\n${body}\n\n${close}`;
+}
+
+// Generic completion helper so other modules (e.g. the Diagnostic Agent) can
+// reuse the same browser-direct Claude plumbing and the user's key/model.
+export async function complete(profile, { system, messages, maxTokens = 1024 }) {
+  return callClaude({
+    apiKey: profile.settings.apiKey,
+    model: model(profile),
+    system,
+    messages,
+    maxTokens,
+  });
+}
+
+export { weeklyPatterns };

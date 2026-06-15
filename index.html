@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Forma — train what AI can't replace</title>
+  <meta name="description" content="Forma helps you measure and strengthen the human capacities that matter most in an age of AI." />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- PWA: installable, app-like on phones -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#4c5fd5" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Forma" />
+</head>
+<body>
+  <div id="app">
+    <!-- Rendered by app.js -->
+    <div class="boot">Loading Forma…</div>
+  </div>
+
+  <!-- Bottom navigation (hidden until onboarded) -->
+  <nav id="tabbar" class="tabbar" hidden>
+    <button data-route="home" class="tab"><span class="tab-ico">🏠</span><span>Home</span></button>
+    <button data-route="session" class="tab"><span class="tab-ico">✦</span><span>Today</span></button>
+    <button data-route="progress" class="tab"><span class="tab-ico">📈</span><span>Progress</span></button>
+    <button data-route="coach" class="tab"><span class="tab-ico">💬</span><span>Coach</span></button>
+    <button data-route="settings" class="tab"><span class="tab-ico">⚙️</span><span>Settings</span></button>
+  </nav>
+
+  <script type="module" src="app.js"></script>
+  <script>
+    // Register the service worker so Forma installs to the home screen and
+    // works offline. Harmless on localhost; required for the installable PWA.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

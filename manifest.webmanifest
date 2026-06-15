@@ -1,0 +1,14 @@
+{
+  "name": "Forma — train what AI can't replace",
+  "short_name": "Forma",
+  "description": "Measure and strengthen the human capacities that matter most in an age of AI.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f5f1",
+  "theme_color": "#4c5fd5",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
