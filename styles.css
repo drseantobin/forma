@@ -182,6 +182,8 @@ button { font-family: inherit; cursor: pointer; }
 .divider { height:1px; background: var(--line); margin: 20px 0; }
 
 /* ---------- tabbar ---------- */
+/* The [hidden] attribute must win over display:flex, or the nav shows during onboarding. */
+.tabbar[hidden] { display: none; }
 .tabbar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
   display:flex; justify-content:space-around; align-items:center;
