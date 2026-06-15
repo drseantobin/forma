@@ -496,6 +496,7 @@ function startTodaysSession() {
   const initPhase = ex.type === 'memory' ? 'memo-show'
     : ex.type === 'nback' ? 'nback-intro'
     : ex.type === 'stream' ? 'stream-intro'
+    : ex.type === 'vigilance' ? 'vigilance-intro'
     : ex.type === 'contemplation' ? 'contempl-intro'
     : 'play';
   state.session = { exercise: ex, phase: initPhase, response: {}, started: Date.now() };
@@ -554,6 +555,7 @@ function renderSession() {
     case 'crt': return renderCRT();
     case 'nback': return renderNBack();
     case 'stream': return renderStream();
+    case 'vigilance': return renderVigilance();
     case 'stay': return renderStay();
     case 'contemplation': return renderContemplation();
     case 'reflection': return renderReflection();
@@ -562,7 +564,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', crt: 'Reflection Test', nback: 'Working Memory', stream: 'Sustained Attention', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', crt: 'Reflection Test', nback: 'Working Memory', stream: 'Sustained Attention', vigilance: 'Live Attention', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
@@ -839,6 +841,91 @@ function renderStream() {
     s._timer = setInterval(advance, ex.stepMs);
     advance();
   }
+}
+
+// Catch the Signal — live Psychomotor Vigilance Task. A faint dot appears at
+// unpredictable moments; press the instant you see it. We measure reaction time,
+// lapses, misses, and false starts in real time.
+function renderVigilance() {
+  const s = state.session;
+  const ex = s.exercise;
+  if (s.phase === 'vigilance-intro') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="card">
+          <p>Watch the dark panel. At random moments a <strong>faint dot</strong> will appear — tap the panel the <strong>instant</strong> you see it.</p>
+          <p class="muted small">Don’t tap before it appears. There are ${ex.trials} signals, spaced unpredictably. This measures how steadily you hold attention and how fast you respond.</p>
+        </div>
+        <button class="btn amber" id="begin">Begin</button>
+      </div>`;
+    document.getElementById('begin').onclick = () => { s.phase = 'vigilance-run'; s.response.trials = []; s.trialIndex = 0; s._started = false; render(); };
+    return;
+  }
+  // run — build the stage once; the trial loop manipulates the DOM directly so
+  // re-renders don't restart it.
+  app.innerHTML = `
+    <div class="fade-in">
+      <p class="muted small center" id="vcount">Signal 1 of ${ex.trials}</p>
+      <div id="vstage" style="height:300px; border-radius:18px; background:#0e1018; display:grid; place-items:center; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;">
+        <div id="vmsg" style="color:#5a6072; font-size:1.05rem;">watch…</div>
+        <div id="vdot" style="display:none; width:48px; height:48px; border-radius:50%; background:#ffffff; opacity:${ex.faint}; box-shadow:0 0 24px rgba(255,255,255,.5);"></div>
+      </div>
+      <p class="muted small center" style="margin-top:10px;">Tap the moment the dot appears — not before.</p>
+    </div>`;
+  const stage = document.getElementById('vstage');
+  const dot = document.getElementById('vdot');
+  const msg = document.getElementById('vmsg');
+  const count = document.getElementById('vcount');
+
+  const aborted = () => state.session !== s || state.route !== 'session';
+  const clearT = () => { if (s._timer) { clearTimeout(s._timer); s._timer = null; } };
+
+  const nextTrial = () => {
+    if (aborted()) { clearT(); return; }
+    if (s.trialIndex >= ex.trials) { clearT(); completeSession(); return; }
+    count.textContent = `Signal ${s.trialIndex + 1} of ${ex.trials}`;
+    s.stage = 'waiting';
+    dot.style.display = 'none';
+    msg.style.display = 'block';
+    msg.textContent = 'watch…';
+    const isi = ex.isiMin + Math.random() * (ex.isiMax - ex.isiMin);
+    s._timer = setTimeout(() => {
+      if (aborted()) { clearT(); return; }
+      s.stage = 'signal';
+      s.signalAt = performance.now();
+      msg.style.display = 'none';
+      dot.style.display = 'block';
+      s._timer = setTimeout(() => { // no response in time → miss
+        if (aborted()) { clearT(); return; }
+        s.response.trials.push({ rt: null, miss: true });
+        s.trialIndex++;
+        nextTrial();
+      }, 2800);
+    }, isi);
+  };
+
+  stage.onclick = () => {
+    if (s.stage === 'waiting') {
+      clearT();
+      s.response.trials.push({ falseStart: true });
+      s.trialIndex++;
+      s.stage = 'idle';
+      msg.textContent = 'too soon — wait for it…';
+      s._timer = setTimeout(() => { if (!aborted()) nextTrial(); }, 700);
+    } else if (s.stage === 'signal') {
+      clearT();
+      s.response.trials.push({ rt: performance.now() - s.signalAt });
+      s.trialIndex++;
+      s.stage = 'idle';
+      dot.style.display = 'none';
+      msg.style.display = 'block';
+      msg.textContent = '✓';
+      s._timer = setTimeout(() => { if (!aborted()) nextTrial(); }, 450);
+    }
+  };
+
+  if (!s._started) { s._started = true; nextTrial(); }
 }
 
 // Stay — behavioral persistence. Staying with the hard item is the signal.

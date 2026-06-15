@@ -79,6 +79,25 @@ export function scoreContemplation(seconds, targetSeconds) {
   return clamp(round(Math.min(1, seconds / targetSeconds) * 100));
 }
 
+// --- Vigilance (Psychomotor Vigilance Task lineage): live sustained attention ---
+// trials: [{rt:number} | {rt:null,miss:true} | {falseStart:true}]. Faster median
+// reaction = sharper attention; lapses (slow RTs), misses, and pressing early all
+// cost. This is a genuine performance measure, not self-report.
+export function scoreVigilance(trials) {
+  if (!trials || !trials.length) return 0;
+  const valid = trials.filter((t) => typeof t.rt === 'number' && !t.falseStart);
+  const falseStarts = trials.filter((t) => t.falseStart).length;
+  const misses = trials.filter((t) => t.miss).length;
+  if (!valid.length) return clamp(8 - falseStarts * 2 - misses);
+  const rts = valid.map((t) => t.rt).sort((a, b) => a - b);
+  const m = Math.floor(rts.length / 2);
+  const medRT = rts.length % 2 ? rts[m] : (rts[m - 1] + rts[m]) / 2;
+  const lapses = valid.filter((t) => t.rt > 500).length;
+  let score = 136.3 - 0.177 * medRT;          // ~250ms→91, ~400ms→65, ~600ms→30
+  score -= lapses * 3 + falseStarts * 5 + misses * 6;
+  return clamp(round(score));
+}
+
 // --- Working memory: position-correct recall, length-weighted ---
 // Reward getting items in the RIGHT position. A longer sequence recalled
 // perfectly should not score lower than a short one, so we score by proportion.
@@ -155,6 +174,8 @@ export function scoreExercise(exercise, response) {
       return scoreStay(response.stayed, response.selfRating);
     case 'contemplation':
       return scoreContemplation(response.seconds || 0, exercise.targetSeconds);
+    case 'vigilance':
+      return scoreVigilance(response.trials || []);
     case 'reflection':
       return scoreSelfRating(response.selfRating || 3);
     default:

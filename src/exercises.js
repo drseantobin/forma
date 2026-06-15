@@ -810,6 +810,25 @@ export function makeStreamExercise(level = 1, rng = Math.random) {
   };
 }
 
+// ----- CATCH THE SIGNAL: live vigilance test (Attention) -----
+// Psychomotor Vigilance Task lineage: a faint dot appears at unpredictable
+// intervals; press the instant you see it. Real-time reaction + lapses +
+// false-starts = a genuine sustained-attention measure, not self-report.
+export function makeVigilanceExercise(level = 1) {
+  const trials = Math.min(12, 7 + level);
+  const faint = Math.max(0.32, 0.62 - level * 0.06); // higher level → fainter dot
+  return {
+    id: `vigilance-${Date.now()}`,
+    type: 'vigilance',
+    domain: 'attention',
+    title: 'Catch the Signal',
+    trials,
+    faint,
+    isiMin: 1500, // ms — minimum wait before the dot appears
+    isiMax: 4500, // ms — maximum wait (the unpredictability is the point)
+  };
+}
+
 // ----- STAY: behavioral persistence drill (Frustration Tolerance) -----
 export const STAY = [
   {
