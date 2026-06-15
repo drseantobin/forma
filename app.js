@@ -65,13 +65,24 @@ function ensurePlan() {
 }
 
 function render() {
-  const onboarded = state.profile && state.profile.baseline;
-  tabbar.hidden = !onboarded;
-  if (!onboarded) { renderOnboarding(); return; }
-  ensurePlan();
+  // A profile always exists in memory so Coach/Settings work before the
+  // baseline is done (and so nothing reads a null profile).
+  state.profile = state.profile || Profile.createProfile();
+  const onboarded = !!state.profile.baseline;
 
+  // Tabs are always visible; highlight the active one.
+  tabbar.hidden = false;
   [...tabbar.querySelectorAll('.tab')].forEach((t) =>
     t.classList.toggle('active', t.dataset.route === state.route));
+
+  if (!onboarded) {
+    // Before the baseline exists: Coach and Settings are usable; every other
+    // tab brings you into the short setup (which is "home" until it's done).
+    if (state.route === 'coach') return renderCoach();
+    if (state.route === 'settings') return renderSettings();
+    return renderOnboarding();
+  }
+  ensurePlan();
 
   switch (state.route) {
     case 'home': return renderHome();
@@ -93,6 +104,9 @@ tabbar.addEventListener('click', (e) => {
 
 // ---------------- onboarding ----------------
 function renderOnboarding() {
+  // Single source of truth for the faith track is the saved setting (the
+  // Settings tab can now toggle it mid-setup).
+  state.onboard.faithTrack = !!(state.profile && state.profile.settings && state.profile.settings.faithTrack);
   if (state.onboard.mode === 'conversation') { renderConversationalOnboarding(); return; }
 
   const groups = baselineByDomain(activeDomainIds(state.onboard.faithTrack));
