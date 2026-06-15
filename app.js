@@ -34,6 +34,11 @@ const state = {
   session: null, // active exercise flow
 };
 
+// Reflect a previously-saved faith-track preference in the onboarding toggle.
+if (state.profile && state.profile.settings && state.profile.settings.faithTrack) {
+  state.onboard.faithTrack = true;
+}
+
 function save() { Profile.saveProfile(state.profile); }
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
@@ -129,7 +134,15 @@ function renderOnboarding() {
           </div>` : ''}
         <p class="muted small center" style="margin-top:14px;">Everything stays on this device. Nothing is uploaded except your own optional Claude calls.</p>
       </div>`;
-    document.getElementById('faithtoggle').onclick = () => { state.onboard.faithTrack = !state.onboard.faithTrack; render(); };
+    document.getElementById('faithtoggle').onclick = () => {
+      state.onboard.faithTrack = !state.onboard.faithTrack;
+      // Persist the choice immediately so it survives a reload, even before
+      // the baseline is finished.
+      state.profile = state.profile || Profile.createProfile();
+      state.profile.settings.faithTrack = state.onboard.faithTrack;
+      save();
+      render();
+    };
     document.getElementById('start').onclick = () => { state.onboard.step = 1; render(); };
     document.getElementById('talk').onclick = () => {
       if (Coach.hasKey(state.profile)) startConversation();
