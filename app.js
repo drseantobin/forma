@@ -398,7 +398,7 @@ function renderHome() {
           <div class="meta"><div class="dn">${esc(fd.name)}</div>
             <div class="muted small">${esc(fd.short)}</div></div>
         </div>
-        <button class="btn amber" id="startsession">${doneToday ? 'Do another session' : 'Start 3-minute session →'}</button>
+        <button class="btn amber" id="startsession">${doneToday ? 'Today’s session — done ✓' : 'Go to today’s session →'}</button>
       </div>
 
       ${weekStripCard(p)}
@@ -489,18 +489,63 @@ function domainRow(id, score) {
 }
 
 // ---------------- daily session ----------------
+// The Orchestrator picks the focus domain (via the weekly plan) AND the
+// exercise modality for it; we only create the session when the user hits Begin.
+function startTodaysSession() {
+  const ex = Orchestrator.chooseExercise(state.profile);
+  const initPhase = ex.type === 'memory' ? 'memo-show'
+    : ex.type === 'nback' ? 'nback-intro'
+    : ex.type === 'stream' ? 'stream-intro'
+    : ex.type === 'contemplation' ? 'contempl-intro'
+    : 'play';
+  state.session = { exercise: ex, phase: initPhase, response: {}, started: Date.now() };
+  render();
+}
+
+// The "Today" landing — a calm runway before the session, not a cold start.
+function renderTodayLanding() {
+  const p = state.profile;
+  const focus = Orchestrator.nextFocus(p);
+  const fd = getDomain(focus);
+  const doneToday = (p.sessions || []).some((s) => s.date === todayStr());
+  const planDay = p.plan && p.plan.days.find((d) => d.date === todayStr());
+  const alive = streakAlive(p.streak);
+  const last = p._lastInsight;
+
+  app.innerHTML = `
+    <div class="fade-in">
+      <div class="row"><h1 style="margin:0;">Today</h1><span class="spacer"></span>
+        <span class="streakchip ${alive ? '' : 'cold'}" style="margin:0;">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}</span></div>
+
+      ${doneToday ? `
+        <div class="card" style="text-align:center;">
+          <div style="font-size:2.4rem;">✓</div>
+          <h2 style="font-size:1.1rem; margin-top:6px;">Today's session is done</h2>
+          <p class="muted small">Formation compounds in the returning, not the cramming. Come back tomorrow.</p>
+        </div>
+        ${last ? `<div class="card"><div class="insight ${last.live ? 'live' : ''}" style="border:none;padding:0;">
+          <div class="k">Today's insight</div><div style="margin-top:6px; white-space:pre-wrap;">${esc(last.text)}</div></div></div>` : ''}
+        <button class="btn ghost" id="begin">Do another session →</button>
+      ` : `
+        <div class="card">
+          <div class="k" style="font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700;">Today's focus</div>
+          <div class="row" style="margin-top:8px;">
+            <span class="ico" style="font-size:1.7rem;">${fd.icon}</span>
+            <div class="meta"><div class="dn" style="font-size:1.05rem;">${esc(fd.name)}</div>
+              <div class="muted small">${esc(fd.short)}</div></div>
+          </div>
+          ${planDay ? `<p class="muted small" style="margin-top:10px;">Part of this week's plan — focus capacity: <strong>${esc(getDomain(p.plan.theme).name)}</strong>.</p>` : ''}
+          <p class="muted small" style="margin-top:6px;">About 3 minutes. One short exercise, calibrated to where you are.</p>
+        </div>
+        <button class="btn amber" id="begin">Begin today's session →</button>
+        <p class="muted small center" style="margin-top:10px;">${esc(fd.aiRationale)}</p>
+      `}
+    </div>`;
+  document.getElementById('begin').onclick = startTodaysSession;
+}
+
 function renderSession() {
-  if (!state.session) {
-    // The Orchestrator picks the focus domain (via the weekly plan) AND the
-    // exercise modality for it (e.g. n-back vs recall, CRT vs decision scenario).
-    const ex = Orchestrator.chooseExercise(state.profile);
-    const initPhase = ex.type === 'memory' ? 'memo-show'
-      : ex.type === 'nback' ? 'nback-intro'
-      : ex.type === 'stream' ? 'stream-intro'
-      : ex.type === 'contemplation' ? 'contempl-intro'
-      : 'play';
-    state.session = { exercise: ex, phase: initPhase, response: {}, started: Date.now() };
-  }
+  if (!state.session) { return renderTodayLanding(); }
   const s = state.session;
   switch (s.exercise.type) {
     case 'reading': return renderReading();
