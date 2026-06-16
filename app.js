@@ -3,7 +3,7 @@
 
 import { DOMAINS, getDomain, bandFor, activeDomainIds } from './src/domains.js';
 import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
-import { pickExercise } from './src/exercises.js';
+import { pickExercise, nextMathProblem } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
 import {
   todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween,
@@ -552,6 +552,7 @@ function initialPhase(ex) {
     : ex.type === 'nback' ? 'nback-intro'
     : ex.type === 'stream' ? 'stream-intro'
     : ex.type === 'vigilance' ? 'vigilance-intro'
+    : ex.type === 'mathfluency' ? 'math-intro'
     : ex.type === 'contemplation' ? 'contempl-intro'
     : 'play';
 }
@@ -634,6 +635,7 @@ function renderSession() {
     case 'nback': return renderNBack();
     case 'stream': return renderStream();
     case 'vigilance': return renderVigilance();
+    case 'mathfluency': return renderMathFluency();
     case 'vignette': return renderVignette();
     case 'stay': return renderStay();
     case 'contemplation': return renderContemplation();
@@ -643,7 +645,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', stream: 'Sustained Attention', vigilance: 'Live Attention', vignette: 'Communication', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', stream: 'Sustained Attention', vigilance: 'Live Attention', vignette: 'Communication', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
@@ -1009,6 +1011,71 @@ function renderVigilance() {
   };
 
   if (!s._started) { s._started = true; nextTrial(); }
+}
+
+// Mental Math — a 60-second timed arithmetic sprint. Answers auto-advance the
+// instant they're correct. Built once; the loop updates DOM directly so the
+// input keeps focus on mobile.
+function renderMathFluency() {
+  const s = state.session;
+  const ex = s.exercise;
+  if (s.phase === 'math-intro') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="card">
+          <p>Solve as many as you can in <strong>${ex.durationSec} seconds</strong> — in your head. Type each answer; it advances the instant you're right.</p>
+          <p class="muted small">No calculator. Speed and accuracy both count. Skip any that stump you.</p>
+        </div>
+        <button class="btn amber" id="begin">Begin</button>
+      </div>`;
+    document.getElementById('begin').onclick = () => {
+      s.phase = 'math-run';
+      s.response.correct = 0;
+      s.timeLeft = ex.durationSec;
+      s.problem = nextMathProblem(ex.level);
+      s._started = false;
+      render();
+    };
+    return;
+  }
+  app.innerHTML = `
+    <div class="fade-in">
+      <div class="row"><span class="muted small">${esc(ex.title)}</span><span class="spacer"></span>
+        <span class="muted small">✓ <span id="mcorrect">${s.response.correct || 0}</span></span>
+        <span class="trendpill flat" id="mtime" style="margin-left:10px;">${s.timeLeft}s</span></div>
+      <div style="height:130px; display:grid; place-items:center;">
+        <div id="mproblem" style="font-size:2.6rem; font-weight:800; color:var(--ink);">${esc(s.problem.text)} =</div>
+      </div>
+      <input id="manswer" inputmode="numeric" autocomplete="off" class="reflect-area" style="min-height:auto; height:auto; text-align:center; font-size:1.7rem; font-weight:700; padding:14px;" placeholder="?" />
+      <button class="btn ghost" id="mskip" style="margin-top:10px;">Skip →</button>
+    </div>`;
+  const input = document.getElementById('manswer');
+  const probEl = document.getElementById('mproblem');
+  const correctEl = document.getElementById('mcorrect');
+  const timeEl = document.getElementById('mtime');
+  const nextProblem = () => {
+    s.problem = nextMathProblem(ex.level);
+    probEl.textContent = s.problem.text + ' =';
+    input.value = '';
+    input.focus();
+  };
+  input.oninput = () => {
+    const v = input.value.trim();
+    if (v === '' || v === '-') return;
+    if (Number(v) === s.problem.answer) { s.response.correct = (s.response.correct || 0) + 1; correctEl.textContent = s.response.correct; nextProblem(); }
+  };
+  document.getElementById('mskip').onclick = nextProblem;
+  input.focus();
+  if (!s._started) {
+    s._started = true;
+    s._timer = setInterval(() => {
+      if (state.session !== s || state.route !== 'session') { clearInterval(s._timer); s._timer = null; return; }
+      s.timeLeft--;
+      if (timeEl) timeEl.textContent = s.timeLeft + 's';
+      if (s.timeLeft <= 0) { clearInterval(s._timer); s._timer = null; completeSession(); }
+    }, 1000);
+  }
 }
 
 function stopMic(s) {
@@ -1654,7 +1721,7 @@ function renderSettings() {
       r.textContent = txt ? `✓ Connected — live coaching is on (model: ${p.settings.model}).` : '✓ Connected.';
     } catch (e) {
       r.style.color = 'var(--red)';
-      r.textContent = `✗ ${e.message}`;
+      r.textContent = `✗ ${Coach.friendlyApiError(e.message)}`;
     }
   };
   document.getElementById('export').onclick = () => {

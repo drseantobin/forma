@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -53,8 +53,9 @@ export function chooseExercise(profile, opts = {}) {
 
   if (focus === 'memory') {
     const level = Math.max(1, Math.round(score / 25));
-    // Alternate the n-back trainer with sequence recall so neither plateaus.
+    // Rotate the n-back trainer, timed mental math, and sequence recall.
     if (!recentTypes.includes('nback')) return makeNBackExercise(level, rng);
+    if (!recentTypes.includes('mathfluency')) return makeMathFluency(level);
     return pickExercise('memory', { level, seenIds: seen, rng });
   }
 

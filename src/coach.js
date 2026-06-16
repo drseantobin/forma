@@ -39,6 +39,24 @@ Hard rules you never break:
 
 Voice: plain, vivid, unhurried. No corporate wellness-speak. No "journey," "lean into," "sit with," "powerful," "transformative." Talk like a real person who has thought hard about this.`;
 
+// Turn a raw Anthropic API error into a plain-language explanation.
+export function friendlyApiError(msg) {
+  const m = String(msg || '');
+  if (/credit balance is too low/i.test(m)) {
+    return 'Your Anthropic API account is out of credit. Note: this is separate from a Claude Max or Pro subscription — those don’t fund API calls. Add pay-as-you-go credit at console.anthropic.com → Billing.';
+  }
+  if (/authentication|invalid x-api-key|\b401\b/i.test(m)) {
+    return 'That API key wasn’t accepted. Double-check you copied the whole key (starts with sk-ant-) from console.anthropic.com.';
+  }
+  if (/model/i.test(m) && /(not found|does not exist|invalid|unknown)/i.test(m)) {
+    return 'That model isn’t available on your account. Try Sonnet or Haiku in the Model dropdown.';
+  }
+  if (/rate limit|\b429\b/i.test(m)) {
+    return 'Rate limit reached — wait a moment and try again.';
+  }
+  return m;
+}
+
 export function hasKey(profile) {
   return !!(profile?.settings?.apiKey && profile.settings.apiKey.trim());
 }
@@ -162,6 +180,25 @@ export const ESCALATION_MESSAGE =
   'Please reach out right now to someone you trust, or to a trained human who can help. In the US you can call or text 988 (the Suicide & Crisis Lifeline), any time, day or night. Anywhere else, your local emergency number or a crisis line in your country can connect you with someone immediately. If you are in immediate danger, please call emergency services.\n\n' +
   "I'll be here for the formation work whenever you're ready — but let a real person be with you in this first.";
 
+// Build a VALID Anthropic messages array from possibly-messy stored history:
+// the API requires the list to start with a user turn and to strictly alternate
+// roles. We take recent turns, drop leading non-user turns, collapse any
+// consecutive same-role turns, and end with the new user message. Exported for
+// testing.
+export function buildCoachMessages(coachLog, userText) {
+  const recent = (coachLog || []).slice(-8).map((m) => ({ role: m.role, content: m.content }));
+  const cleaned = [];
+  for (const m of recent) {
+    if (m.role !== 'user' && m.role !== 'assistant') continue;
+    if (!cleaned.length && m.role !== 'user') continue; // must start with user
+    if (cleaned.length && cleaned[cleaned.length - 1].role === m.role) continue; // no two in a row
+    cleaned.push(m);
+  }
+  // The new user message must not follow a trailing user turn.
+  if (cleaned.length && cleaned[cleaned.length - 1].role === 'user') cleaned.pop();
+  return [...cleaned, { role: 'user', content: userText }];
+}
+
 export async function coachReply(userText, profile) {
   // Safety first, before anything else — and before any network call.
   if (looksLikeDistress(userText)) {
@@ -175,19 +212,13 @@ export async function coachReply(userText, profile) {
     };
   }
   try {
-    // Prior conversation for continuity. NOTE: the caller appends the current
-    // user turn to coachLog only AFTER this call returns, so coachLog here holds
-    // only prior turns — we add the current userText exactly once below.
-    const priorTurns = (profile.coachLog || []).slice(-8).map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    const messages = buildCoachMessages(profile.coachLog, userText);
     const text = await callClaude({
       apiKey: profile.settings.apiKey,
       model: model(profile),
       system: `${FORMA_SYSTEM}\n\n--- THE PERSON YOU ARE COACHING ---\n${profileSummary(profile)}`,
       maxTokens: 1024,
-      messages: [...priorTurns, { role: 'user', content: userText }],
+      messages,
     });
     return { text: text || offlineCoachReply(userText, profile), live: !!text };
   } catch (e) {

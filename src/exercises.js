@@ -830,6 +830,42 @@ export function makeStreamExercise(level = 1, rng = Math.random) {
   };
 }
 
+// ----- MENTAL MATH: timed arithmetic fluency (Working Memory) -----
+// A 60-second sprint: solve as many problems as you can in your head. Throughput
+// = working memory + processing speed under time pressure. Problems generated
+// live by level; the exercise object just carries config.
+export function makeMathFluency(level = 1) {
+  return {
+    id: `math-${Date.now()}`,
+    type: 'mathfluency',
+    domain: 'memory',
+    title: 'Mental Math',
+    durationSec: 60,
+    level: Math.max(1, Math.min(4, Math.round(level))),
+    target: 14, // correct answers in the window for a top score
+  };
+}
+
+// Generate one problem appropriate to the level. Returns {text, answer}.
+export function nextMathProblem(level = 1, rng = Math.random) {
+  const r = (lo, hi) => lo + Math.floor(rng() * (hi - lo + 1));
+  let a; let b; let op; let answer;
+  if (level <= 1) {
+    a = r(2, 19); b = r(2, 19);
+    if (rng() < 0.5) { op = '+'; answer = a + b; }
+    else { if (b > a) { const t = a; a = b; b = t; } op = '−'; answer = a - b; }
+  } else if (level === 2) {
+    if (rng() < 0.6) { a = r(2, 9); b = r(2, 9); op = '×'; answer = a * b; }
+    else { a = r(10, 49); b = r(10, 49); op = '+'; answer = a + b; }
+  } else {
+    const k = rng();
+    if (k < 0.4) { a = r(3, 12); b = r(3, 12); op = '×'; answer = a * b; }
+    else if (k < 0.7) { a = r(20, 99); b = r(20, 99); op = '+'; answer = a + b; }
+    else { answer = r(3, 12); b = r(2, 9); a = answer * b; op = '÷'; } // integer division
+  }
+  return { text: `${a} ${op} ${b}`, answer };
+}
+
 // ----- CATCH THE SIGNAL: live vigilance test (Attention) -----
 // Psychomotor Vigilance Task lineage: a faint dot appears at unpredictable
 // intervals; press the instant you see it. Real-time reaction + lapses +

@@ -73,6 +73,12 @@ export function scoreStay(stayed, selfRating) {
   return clamp(round(behavioral * 0.7 + scoreSelfRating(selfRating || 3) * 0.3));
 }
 
+// --- Mental Math fluency: throughput (correct answers vs a target) ---
+export function scoreMathFluency(correct, target = 14) {
+  if (!target) return 0;
+  return clamp(round((correct / target) * 100));
+}
+
 // --- Contemplation (interior-life silence practice): proportion of target sat ---
 export function scoreContemplation(seconds, targetSeconds) {
   if (!targetSeconds) return 0;
@@ -186,6 +192,8 @@ export function scoreExercise(exercise, response) {
     case 'vignette':
       // Scored by Claude in the UI before completion; stored on the response.
       return clamp(round(response.aiScore != null ? response.aiScore : 60));
+    case 'mathfluency':
+      return scoreMathFluency(response.correct || 0, exercise.target);
     case 'reflection':
       return scoreSelfRating(response.selfRating || 3);
     default:
