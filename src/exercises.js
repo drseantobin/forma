@@ -906,6 +906,23 @@ export function nextMathProblem(level = 1, rng = Math.random) {
   return { text: `${a} ${op} ${b}`, answer };
 }
 
+// ----- DIGIT SPAN BACKWARD: working-memory manipulation (WAIS lineage) -----
+// See digits, then recall them in REVERSE order — holding AND manipulating, the
+// harder/more valid span. Scored by position-correct recall of the reversed list.
+export function makeDigitSpan(level = 1, rng = Math.random) {
+  const len = Math.max(4, Math.min(7, 3 + Math.round(level)));
+  const digits = [];
+  for (let i = 0; i < len; i++) digits.push(String(Math.floor(rng() * 10)));
+  return {
+    id: `digit-${Date.now()}-${len}`,
+    type: 'digitspan',
+    domain: 'memory',
+    title: 'Digit Span — Backward',
+    digits,
+    showMs: 900 + len * 650,
+  };
+}
+
 // ----- CATCH THE SIGNAL: live vigilance test (Attention) -----
 // Psychomotor Vigilance Task lineage: a faint dot appears at unpredictable
 // intervals; press the instant you see it. Real-time reaction + lapses +

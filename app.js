@@ -565,6 +565,7 @@ function domainRow(id, score) {
 // exercise modality for it; we only create the session when the user hits Begin.
 function initialPhase(ex) {
   return ex.type === 'memory' ? 'memo-show'
+    : ex.type === 'digitspan' ? 'digit-show'
     : ex.type === 'nback' ? 'nback-intro'
     : ex.type === 'stream' ? 'stream-intro'
     : ex.type === 'vigilance' ? 'vigilance-intro'
@@ -646,6 +647,7 @@ function renderSession() {
   switch (s.exercise.type) {
     case 'reading': return renderReading();
     case 'memory': return renderMemory();
+    case 'digitspan': return renderDigitSpan();
     case 'decision': return renderDecision();
     case 'tradeoff': return renderDecision();
     case 'crt': return renderCRT();
@@ -665,7 +667,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
@@ -1123,6 +1125,43 @@ function renderMaze() {
     s.response.answers = [...app.querySelectorAll('.mazesel')].map((el) => Number(el.value));
     completeSession();
   };
+}
+
+// Digit Span Backward — memorize digits, recall them in reverse.
+function renderDigitSpan() {
+  const s = state.session;
+  const ex = s.exercise;
+  if (s.phase === 'digit-show') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <p class="muted small">Memorize these digits — then you'll enter them <strong>backward</strong>.</p>
+        <div class="memo-words" style="gap:16px;">${ex.digits.map((d) => `<span class="memo-word" style="font-size:2rem;">${d}</span>`).join('')}</div>
+        <div class="memo-countdown" id="cd">${Math.ceil(ex.showMs / 1000)}</div>
+      </div>`;
+    let left = Math.ceil(ex.showMs / 1000);
+    const cd = document.getElementById('cd');
+    if (s._timer) clearInterval(s._timer);
+    s._timer = setInterval(() => {
+      if (state.session !== s || state.route !== 'session') { clearInterval(s._timer); s._timer = null; return; }
+      left -= 1;
+      if (cd) cd.textContent = left;
+      if (left <= 0) { clearInterval(s._timer); s._timer = null; s.phase = 'digit-recall'; s.response.recalled = []; render(); }
+    }, 1000);
+    return;
+  }
+  const recalled = s.response.recalled || [];
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <p class="muted small">Enter the digits <strong>in reverse order</strong> — the last one first.</p>
+      <div class="slot-row" id="slots">${recalled.length ? recalled.map((d, i) => `<span class="slot" data-rm="${i}">${esc(d)} ✕</span>`).join('') : '<span class="muted small">backward…</span>'}</div>
+      <div class="chiprow" style="justify-content:center; gap:8px;">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((n) => `<button class="chip" data-d="${n}" style="min-width:54px; font-size:1.25rem; font-weight:700;">${n}</button>`).join('')}</div>
+      <button class="btn" id="done" ${recalled.length === 0 ? 'disabled' : ''} style="margin-top:16px;">Check</button>
+    </div>`;
+  app.querySelectorAll('.chip[data-d]').forEach((b) => b.onclick = () => { s.response.recalled = [...(s.response.recalled || []), b.dataset.d]; render(); });
+  app.querySelectorAll('.slot[data-rm]').forEach((el) => el.onclick = () => { s.response.recalled.splice(Number(el.dataset.rm), 1); render(); });
+  document.getElementById('done').onclick = completeSession;
 }
 
 // Sentence Completion — finish open stems; Claude scores self-awareness.

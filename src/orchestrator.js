@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -56,6 +56,7 @@ export function chooseExercise(profile, opts = {}) {
     // Rotate the n-back trainer, timed mental math, and sequence recall.
     if (!recentTypes.includes('nback')) return makeNBackExercise(level, rng);
     if (!recentTypes.includes('mathfluency')) return makeMathFluency(level);
+    if (!recentTypes.includes('digitspan')) return makeDigitSpan(level, rng);
     return pickExercise('memory', { level, seenIds: seen, rng });
   }
 

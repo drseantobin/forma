@@ -189,6 +189,9 @@ export function scoreExercise(exercise, response) {
       return scoreReading(response.answers || [], exercise.questions);
     case 'memory':
       return scoreMemory(response.recalled || [], exercise.sequence);
+    case 'digitspan':
+      // Recall is entered backward, so score against the reversed digit list.
+      return scoreMemory(response.recalled || [], exercise.digits.slice().reverse());
     case 'decision':
     case 'tradeoff':
       return scoreDecision(response.optionId, exercise.options);
