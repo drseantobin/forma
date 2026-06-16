@@ -427,7 +427,7 @@ export const DECISIONS = [
     options: [
       { id: 'a', text: 'Always use the AI draft — output is what counts, not how you got it.', score: 25, rationale: 'For low-stakes work this is fine. But "always" removes all the effort that forms the underlying skill — and this one matters and will be judged.' },
       { id: 'b', text: 'Draft the core thinking yourself, then use AI to pressure-test and refine it.', score: 100, rationale: 'You keep the formative effort (the thinking) and use the tool where it adds value (refinement). This is wise delegation, not dependence.' },
-      { id: 'c', text: 'Refuse to use AI at all, on principle.', score: 55, rationale: 'Honorable, and it preserves the effort — but a blanket refusal also forfeits genuine help. Independence is choosing, not abstaining by rule.' },
+      { id: 'c', text: 'Refuse to use AI at all, on principle.', score: 60, rationale: 'Honorable, and it preserves the effort — but a blanket refusal also forfeits genuine help. Independence is choosing, not abstaining by rule.' },
       { id: 'd', text: 'Have AI write it, then change a few words so it feels like yours.', score: 15, rationale: 'This keeps neither the effort nor the integrity. You lose the formation and gain a false sense of authorship.' },
     ],
   },
@@ -456,8 +456,8 @@ export const DECISIONS = [
     prompt: 'Which response best balances getting unstuck and staying capable?',
     options: [
       { id: 'a', text: 'Immediately ask AI for the full answer and move on.', score: 25, rationale: 'Efficient, but if you do this every time the stuck-and-frustrated phase is gone — and that phase is where problem-solving capacity is actually built.' },
-      { id: 'b', text: 'Sit with it a bit longer, try one more angle, then ask AI for a hint rather than the answer.', score: 100, rationale: 'You honor the difficulty (where growth lives) and use the tool to keep moving without surrendering the whole problem. Frustration tolerance plus wise delegation.' },
-      { id: 'c', text: 'Push on alone for hours no matter what, refusing any help.', score: 50, rationale: 'Persistence is good, but rigid refusal of help can be its own trap. Knowing when a hint serves you is part of judgment.' },
+      { id: 'b', text: 'Stay with it a bit longer, try one more angle, then ask AI for a hint rather than the answer.', score: 100, rationale: 'You honor the difficulty (where growth lives) and use the tool to keep moving without surrendering the whole problem. Frustration tolerance plus wise delegation.' },
+      { id: 'c', text: 'Push on alone for hours no matter what, refusing any help.', score: 60, rationale: 'Persistence is good, but rigid refusal of help can be its own trap. Knowing when a hint serves you is part of judgment.' },
       { id: 'd', text: 'Abandon the problem entirely — it’s too hard right now.', score: 20, rationale: 'Quitting at the point of frustration trains the habit of quitting at frustration. The wall is usually just before the breakthrough.' },
     ],
   },
@@ -471,8 +471,8 @@ export const DECISIONS = [
     prompt: 'What is the wisest way to use that output?',
     options: [
       { id: 'a', text: 'Follow the recommendation — it reasoned it out better than you could.', score: 20, rationale: 'A values-laden life decision isn’t a task you can fully delegate. The model doesn’t know what it’s like to be you, and outsourcing the choice also outsources ownership of the consequences.' },
-      { id: 'b', text: 'Treat it as one well-argued input, then sit with which option you actually want to live.', score: 100, rationale: 'Exactly. Use the analysis to sharpen your thinking, but keep the decision — especially a values-laden one — yours. That’s the line between a tool and a substitute.' },
-      { id: 'c', text: 'Ignore it entirely — only you can decide your life.', score: 50, rationale: 'The instinct to own the decision is right, but discarding a genuinely good analysis is wasteful. Independence means weighing the input, not refusing it.' },
+      { id: 'b', text: 'Treat it as one well-argued input, then feel out which option you’d actually want to live.', score: 100, rationale: 'Exactly. Use the analysis to sharpen your thinking, but keep the decision — especially a values-laden one — yours. That’s the line between a tool and a substitute.' },
+      { id: 'c', text: 'Ignore it entirely — only you can decide your life.', score: 60, rationale: 'The instinct to own the decision is right, but discarding a genuinely good analysis is wasteful. Independence means weighing the input, not refusing it.' },
       { id: 'd', text: 'Ask it three more times and go with the majority answer.', score: 20, rationale: 'Repeating the same query isn’t deliberation; it’s laundering a single source into false consensus. The work is yours to do, not to re-roll.' },
     ],
   },
@@ -487,7 +487,7 @@ export const DECISIONS = [
     options: [
       { id: 'a', text: 'Change the plan — the story makes the risk feel real.', score: 20, rationale: 'A single vivid anecdote feels like strong evidence but usually isn’t. Vividness drives availability bias; it tells you what’s easy to imagine, not what’s likely.' },
       { id: 'b', text: 'Ask how often that outcome actually happens before reacting to one vivid case.', score: 100, rationale: 'Right — reach for the base rate. One memorable story is a sample size of one. Good judgment weighs frequency, not just emotional vividness.' },
-      { id: 'c', text: 'Dismiss the friend — anecdotes are worthless.', score: 45, rationale: 'Anecdotes aren’t worthless; they can flag a risk worth checking. The error is letting one stand in for the rate. Check, don’t dismiss.' },
+      { id: 'c', text: 'Dismiss the friend — anecdotes are worthless.', score: 60, rationale: 'Anecdotes aren’t worthless; they can flag a risk worth checking. The error is letting one stand in for the rate. Check, don’t dismiss.' },
       { id: 'd', text: 'Split the difference and change half the plan.', score: 30, rationale: 'Compromising between a number you haven’t checked and a story you can’t verify isn’t reasoning — it’s splitting the difference between two unknowns.' },
     ],
   },
@@ -526,7 +526,7 @@ export const REFLECTIONS = [
     title: 'The Hard Thing You Stayed With',
     prompt:
       'Name something you stayed with even though it was uncomfortable. What made it possible to not bail?',
-    selfRatingLabel: 'How would you rate your frustration tolerance today?',
+    selfRatingLabel: 'How well did you stay with discomfort today?',
   },
   {
     id: 'ref-ai-1',
@@ -637,7 +637,7 @@ export const CRT = [
       { id: 'c', text: '55¢', kind: 'other' },
       { id: 'd', text: '5¢', kind: 'other' },
     ],
-    explanation: 'The pull is 50¢ — but then the notebook ($5.50) would be only $5.00 more than the pen, not... wait: $5.50 − $0.50 = $5.00, a $4.50 gap. The pen is 25¢: notebook $5.25, pen $0.25, gap exactly $5.00, total $5.50. The intuitive answer ignores that the *difference* must stay $5.00.',
+    explanation: 'The pull is 50¢ — but if the pen were 50¢, the notebook would be $5.00, only a $4.50 gap, not the required $5.00. The pen is 25¢: notebook $5.25, pen $0.25, gap exactly $5.00, total $5.50. The intuitive answer forgets the difference must stay $5.00.',
   },
   {
     id: 'crt-printers',
@@ -839,7 +839,7 @@ export const STAY = [
   },
   {
     id: 'stay-riddle', type: 'stay', domain: 'persistence', title: 'Stay With It',
-    prompt: 'Sit with this before moving: a man pushes his car to a hotel and realizes he is bankrupt. What happened?',
+    prompt: 'Stay with this before you move on: a man pushes his car to a hotel and realizes he is bankrupt. What happened?',
     answer: 'He’s playing Monopoly.',
     explanation: 'It only resolves if you let go of the literal frame and keep turning it over. Frustration tolerance is exactly this willingness to stay past the first wave of “I don’t know.”',
   },

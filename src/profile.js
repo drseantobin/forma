@@ -157,6 +157,10 @@ export function enableFaithTrack(profile) {
   const p = clone(profile);
   p.settings.faithTrack = true;
   if (p.domainScores.interior == null) p.domainScores.interior = 50;
+  // Seed the baseline too, so the 90-day delta for interior is consistent.
+  if (p.baseline && p.baseline.domainScores && p.baseline.domainScores.interior == null) {
+    p.baseline.domainScores.interior = 50;
+  }
   return p;
 }
 export function disableFaithTrack(profile) {
@@ -196,6 +200,7 @@ export function loadProfile() {
 }
 
 export function saveProfile(profile) {
+  if (!profile) return; // never persist the string "null"
   try {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));

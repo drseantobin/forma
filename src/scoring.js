@@ -79,6 +79,13 @@ export function scoreContemplation(seconds, targetSeconds) {
   return clamp(round(Math.min(1, seconds / targetSeconds) * 100));
 }
 
+// Shared mapping from a (median) reaction time in ms to a 0–100 attention score,
+// so the live vigilance test and the Focus Check score the same RT identically.
+// Anchors: 250ms→90, 450ms→60, 650ms→30 (slope -0.15, intercept 127.5).
+export function rtToAttentionScore(ms) {
+  return clamp(round(127.5 - 0.15 * ms));
+}
+
 // --- Vigilance (Psychomotor Vigilance Task lineage): live sustained attention ---
 // trials: [{rt:number} | {rt:null,miss:true} | {falseStart:true}]. Faster median
 // reaction = sharper attention; lapses (slow RTs), misses, and pressing early all
@@ -93,8 +100,7 @@ export function scoreVigilance(trials) {
   const m = Math.floor(rts.length / 2);
   const medRT = rts.length % 2 ? rts[m] : (rts[m - 1] + rts[m]) / 2;
   const lapses = valid.filter((t) => t.rt > 500).length;
-  let score = 136.3 - 0.177 * medRT;          // ~250ms→91, ~400ms→65, ~600ms→30
-  score -= lapses * 3 + falseStarts * 5 + misses * 6;
+  const score = rtToAttentionScore(medRT) - (lapses * 3 + falseStarts * 5 + misses * 6);
   return clamp(round(score));
 }
 
@@ -108,9 +114,9 @@ export function scoreMemory(recalled, sequence) {
     if (recalled[i] && recalled[i] === sequence[i]) hits++;
   }
   const proportion = hits / sequence.length;
-  // Small length bonus: longer sequences are harder, so a perfect long recall
-  // earns a touch more credit (capped at 100).
-  const lengthBonus = sequence.length >= 7 ? 1.05 : 1.0;
+  // Length bonus only on PERFECT long recall (its stated intent) — so it doesn't
+  // silently inflate partial recalls on long sequences.
+  const lengthBonus = (sequence.length >= 7 && proportion === 1) ? 1.05 : 1.0;
   return clamp(round(proportion * 100 * lengthBonus));
 }
 
@@ -129,15 +135,15 @@ export function scoreSelfRating(value) {
 }
 
 // --- Cognitive Reflection ("The Lure"): did they override the intuitive pull? ---
-// Reflective/correct = 100; took the intuitive lure = 30 (you can watch the bias
-// happen); other wrong = 55. A wrong answer is still formative — the explanation
-// names the bias — so we never zero it.
+// Reflective/correct = 100; took the intuitive lure = 40 (you engaged the problem
+// in the expected way, just didn't override); other wrong = 25 (didn't read it
+// carefully). Always formative — the explanation names the bias — so never zeroed.
 export function scoreCRT(optionId, options) {
   const opt = options.find((o) => o.id === optionId);
   if (!opt) return 0;
   if (opt.kind === 'reflective') return 100;
-  if (opt.kind === 'intuitive') return 30;
-  return 55;
+  if (opt.kind === 'intuitive') return 40;
+  return 25;
 }
 
 // --- n-back: overall decision accuracy across judgeable positions (i >= n) ---

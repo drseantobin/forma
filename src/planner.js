@@ -32,7 +32,7 @@ const TYPE_LABEL = {
 export function typeLabel(type) { return TYPE_LABEL[type] || type; }
 
 function addDays(dateStr, n) {
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = new Date(dateStr + 'T12:00:00'); // noon avoids DST midnight skips
   d.setDate(d.getDate() + n);
   return todayStr(d);
 }
@@ -106,9 +106,14 @@ export function planWithProgress(plan, profile) {
 // plan covers today (caller falls back to the generic recommendation).
 export function focusForToday(profile, today = todayStr()) {
   const plan = profile.plan;
-  if (!plan) return null;
+  if (!plan || !plan.days || !plan.days.length) return null;
   const day = plan.days.find((d) => d.date === today);
-  return day ? day.domain : null;
+  if (day) return day.domain;
+  // No exact date match but still inside the week (e.g. a DST skip): use the day
+  // matching how far we are in. Outside the window → null (caller regenerates).
+  const offset = daysBetween(plan.weekStart, today);
+  if (offset >= 0 && offset < plan.days.length) return plan.days[offset].domain;
+  return null;
 }
 
 const PLAN_SYSTEM = `You are Forma's Formation Planner, writing a short, warm framing for the week's plan. 2-3 sentences. Name the week's focus capacity and why it matters for this person, and one encouraging, concrete note about how to approach the week. Formation framing only — no clinical language, no hype, no "journey"/"lean into"/"powerful".`;

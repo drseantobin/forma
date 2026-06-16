@@ -11,13 +11,14 @@
 // "Focus Check" — into honest, growth-framed progress metrics. Pure functions;
 // no side effects. Everything is framed as evidence-for-yourself, never a verdict.
 
-import { clamp, round } from './scoring.js';
+import { clamp, round, rtToAttentionScore } from './scoring.js';
 import { domainTrend, daysBetween, todayStr } from './progress.js';
 
-// Map a median reaction time (ms) from the Focus Check to a 0–100 score.
-// Calibrated so ~250ms (sharp) → ~90, ~450ms (typical) → ~63, ~700ms → ~30.
+// Map a median reaction time (ms) from the Focus Check to a 0–100 score, using
+// the same mapping as the live vigilance test so identical performance scores
+// identically across both attention measures.
 export function scoreFocusCheck(medianMs) {
-  return clamp(round(123.33 - 0.13333 * medianMs));
+  return rtToAttentionScore(medianMs);
 }
 
 export function median(nums) {

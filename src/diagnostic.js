@@ -79,14 +79,22 @@ export function parseDiagnosticScores(text) {
   const ids = DOMAINS.map((d) => d.id);
   const domainScores = {};
   const notes = {};
+  let parsedAny = false;
   for (const id of ids) {
     const v = obj[id];
     const score = v && (typeof v.score === 'number' ? v.score : Number(v.score));
-    if (score == null || Number.isNaN(score)) return null; // require all eight
-    domainScores[id] = clamp(round(score));
-    notes[id] = v && v.note ? String(v.note) : '';
+    if (score == null || Number.isNaN(score)) {
+      // Tolerant: fill a missing/garbled domain with neutral rather than
+      // stranding someone who finished the whole interview.
+      domainScores[id] = 50;
+      notes[id] = 'limited signal';
+    } else {
+      domainScores[id] = clamp(round(score));
+      notes[id] = v && v.note ? String(v.note) : '';
+      parsedAny = true;
+    }
   }
-  return { domainScores, notes };
+  return parsedAny ? { domainScores, notes } : null; // only fail if nothing parsed
 }
 
 // Turn the interview transcript into a scored profile (one scoring call).
@@ -97,7 +105,7 @@ export async function scoreDiagnostic(history, profile) {
   const text = await complete(profile, {
     system: SCORING_SYSTEM,
     messages: [{ role: 'user', content: transcript }],
-    maxTokens: 700,
+    maxTokens: 900,
   });
   return parseDiagnosticScores(text);
 }

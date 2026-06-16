@@ -32,8 +32,14 @@ export function dailyInsight(session, profile) {
   const streak = profile.streak?.current || 1;
   const lines = [];
 
-  // Streak milestone takes priority — it's the retention moment.
-  if ([3, 7, 14, 30, 50, 100].includes(streak)) {
+  // Returning after a gap — name the return as the rep, never the absence.
+  const totalSessions = (profile.sessions || []).length;
+  const returnedAfterLapse = streak === 1 && totalSessions > 1;
+
+  if (returnedAfterLapse) {
+    lines.push('You came back. That’s the part most people skip — not the streak, the return. Today counts double for being the harder rep.');
+  } else if ([3, 7, 14, 30, 50, 100].includes(streak)) {
+    // Streak milestone is the retention moment.
     lines.push(`That's ${streak} days in a row. The streak isn't the point — but the person who shows up ${streak} days running is already becoming someone different.`);
   }
 
@@ -87,7 +93,7 @@ export function interpretBaseline(domainScores, name = '') {
     ``,
     `Your biggest opening for growth is ${lo.name} — ${lo.short.toLowerCase()}. ${lo.aiRationale} This is where your first weeks of sessions will move the most.`,
     ``,
-    `Nothing here is fixed. These are capacities, not traits — every one of them responds to deliberate practice. That's the whole bet of Forma: as AI gets stronger, we help you stay capable.`,
+    `Nothing here is fixed. These are capacities, not traits — every one of them responds to deliberate practice. That's the whole wager of Forma: the more cognition gets automated, the more the mind you keep in your own hands is worth.`,
   ].join('\n');
 }
 

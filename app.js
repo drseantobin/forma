@@ -8,7 +8,7 @@ import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/s
 import {
   todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween,
 } from './src/progress.js';
-import { recommendFocus, weeklyPatterns } from './src/insights.js';
+import { recommendFocus, weeklyPatterns, dailyInsight as ruleDailyInsight, interpretBaseline as ruleInterpretBaseline } from './src/insights.js';
 import * as Profile from './src/profile.js';
 import * as Coach from './src/coach.js';
 import * as Diagnostic from './src/diagnostic.js';
@@ -42,6 +42,26 @@ if (state.profile && state.profile.settings && state.profile.settings.faithTrack
 function save() { Profile.saveProfile(state.profile); }
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
+function prefersReducedMotion() {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+// Animate an element's text from 0 to target (skips under reduced-motion).
+function countUp(el, target, ms = 650) {
+  if (!el) return;
+  if (prefersReducedMotion()) { el.textContent = target; return; }
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / ms);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
+    if (t < 1) requestAnimationFrame(step); else el.textContent = target;
+  };
+  requestAnimationFrame(step);
+}
+// Resolve to `fallback` if `promise` doesn't settle within `ms` (stalled API).
+function raceTimeout(promise, ms, fallback) {
+  return Promise.race([promise, new Promise((res) => setTimeout(() => res(fallback), ms))]);
+}
+
 // ---------------- router ----------------
 function go(route) {
   // Leaving an active session: stop any running countdown so it can't fire
@@ -49,6 +69,12 @@ function go(route) {
   if (route !== 'session' && state.session && state.session._timer) {
     clearInterval(state.session._timer);
     state.session._timer = null;
+  }
+  // Leaving the Focus Check: clear its pending timer so a stale closure can't
+  // log a bogus reaction time.
+  if (route !== 'focuscheck' && state._focus && state._focus._t) {
+    clearTimeout(state._focus._t);
+    state._focus = null;
   }
   state.route = route;
   render();
@@ -232,9 +258,13 @@ function itemHtml(item) {
 }
 
 async function finishBaseline() {
-  const scores = domainScoresFromBaseline(ALL_ITEMS, state.onboard.responses, LIKERT_POINTS);
+  // Only score items for active domains — so interior answers don't leak in if
+  // the faith track was toggled off mid-setup.
+  const faith = !!state.onboard.faithTrack;
+  const items = faith ? ALL_ITEMS : BASELINE_ITEMS;
+  const scores = domainScoresFromBaseline(items, state.onboard.responses, LIKERT_POINTS);
   state.profile = state.profile || Profile.createProfile();
-  state.profile.settings.faithTrack = !!state.onboard.faithTrack;
+  state.profile.settings.faithTrack = faith;
   state.profile = Profile.applyBaseline(state.profile, scores, state.onboard.responses);
   save();
   renderBaselineResult();
@@ -253,10 +283,11 @@ async function renderBaselineResult() {
     </div>`;
   document.getElementById('go').onclick = () => go('session');
 
-  const { text, live } = await Coach.interpretBaseline(p);
+  const fallback = { text: ruleInterpretBaseline(p.baseline.domainScores, p.settings.name), live: false };
+  const { text, live } = await raceTimeout(Coach.interpretBaseline(p), 10000, fallback);
   const el = document.getElementById('interp');
   if (el) el.innerHTML = `
-    <div class="insight ${live ? 'live' : ''}" style="border:none; padding:0;">
+    <div class="insight fade-in ${live ? 'live' : ''}" style="border:none; padding:0;">
       <div class="k">Interpretation</div>
       <div style="white-space:pre-wrap; margin-top:8px;">${esc(text)}</div>
     </div>`;
@@ -300,6 +331,15 @@ function renderConversationalOnboarding() {
   const sendTurn = async () => {
     const text = dci.value.trim();
     if (!text || d.busy) return;
+    // Safety first — route genuine distress to a real human, deterministically,
+    // even mid-onboarding and even with no key (the interview is not the place).
+    if (Coach.looksLikeDistress(text)) {
+      d.messages.push({ role: 'user', content: text });
+      d.messages.push({ role: 'assistant', content: Coach.ESCALATION_MESSAGE });
+      render();
+      dci.value = '';
+      return;
+    }
     d.messages.push({ role: 'user', content: text });
     d.busy = true;
     d.error = '';
@@ -356,6 +396,8 @@ async function finishConversation() {
   if (state.onboard.faithTrack) {
     state.profile.settings.faithTrack = true;
     if (state.profile.domainScores.interior == null) state.profile.domainScores.interior = 50;
+    // Seed the baseline too, so 90-day deltas for interior line up with the others.
+    if (state.profile.baseline.domainScores.interior == null) state.profile.baseline.domainScores.interior = 50;
   }
   state.onboard.mode = null;
   save();
@@ -380,7 +422,7 @@ function renderHome() {
       <div class="card index-hero">
         <div class="index-num kbig">${fi}</div>
         <div class="index-label">Formation Index</div>
-        <div class="streakchip ${alive ? '' : 'cold'}">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}-day streak${alive ? '' : ' — pick it back up'}</div>
+        <div class="streakchip ${alive ? '' : 'cold'}">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}-day streak${alive ? '' : ' — relight it'}</div>
       </div>
 
       ${lastInsight ? `<div class="card"><div class="insight ${lastInsight.live ? 'live' : ''}" style="border:none;padding:0;">
@@ -398,7 +440,7 @@ function renderHome() {
           <div class="meta"><div class="dn">${esc(fd.name)}</div>
             <div class="muted small">${esc(fd.short)}</div></div>
         </div>
-        <button class="btn amber" id="startsession">${doneToday ? 'Today’s session — done ✓' : 'Go to today’s session →'}</button>
+        <button class="btn amber" id="startsession">${doneToday ? 'Practice again →' : 'Go to today’s session →'}</button>
       </div>
 
       ${weekStripCard(p)}
@@ -456,11 +498,12 @@ function radarCard(scores) {
     return `<text x="${a.labelX}" y="${a.labelY + 4}" font-size="13" text-anchor="${anchor}" fill="var(--ink-faint)">${d.icon}</text>`;
   }).join('');
 
+  const ariaSummary = order.map((id) => `${getDomain(id).name} ${scores[id] ?? 0}`).join(', ');
   return `
     <div class="card">
       <h2 style="font-size:1.05rem;">Your formation profile</h2>
       <div class="radarwrap">
-        <svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:320px;">
+        <svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:320px;" role="img" aria-label="Your formation profile, out of 100: ${esc(ariaSummary)}">
           ${rings}${axes}
           <polygon points="${geo.points}" fill="rgba(76,95,213,.18)" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
           ${geo.axes.map((a) => `<circle cx="${a.x}" cy="${a.y}" r="3" fill="var(--accent)"/>`).join('')}
@@ -770,8 +813,10 @@ function renderNBack() {
     </div>`;
   const matchBtn = document.getElementById('match');
   if (matchBtn) matchBtn.onclick = () => {
-    if (s.idx >= ex.n && !s.flaggedThis) {
-      s.response.flagged.push(s.idx);
+    // Use the index displayed at render time (not the live s.idx, which the
+    // interval may have already advanced), bounds-check, and de-dupe.
+    if (idx >= ex.n && idx < ex.sequence.length && !s.response.flagged.includes(idx)) {
+      s.response.flagged.push(idx);
       s.flaggedThis = true;
       matchBtn.classList.remove('amber'); matchBtn.classList.add('green');
       matchBtn.textContent = 'Marked ✓';
@@ -820,14 +865,16 @@ function renderStream() {
     <div class="fade-in">
       <p class="muted small center">${ex.title} · ${Math.max(0, idx + 1)}/${ex.items.length} · withhold on “${esc(ex.targetSymbol)}”</p>
       <div style="height:200px; display:grid; place-items:center;">
-        <div style="font-size:5.5rem; font-weight:800; color:${item && item.nogo ? 'var(--red)' : 'var(--accent)'};">${esc(item ? item.symbol : '·')}</div>
+        <div style="font-size:5.5rem; font-weight:800; color:var(--ink);">${esc(item ? item.symbol : '·')}</div>
       </div>
       <button class="btn ${tappedThis ? 'green' : 'amber'}" id="go">${tappedThis ? 'GO ✓' : 'GO'}</button>
     </div>`;
   const goBtn = document.getElementById('go');
   if (goBtn) goBtn.onclick = () => {
-    if (s.idx >= 0 && !s.response.tapped.includes(s.idx)) {
-      s.response.tapped.push(s.idx);
+    // Use the index shown at render time (not the live s.idx the interval may
+    // have advanced) so a tap can't be logged against the next, unseen symbol.
+    if (idx >= 0 && !s.response.tapped.includes(idx)) {
+      s.response.tapped.push(idx);
       goBtn.classList.remove('amber'); goBtn.classList.add('green'); goBtn.textContent = 'GO ✓';
     }
   };
@@ -868,7 +915,7 @@ function renderVigilance() {
     <div class="fade-in">
       <p class="muted small center" id="vcount">Signal 1 of ${ex.trials}</p>
       <div id="vstage" style="height:300px; border-radius:18px; background:#0e1018; display:grid; place-items:center; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;">
-        <div id="vmsg" style="color:#5a6072; font-size:1.05rem;">watch…</div>
+        <div id="vmsg" style="color:#9aa0b4; font-size:1.05rem;">watch…</div>
         <div id="vdot" style="display:none; width:48px; height:48px; border-radius:50%; background:#ffffff; opacity:${ex.faint}; box-shadow:0 0 24px rgba(255,255,255,.5);"></div>
       </div>
       <p class="muted small center" style="margin-top:10px;">Tap the moment the dot appears — not before.</p>
@@ -1028,18 +1075,20 @@ function renderReflection() {
 
 async function completeSession() {
   const s = state.session;
-  if (s._timer) clearInterval(s._timer);
+  if (!s || s._completed) return; // one-shot: neutralizes every double-fire path
+  s._completed = true;
+  if (s._timer) { clearInterval(s._timer); s._timer = null; }
   const rawScore = scoreExercise(s.exercise, s.response);
   const { profile, session } = Profile.applySession(state.profile, s.exercise, s.response);
   state.profile = profile;
   save();
 
-  // Reveal score, then fetch the one insight.
+  // Reveal score (count-up), then fetch the one insight.
   const band = bandFor(rawScore);
   app.innerHTML = `
     <div class="fade-in">
       <div class="score-reveal">
-        <div class="big" style="color:${band.color}">${rawScore}</div>
+        <div class="big score-pop" id="bigscore" style="color:${band.color}">0</div>
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
       </div>
       <div class="card" id="insight">
@@ -1048,12 +1097,16 @@ async function completeSession() {
       <button class="btn amber" id="home">Done →</button>
     </div>`;
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };
+  countUp(document.getElementById('bigscore'), rawScore);
 
-  const insight = await Coach.dailyInsight(session, state.profile);
+  // Soft timeout: if a live key stalls, fall back to the rule-based insight
+  // rather than spinning forever during the payoff moment.
+  const fallback = { text: ruleDailyInsight(session, state.profile), live: false };
+  const insight = await raceTimeout(Coach.dailyInsight(session, state.profile), 9000, fallback);
   state.profile._lastInsight = insight; // shown on home too
   const el = document.getElementById('insight');
   if (el) el.innerHTML = `
-    <div class="insight ${insight.live ? 'live' : ''}" style="border:none;padding:0;">
+    <div class="insight fade-in ${insight.live ? 'live' : ''}" style="border:none;padding:0;">
       <div class="k">One insight</div>
       <div style="margin-top:8px; white-space:pre-wrap;">${esc(insight.text)}</div>
     </div>`;
@@ -1090,7 +1143,7 @@ function renderProgress() {
 
       <h2>What Forma is noticing</h2>
       <div class="card">
-        ${weeklyPatterns(p).map((line) => `<p>• ${esc(line)}</p>`).join('')}
+        <ul class="noticing">${weeklyPatterns(p).map((line) => `<li>${esc(line)}</li>`).join('')}</ul>
       </div>
     </div>`;
   document.getElementById('toproof').onclick = () => go('proof');
@@ -1260,14 +1313,17 @@ function renderFocusCheck() {
     const timer = setTimeout(() => {
       if (state.route !== 'focuscheck') return;
       armed = true;
+      fcState._t = null;
       greenAt = performance.now();
       panel.style.background = 'var(--green)';
       panel.textContent = 'TAP!';
     }, delay);
+    fcState._t = timer;
     panel.onclick = () => {
       if (!armed) {
         // tapped too early — restart this round
         clearTimeout(timer);
+        fcState._t = null;
         fcState.tooSoon = true;
         render();
         return;
@@ -1332,32 +1388,44 @@ function renderCoach() {
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">Coach</h1><span class="spacer"></span>
         <span class="trendpill ${live ? 'up' : 'flat'}">${live ? 'live · Claude' : 'offline mode'}</span></div>
-      ${!live ? `<p class="muted small">Add your Claude API key in Settings for live, personalized coaching. Until then, the coach answers from your own data.</p>` : ''}
-      <div class="chat" id="chat">
-        ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">Hi${p.settings.name ? ' ' + esc(p.settings.name) : ''}. I'm your Forma coach. Ask me anything about your formation — your scores, what to work on, why a domain matters, or how a hard day went. ${live ? '' : '(Right now I’m in offline mode — I’ll read your data back to you.)'}</div>`}
+      ${!live ? `<p class="muted small">Add your Claude API key in <button id="tosettings" class="inlinelink">Settings</button> for live, personalized coaching. Until then, the coach reads from your own data.</p>` : ''}
+      <div class="chat" id="chat" role="log" aria-live="polite">
+        ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">Hi${p.settings.name ? ' ' + esc(p.settings.name) : ''}. I've read your scales and your last few sessions. Ask me what to work on, why a capacity matters, or talk through a day that didn't go the way you wanted — I'd rather do that than recite numbers at you.${live ? '' : ' (Offline mode for now — I’ll read your own data back to you.)'}</div>`}
       </div>
       <div class="composer">
-        <input id="ci" placeholder="Ask your coach…" autocomplete="off" />
+        <input id="ci" placeholder="Ask your coach…" autocomplete="off" aria-label="Message your coach" />
         <button class="btn" id="send">Send</button>
       </div>
     </div>`;
+  const tos = document.getElementById('tosettings');
+  if (tos) tos.onclick = () => go('settings');
   const ci = document.getElementById('ci');
   const sendBtn = document.getElementById('send');
+  let busy = false;
   const send = async () => {
     const text = ci.value.trim();
-    if (!text) return;
+    if (!text || busy) return;
+    busy = true;
     ci.value = '';
+    ci.disabled = true; sendBtn.disabled = true;
     p.coachLog = p.coachLog || [];
     appendBubble({ role: 'user', content: text });
     const typing = appendBubble({ role: 'assistant', content: '…', typing: true });
-    const reply = await Coach.coachReply(text, p);
+    let reply;
+    try {
+      reply = await Coach.coachReply(text, p);
+    } finally {
+      busy = false;
+    }
     if (typing) typing.remove();
-    // Record the exchange only now — so coachReply saw clean prior history and
-    // didn't double-count this message.
+    ci.disabled = false; sendBtn.disabled = false;
+    if (state.profile !== p) return; // profile was reset/replaced mid-flight
+    // Record the exchange only now — so coachReply saw clean prior history.
     p.coachLog.push({ role: 'user', content: text, ts: Date.now() });
     p.coachLog.push({ role: 'assistant', content: reply.text, ts: Date.now() });
     save();
     appendBubble({ role: 'assistant', content: reply.text });
+    if (document.getElementById('ci')) document.getElementById('ci').focus();
   };
   sendBtn.onclick = send;
   ci.onkeydown = (e) => { if (e.key === 'Enter') send(); };
@@ -1430,7 +1498,7 @@ function renderSettings() {
         </div>
       </div>
 
-      <p class="muted small center">Forma · as AI gets stronger, we help you stay capable.</p>
+      <p class="muted small center">Forma · the capacities a machine can’t keep for you.</p>
     </div>`;
 
   document.getElementById('name').onchange = (e) => { p.settings.name = e.target.value.trim(); save(); };

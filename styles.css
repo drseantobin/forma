@@ -1,7 +1,7 @@
 :root {
   --ink: #1b1c28;
   --ink-soft: #4a4c5e;
-  --ink-faint: #8a8c9e;
+  --ink-faint: #6b6d80; /* AA-contrast on --bg */
   --bg: #f6f5f1;
   --card: #ffffff;
   --line: #e7e5dd;
@@ -31,7 +31,7 @@ body {
   padding-bottom: 84px; /* room for tabbar */
 }
 
-#app { max-width: var(--maxw); margin: 0 auto; padding: 20px 18px 8px; }
+#app { max-width: var(--maxw); margin: 0 auto; padding: calc(20px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 8px calc(18px + env(safe-area-inset-left)); }
 .boot { text-align: center; color: var(--ink-faint); padding: 80px 0; }
 
 h1, h2, h3 { line-height: 1.2; margin: 0 0 .4em; letter-spacing: -.01em; }
@@ -57,7 +57,7 @@ button { font-family: inherit; cursor: pointer; }
 .btn.ghost { background: transparent; color: var(--accent); box-shadow: none; border: 1.5px solid var(--line); }
 .btn.ghost:active { transform: translateY(1px); }
 .btn.green { background: var(--green); box-shadow: 0 4px 0 #2c6a52; }
-.btn.sm { padding: 9px 16px; font-size: .9rem; width: auto; }
+.btn.sm { padding: 11px 16px; min-height: 44px; font-size: .9rem; width: auto; }
 .btn.danger { background: transparent; color: var(--red); border: 1.5px solid var(--red); box-shadow: none; }
 
 /* ---------- cards ---------- */
@@ -121,7 +121,7 @@ button { font-family: inherit; cursor: pointer; }
   border-left: 4px solid var(--amber); border-radius: var(--radius-sm);
   padding: 16px 18px; margin: 4px 0 0;
 }
-.insight .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color: var(--amber); font-weight:700; }
+.insight .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color: #9a6a16; font-weight:700; }
 .insight.live .k::after { content:" · live"; color: var(--green); }
 
 .radarwrap { display:grid; place-items:center; padding: 8px 0; }
@@ -194,6 +194,7 @@ button { font-family: inherit; cursor: pointer; }
 .tab { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; color: var(--ink-faint); font-size:.68rem; font-weight:600; padding:4px 10px; border-radius:12px; }
 .tab .tab-ico { font-size:1.25rem; }
 .tab.active { color: var(--accent); }
+.tab.active { background: var(--accent-soft); }
 
 /* ---------- misc ---------- */
 .fade-in { animation: fade .35s ease; }
@@ -203,3 +204,44 @@ button { font-family: inherit; cursor: pointer; }
 .row { display:flex; align-items:center; gap:10px; }
 .spacer { flex:1; }
 .stack > * + * { margin-top: 12px; }
+
+/* shared eyebrow label */
+.eyebrow { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700; }
+
+/* inline text button that reads as a link */
+.inlinelink { background:none; border:none; color:var(--accent); font:inherit; font-weight:600; padding:0; cursor:pointer; text-decoration:underline; }
+
+/* the "what Forma is noticing" list */
+.noticing { list-style:none; padding:0; margin:0; }
+.noticing li { position:relative; padding-left:18px; margin-bottom:8px; line-height:1.5; }
+.noticing li:last-child { margin-bottom:0; }
+.noticing li::before { content:'•'; position:absolute; left:2px; color:var(--accent); font-weight:700; }
+
+/* score reveal pop */
+.score-pop { animation: scorePop .5s cubic-bezier(.2,.8,.2,1); }
+@keyframes scorePop { from { opacity:0; transform: scale(.82); } to { opacity:1; transform: scale(1); } }
+
+/* ---------- accessibility ---------- */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus:not(:focus-visible) { outline: none; }
+.btn:focus-visible, .opt:focus-visible, .chip:focus-visible, .tab:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 4px var(--accent);
+}
+
+/* desktop / pointer hover only — leaves touch untouched */
+@media (hover: hover) {
+  .btn:hover { filter: brightness(1.04); }
+  .btn.ghost:hover { border-color: var(--accent); }
+  .opt:hover { border-color: var(--ink-faint); }
+  .chip:hover { border-color: var(--ink-faint); }
+  .tab:hover { color: var(--ink-soft); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

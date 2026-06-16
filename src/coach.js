@@ -157,7 +157,7 @@ export function looksLikeDistress(text) {
   return CRISIS_PATTERN.test(text || '');
 }
 
-const ESCALATION_MESSAGE =
+export const ESCALATION_MESSAGE =
   "I'm really glad you said that to me — and I want to be honest: what you're describing is heavier than a formation app should carry, and you deserve a real person for it, not an algorithm.\n\n" +
   'Please reach out right now to someone you trust, or to a trained human who can help. In the US you can call or text 988 (the Suicide & Crisis Lifeline), any time, day or night. Anywhere else, your local emergency number or a crisis line in your country can connect you with someone immediately. If you are in immediate danger, please call emergency services.\n\n' +
   "I'll be here for the formation work whenever you're ready — but let a real person be with you in this first.";
