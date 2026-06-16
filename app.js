@@ -15,6 +15,7 @@ import * as Diagnostic from './src/diagnostic.js';
 import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import * as Orchestrator from './src/orchestrator.js';
+import { speechSupported, createRecognizer } from './src/speech.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
 // The domains to display for the current user (adds Interior Life when the
@@ -75,6 +76,11 @@ function go(route) {
   if (route !== 'focuscheck' && state._focus && state._focus._t) {
     clearTimeout(state._focus._t);
     state._focus = null;
+  }
+  // Leaving a vignette mid-recording: stop the mic.
+  if (route !== 'session' && state.session && state.session.recognizer) {
+    try { state.session.recognizer.stop(); } catch (e) { /* noop */ }
+    state.session.recognizer = null;
   }
   state.route = route;
   render();
@@ -599,6 +605,7 @@ function renderSession() {
     case 'nback': return renderNBack();
     case 'stream': return renderStream();
     case 'vigilance': return renderVigilance();
+    case 'vignette': return renderVignette();
     case 'stay': return renderStay();
     case 'contemplation': return renderContemplation();
     case 'reflection': return renderReflection();
@@ -607,7 +614,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', crt: 'Reflection Test', nback: 'Working Memory', stream: 'Sustained Attention', vigilance: 'Live Attention', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', crt: 'Reflection Test', nback: 'Working Memory', stream: 'Sustained Attention', vigilance: 'Live Attention', vignette: 'Communication', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
@@ -975,6 +982,86 @@ function renderVigilance() {
   if (!s._started) { s._started = true; nextTrial(); }
 }
 
+function stopMic(s) {
+  if (s && s.recognizer) { try { s.recognizer.stop(); } catch (e) { /* noop */ } s.recognizer = null; }
+}
+
+// Vignette — the AI-scored communication exercise. Respond out loud (voice-first,
+// on-device transcription) or type; Claude scores it and gives formative feedback.
+function renderVignette() {
+  const s = state.session;
+  const ex = s.exercise;
+  s.response.transcript = s.response.transcript || '';
+  if (s.phase === 'vignette-scoring') {
+    app.innerHTML = `
+      <div class="fade-in center" style="padding-top:60px;">
+        <div class="spinner" style="width:28px;height:28px;"></div>
+        <p class="muted" style="margin-top:16px;">Reading your response…</p>
+      </div>`;
+    return;
+  }
+  const supported = speechSupported();
+  const useType = s.useType || !supported;
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <div class="passage">${esc(ex.scenario)}</div>
+      <p class="likert-q" style="font-size:1.05rem;">${esc(ex.prompt)}</p>
+      ${!useType ? `
+        <div class="center" style="margin:10px 0;">
+          <button class="btn ${s.recording ? 'green' : 'amber'}" id="mic" style="width:auto;">${s.recording ? '■ Stop' : '🎤 Tap to speak'}</button>
+        </div>
+        <p class="muted small center">${s.recording ? 'Listening… speak naturally, then stop.' : 'Your words appear below — you can edit them before sending.'}</p>
+      ` : ''}
+      <textarea class="reflect-area" id="vresp" placeholder="${useType ? 'Type your response…' : 'Your spoken words will appear here…'}">${esc(s.response.transcript)}</textarea>
+      ${supported ? (useType
+        ? `<p class="muted small" style="margin-top:8px;"><button class="inlinelink" id="usevoice">Use voice instead</button></p>`
+        : `<p class="muted small center" style="margin-top:6px;"><button class="inlinelink" id="usetype">Prefer to type?</button></p>`)
+        : '<p class="muted small" style="margin-top:8px;">Voice isn’t available on this device — type your response.</p>'}
+      <button class="btn amber" id="vsubmit" style="margin-top:14px;">Send my response →</button>
+    </div>`;
+
+  const ta = document.getElementById('vresp');
+  ta.oninput = () => { s.response.transcript = ta.value; };
+  const usetype = document.getElementById('usetype');
+  if (usetype) usetype.onclick = () => { stopMic(s); s.recording = false; s.useType = true; render(); };
+  const usevoice = document.getElementById('usevoice');
+  if (usevoice) usevoice.onclick = () => { s.useType = false; render(); };
+
+  const mic = document.getElementById('mic');
+  if (mic) mic.onclick = () => {
+    if (s.recording) { stopMic(s); s.recording = false; render(); return; }
+    s.recognizer = createRecognizer({
+      onInterim: (t) => { const el = document.getElementById('vresp'); if (el) el.value = (s.response.transcript + ' ' + t).trim(); },
+      onFinal: (t) => {
+        s.response.transcript = (s.response.transcript + ' ' + t).trim();
+        const el = document.getElementById('vresp'); if (el) el.value = s.response.transcript;
+      },
+      onError: () => { s.recording = false; stopMic(s); render(); },
+      onEnd: () => {
+        // iOS often auto-ends; reflect that in the button without nuking text.
+        if (s.recording) { s.recording = false; const m = document.getElementById('mic'); if (m) { m.classList.remove('green'); m.classList.add('amber'); m.textContent = '🎤 Tap to speak'; } }
+      },
+    });
+    if (!s.recognizer) { s.useType = true; render(); return; }
+    try { s.recognizer.start(); s.recording = true; render(); }
+    catch (e) { s.useType = true; render(); }
+  };
+
+  document.getElementById('vsubmit').onclick = async () => {
+    const text = (s.response.transcript || '').trim();
+    if (!text) return;
+    stopMic(s); s.recording = false;
+    s.phase = 'vignette-scoring';
+    render();
+    const result = await Coach.scoreVignette(ex, text, state.profile);
+    s.response.aiScore = result ? result.score : 60;
+    s.response.feedback = result ? result.feedback : '';
+    s.response.transcript = text;
+    completeSession();
+  };
+}
+
 // Stay — behavioral persistence. Staying with the hard item is the signal.
 function renderStay() {
   const s = state.session;
@@ -1099,10 +1186,17 @@ async function completeSession() {
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };
   countUp(document.getElementById('bigscore'), rawScore);
 
-  // Soft timeout: if a live key stalls, fall back to the rule-based insight
-  // rather than spinning forever during the payoff moment.
-  const fallback = { text: ruleDailyInsight(session, state.profile), live: false };
-  const insight = await raceTimeout(Coach.dailyInsight(session, state.profile), 9000, fallback);
+  // The vignette already produced Claude's rubric feedback — use it as the
+  // insight rather than asking for a generic one.
+  let insight;
+  if (s.exercise.type === 'vignette' && s.response.feedback) {
+    insight = { text: s.response.feedback, live: true };
+  } else {
+    // Soft timeout: if a live key stalls, fall back to the rule-based insight
+    // rather than spinning forever during the payoff moment.
+    const fallback = { text: ruleDailyInsight(session, state.profile), live: false };
+    insight = await raceTimeout(Coach.dailyInsight(session, state.profile), 9000, fallback);
+  }
   state.profile._lastInsight = insight; // shown on home too
   const el = document.getElementById('insight');
   if (el) el.innerHTML = `

@@ -11,8 +11,9 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES } from './exercises.js';
 import { recentSeenIds } from './profile.js';
+import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
 
 // Today's focus domain: the weekly plan leads; the generic heuristic backs it up.
@@ -76,6 +77,13 @@ export function chooseExercise(profile, opts = {}) {
     // Alternate the behavioral "Stay" drill with a frustration-tolerance reflection.
     if (!recentTypes.includes('stay')) return pickFrom(STAY, seen, rng);
     return pickExercise('persistence', { seenIds: seen, rng });
+  }
+
+  if (focus === 'presence') {
+    // The AI-scored communication vignette is the showcase, but it needs a live
+    // key. With a key, alternate it with reflection; without, use reflection.
+    if (hasKey(profile) && !recentTypes.includes('vignette')) return pickFrom(VIGNETTES, seen, rng);
+    return pickExercise('presence', { seenIds: seen, rng });
   }
 
   if (focus === 'interior') {

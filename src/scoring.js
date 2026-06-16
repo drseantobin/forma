@@ -182,6 +182,9 @@ export function scoreExercise(exercise, response) {
       return scoreContemplation(response.seconds || 0, exercise.targetSeconds);
     case 'vigilance':
       return scoreVigilance(response.trials || []);
+    case 'vignette':
+      // Scored by Claude in the UI before completion; stored on the response.
+      return clamp(round(response.aiScore != null ? response.aiScore : 60));
     case 'reflection':
       return scoreSelfRating(response.selfRating || 3);
     default:

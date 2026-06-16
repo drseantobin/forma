@@ -214,6 +214,42 @@ function offlineCoachReply(userText, profile) {
   return `${intro}\n\n${body}\n\n${close}`;
 }
 
+// --- Vignette scoring (the AI-scored communication/EI exercise) ---
+// A person spoke (or typed) how they'd respond to a charged interpersonal
+// scenario; Claude scores the transcript on a relational-presence rubric and
+// returns one piece of formative feedback. Growth-framed, never clinical.
+const VIGNETTE_SYSTEM = `You are scoring a Forma communication exercise. You are NOT diagnosing anyone and you never use clinical language. A person was given a charged interpersonal scenario and said how they would respond. Rate that response 0–100 on how well it embodies real relational presence and emotional intelligence: did they attune to the other person's emotional reality before fixing, advising, or defending? Perspective-taking, warmth, clarity, non-defensiveness and repair. Reward genuine listening over clever solutions. A clumsy but warm, present response should outscore a polished but defensive or fix-it-first one.
+
+Return ONLY a JSON object, nothing else:
+{"score": <0-100>, "feedback": "<2-3 sentences, second person, warm and plain: one specific thing the response did well, and one concrete thing to try. No clinical language, no scores in the prose, no preamble.>"}`;
+
+function parseVignette(text) {
+  if (!text) return null;
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) return null;
+  let obj;
+  try { obj = JSON.parse(text.slice(start, end + 1)); } catch { return null; }
+  const score = typeof obj.score === 'number' ? obj.score : Number(obj.score);
+  if (score == null || Number.isNaN(score)) return null;
+  return { score: Math.max(0, Math.min(100, Math.round(score))), feedback: String(obj.feedback || '') };
+}
+
+export async function scoreVignette(vignette, transcript, profile) {
+  if (!hasKey(profile)) return null; // this exercise requires the live coach
+  const soft = { score: 60, feedback: "I couldn't fully read that one — but showing up to a hard conversation is the rep. Next time, try naming what the other person might be feeling before you respond to it." };
+  try {
+    const text = await complete(profile, {
+      system: VIGNETTE_SYSTEM,
+      maxTokens: 500,
+      messages: [{ role: 'user', content: `Scenario: ${vignette.scenario}\n\nThe prompt they answered: ${vignette.prompt}\n\nTheir response: "${transcript}"\n\nScore it.` }],
+    });
+    return parseVignette(text) || soft;
+  } catch {
+    return soft;
+  }
+}
+
 // Generic completion helper so other modules (e.g. the Diagnostic Agent) can
 // reuse the same browser-direct Claude plumbing and the user's key/model.
 export async function complete(profile, { system, messages, maxTokens = 1024 }) {

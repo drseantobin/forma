@@ -851,6 +851,39 @@ export const STAY = [
   },
 ];
 
+// ----- VIGNETTES: AI-scored communication / emotional-intelligence exercise -----
+// A charged interpersonal moment. The person responds OUT LOUD (or types), and
+// Claude scores the transcript on a relational-presence rubric (see coach.js
+// scoreVignette). Measures communication & EI from real language — the thing no
+// self-report or static test can do. Requires a live key.
+export const VIGNETTES = [
+  {
+    id: 'vig-diagnosis', type: 'vignette', domain: 'presence', title: 'The Hard News',
+    scenario: 'A close friend tells you, voice shaking, that they were just diagnosed with something serious. They go quiet and look at you, waiting.',
+    prompt: 'What do you say to them? Say it out loud, as if they’re right in front of you.',
+  },
+  {
+    id: 'vig-teen', type: 'vignette', domain: 'presence', title: '“You Don’t Get It”',
+    scenario: 'Someone you love — a teenager, a younger sibling — snaps "you don’t get it, you never have," and turns to walk out of the room.',
+    prompt: 'What do you say in that moment? Speak it the way you actually would.',
+  },
+  {
+    id: 'vig-credit', type: 'vignette', domain: 'presence', title: 'Credit Taken',
+    scenario: 'In a meeting, a colleague presents an idea that was yours as if it were theirs, and people nod along. They glance at you.',
+    prompt: 'What do you say — to them, or to the room? Say it out loud.',
+  },
+  {
+    id: 'vig-spiral', type: 'vignette', domain: 'presence', title: 'The Small Thing That Isn’t',
+    scenario: 'A friend is spiraling, near tears, over something that seems small to you. You can feel the urge to tell them it’ll be fine.',
+    prompt: 'What do you actually say to them? Speak it.',
+  },
+  {
+    id: 'vig-doubt', type: 'vignette', domain: 'presence', title: 'The Confession',
+    scenario: 'Over coffee, someone you care about admits quietly that they’ve stopped believing — stopped praying — and they’re watching your face to see how you react.',
+    prompt: 'What do you say? Say it the way you would if it were real.',
+  },
+];
+
 // Pick an exercise for a given target domain. Objective domains get their
 // matching family; reflective domains get a reflection prompt. `seen` lets the
 // caller rotate variety (avoid repeating the last exercise).
