@@ -656,6 +656,7 @@ function renderSession() {
     case 'maze': return renderMaze();
     case 'pursuit': return renderPursuit();
     case 'vignette': return renderVignette();
+    case 'sentence': return renderSentence();
     case 'stay': return renderStay();
     case 'contemplation': return renderContemplation();
     case 'reflection': return renderReflection();
@@ -664,7 +665,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
@@ -1124,6 +1125,48 @@ function renderMaze() {
   };
 }
 
+// Sentence Completion — finish open stems; Claude scores self-awareness.
+function renderSentence() {
+  const s = state.session;
+  const ex = s.exercise;
+  s.response.completions = s.response.completions || ex.stems.map(() => '');
+  if (s.phase === 'sentence-scoring') {
+    app.innerHTML = `
+      <div class="fade-in center" style="padding-top:60px;">
+        <div class="spinner" style="width:28px;height:28px;"></div>
+        <p class="muted" style="margin-top:16px;">Reading what you wrote…</p>
+      </div>`;
+    return;
+  }
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <p class="muted small">Finish each sentence honestly — the first true thing, not the polished one. No wrong answers; this stays on your device.</p>
+      ${ex.stems.map((st, i) => `
+        <div class="card" style="padding:14px;">
+          <div class="likert-q" style="font-size:1rem;">${esc(st)} …</div>
+          <input class="reflect-area sentinput" data-i="${i}" style="min-height:auto; height:auto; padding:10px; font-size:1rem;" value="${esc(s.response.completions[i])}" placeholder="…" />
+        </div>`).join('')}
+      <button class="btn amber" id="sentdone">Done →</button>
+      <p class="muted small center" id="senthint" style="margin-top:8px;"></p>
+    </div>`;
+  app.querySelectorAll('.sentinput').forEach((el) => { el.oninput = () => { s.response.completions[Number(el.dataset.i)] = el.value; }; });
+  document.getElementById('sentdone').onclick = async () => {
+    const done = s.response.completions.filter((c) => c.trim()).length;
+    if (done < Math.ceil(ex.stems.length / 2)) {
+      const h = document.getElementById('senthint');
+      if (h) { h.style.color = 'var(--ink-faint)'; h.textContent = 'Finish at least half before you send.'; }
+      return;
+    }
+    s.phase = 'sentence-scoring';
+    render();
+    const result = await Coach.scoreSentences(ex.stems, s.response.completions, state.profile);
+    s.response.aiScore = result ? result.score : 60;
+    s.response.feedback = result ? result.feedback : '';
+    completeSession();
+  };
+}
+
 // Follow the Dot — visuomotor pursuit tracking. Keep your finger/cursor on the
 // moving target; we measure the proportion of time you stay on it.
 function renderPursuit() {
@@ -1386,7 +1429,7 @@ async function completeSession() {
   // The vignette already produced Claude's rubric feedback — use it as the
   // insight rather than asking for a generic one.
   let insight;
-  if (s.exercise.type === 'vignette' && s.response.feedback) {
+  if ((s.exercise.type === 'vignette' || s.exercise.type === 'sentence') && s.response.feedback) {
     insight = { text: s.response.feedback, live: true };
   } else {
     // Soft timeout: if a live key stalls, fall back to the rule-based insight

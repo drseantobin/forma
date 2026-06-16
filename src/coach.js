@@ -301,6 +301,27 @@ export async function scoreVignette(vignette, transcript, profile) {
   }
 }
 
+// --- Sentence-completion scoring (Rotter RISB lineage, formative not clinical) ---
+const SENTENCES_SYSTEM = `You are scoring a Forma self-reflection exercise: a person finished several incomplete sentences. You are NOT diagnosing — never use clinical or pathologizing language. Rate 0–100 how much honest self-awareness and coherence the completions show: candor over deflection, emotional specificity (a real feeling named, not "fine"), and the sense of someone who actually knows themselves. Reward honesty over polish; a raw, true completion outscores a guarded, clever one. Blank or evasive answers score lower, but gently.
+
+Return ONLY a JSON object: {"score": <0-100>, "feedback": "<2-3 sentences, second person, warm and plain: one thing their answers quietly reveal that's worth seeing, and one gentle invitation to look further. No clinical language, no scores in the prose, no preamble.>"}`;
+
+export async function scoreSentences(stems, completions, profile) {
+  if (!hasKey(profile)) return null;
+  const soft = { score: 60, feedback: "Even half-finishing these honestly is worth something — self-knowledge starts with the willingness to look. Next time, try the first true thing that comes, before you tidy it up." };
+  try {
+    const pairs = stems.map((st, i) => `"${st} …" → "${(completions[i] || '').trim()}"`).join('\n');
+    const text = await complete(profile, {
+      system: SENTENCES_SYSTEM,
+      maxTokens: 500,
+      messages: [{ role: 'user', content: `Their sentence completions:\n${pairs}\n\nScore them.` }],
+    });
+    return parseVignette(text) || soft;
+  } catch {
+    return soft;
+  }
+}
+
 // Generic completion helper so other modules (e.g. the Diagnostic Agent) can
 // reuse the same browser-direct Claude plumbing and the user's key/model.
 export async function complete(profile, { system, messages, maxTokens = 1024 }) {

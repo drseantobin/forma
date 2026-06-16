@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -105,6 +105,13 @@ export function chooseExercise(profile, opts = {}) {
     const level = Math.max(1, Math.round(score / 25));
     if (!recentTypes.includes('contemplation')) return makeContemplation(level);
     return pickExercise('interior', { seenIds: seen, rng });
+  }
+
+  if (focus === 'values') {
+    // The AI-scored sentence-completion is the showcase for self-knowledge;
+    // needs a live key. Otherwise a values reflection.
+    if (hasKey(profile) && !recentTypes.includes('sentence')) return pickFrom(SENTENCES, seen, rng);
+    return pickExercise('values', { seenIds: seen, rng });
   }
 
   const level = Math.max(1, Math.round(score / 20));

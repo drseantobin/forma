@@ -205,6 +205,7 @@ export function scoreExercise(exercise, response) {
     case 'vigilance':
       return scoreVigilance(response.trials || []);
     case 'vignette':
+    case 'sentence':
       // Scored by Claude in the UI before completion; stored on the response.
       return clamp(round(response.aiScore != null ? response.aiScore : 60));
     case 'mathfluency':

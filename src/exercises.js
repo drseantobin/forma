@@ -963,6 +963,24 @@ export const STAY = [
   },
 ];
 
+// ----- SENTENCE COMPLETION: AI-scored self-knowledge (Values Alignment) -----
+// Rotter RISB lineage: finish open stems; Claude scores honesty/self-awareness/
+// coherence formatively (see coach.scoreSentences). Requires a live key.
+export const SENTENCES = [
+  {
+    id: 'sent-self', type: 'sentence', domain: 'values', title: 'Finish the Thought',
+    stems: ['When I am most myself, I', 'The thing I keep avoiding is', 'What I want more than I usually admit is', 'When I am overwhelmed, I tend to', 'A year from now, I hope I have'],
+  },
+  {
+    id: 'sent-values', type: 'sentence', domain: 'values', title: 'Finish the Thought',
+    stems: ['What matters most to me is', 'I lose myself when I', 'The person I want to become', 'I feel most alive when', 'If I am honest, I spend too much of my attention on'],
+  },
+  {
+    id: 'sent-interior', type: 'sentence', domain: 'values', title: 'Finish the Thought',
+    stems: ['I feel free when', 'The thing I am quietly proud of is', 'What I am afraid to lose is', 'I know I am off-track when', 'What I most need to forgive is'],
+  },
+];
+
 // ----- THE TRADE: automation/atrophy tradeoff scenarios (AI Independence) -----
 // Near-future scenarios where AI could take over a whole human capacity. The
 // person chooses what they'd trade and at what cost. Scored by ENGAGEMENT
