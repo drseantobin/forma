@@ -87,6 +87,28 @@ export const DOMAINS = [
       'The same muscle that holds attention on a text holds attention on a person. As simulated companionship spreads, the capacity for real presence becomes rare and precious.',
   },
   {
+    id: 'communication',
+    name: 'Communication & EI',
+    short: 'Reading and responding to emotion',
+    icon: '🗣️',
+    color: '#C2608A',
+    blurb:
+      'Sensing what another person is actually feeling — and responding in a way that meets them there, not just your own idea of what they need.',
+    aiRationale:
+      'AI can draft the words; it cannot feel the room. As more of our communication is mediated and auto-generated, the ability to attune to a real person in real time becomes rare and unmistakable.',
+  },
+  {
+    id: 'emotion_regulation',
+    name: 'Emotional Regulation',
+    short: 'Steadying your own inner weather',
+    icon: '🌊',
+    color: '#3E8FA8',
+    blurb:
+      'Noticing a strong feeling without being run by it — staying steady under pressure, and metabolizing your own emotions rather than outsourcing them.',
+    aiRationale:
+      'When something is always there to absorb every feeling on demand, the muscle that processes emotion from the inside can quietly waste. Regulation is what keeps you the author of your reactions.',
+  },
+  {
     id: 'values',
     name: 'Values Alignment',
     short: 'Coherence between belief & life',
@@ -119,7 +141,7 @@ export const INTERIOR_DOMAIN = {
 // Domains that have an objective in-app measure vs. those formed through
 // reflection (the "soft" capacities Forma is careful NOT to fake-test).
 export const OBJECTIVE_DOMAINS = ['attention', 'memory', 'reading', 'judgment'];
-export const REFLECTIVE_DOMAINS = ['persistence', 'ai_autonomy', 'presence', 'values'];
+export const REFLECTIVE_DOMAINS = ['persistence', 'ai_autonomy', 'presence', 'communication', 'emotion_regulation', 'values'];
 
 const DOMAIN_BY_ID = Object.fromEntries([...DOMAINS, INTERIOR_DOMAIN].map((d) => [d.id, d]));
 

@@ -211,7 +211,10 @@ function renderOnboarding() {
   const group = groups[gi];
   const d = getDomain(group.domain);
   const answered = group.items.filter((i) => state.onboard.responses[i.id] != null).length;
-  const pct = Math.round(((gi) / groups.length) * 100);
+  // Tie both the bar and the counter to OVERALL progress: the bar fills as you
+  // answer within a page and jumps as you advance pages; the counter shows the
+  // page you're on out of the total.
+  const pct = Math.round(((gi + answered / group.items.length) / groups.length) * 100);
 
   app.innerHTML = `
     <div class="fade-in">
@@ -219,7 +222,7 @@ function renderOnboarding() {
       <div class="lesson-domain">
         <span class="ico">${d.icon}</span>
         <span class="dname">${esc(d.name)}</span>
-        <span class="dcount">${answered}/${group.items.length}</span>
+        <span class="dcount">${gi + 1} of ${groups.length} · ${groups.length - gi - 1} left</span>
       </div>
       <p class="muted small">${esc(d.blurb)}</p>
       <div class="stack" id="items">

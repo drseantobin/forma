@@ -79,11 +79,11 @@ export function chooseExercise(profile, opts = {}) {
     return pickExercise('persistence', { seenIds: seen, rng });
   }
 
-  if (focus === 'presence') {
-    // The AI-scored communication vignette is the showcase, but it needs a live
-    // key. With a key, alternate it with reflection; without, use reflection.
+  if (focus === 'communication') {
+    // The AI-scored vignette is the showcase for communication/EI, but it needs
+    // a live key. With a key, alternate it with reflection; without, reflection.
     if (hasKey(profile) && !recentTypes.includes('vignette')) return pickFrom(VIGNETTES, seen, rng);
-    return pickExercise('presence', { seenIds: seen, rng });
+    return pickExercise('communication', { seenIds: seen, rng });
   }
 
   if (focus === 'interior') {

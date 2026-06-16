@@ -618,6 +618,26 @@ export const REFLECTIONS = [
       'If a stranger watched only your last 24 hours — not your words, just your actions — what would they guess you value most? Is that the thing you’d want them to guess?',
     selfRatingLabel: 'How closely did your actions match your real priorities today?',
   },
+  {
+    id: 'ref-comm-1', type: 'reflection', domain: 'communication', title: 'What They Actually Felt',
+    prompt: 'Recall a conversation today where the other person had a feeling under their words. What were they actually feeling — and did your response meet that, or just the surface?',
+    selfRatingLabel: 'How well did you read and meet what others were feeling today?',
+  },
+  {
+    id: 'ref-comm-2', type: 'reflection', domain: 'communication', title: 'Before the Fix',
+    prompt: 'Was there a moment someone needed to feel understood before they needed a solution? Did you let them feel heard first, or did you jump to fixing?',
+    selfRatingLabel: 'How well did you make people feel heard before responding today?',
+  },
+  {
+    id: 'ref-reg-1', type: 'reflection', domain: 'emotion_regulation', title: 'The Wave',
+    prompt: 'Name a moment a strong feeling rose up today. Did it run you, or could you notice it and choose your response? What helped, or what didn’t?',
+    selfRatingLabel: 'How steady were you under strong feeling today?',
+  },
+  {
+    id: 'ref-reg-2', type: 'reflection', domain: 'emotion_regulation', title: 'Metabolize, Not Outsource',
+    prompt: 'When you felt bad today, what did you do with it — sit with it, talk to a person, or reach for a screen to numb it? What would it have cost to stay with it a little longer?',
+    selfRatingLabel: 'How well did you process your own emotions today, rather than numb them?',
+  },
 ];
 
 // ----- THE LURE: cognitive-reflection items (Judgment) -----
@@ -858,27 +878,27 @@ export const STAY = [
 // self-report or static test can do. Requires a live key.
 export const VIGNETTES = [
   {
-    id: 'vig-diagnosis', type: 'vignette', domain: 'presence', title: 'The Hard News',
+    id: 'vig-diagnosis', type: 'vignette', domain: 'communication', title: 'The Hard News',
     scenario: 'A close friend tells you, voice shaking, that they were just diagnosed with something serious. They go quiet and look at you, waiting.',
     prompt: 'What do you say to them? Say it out loud, as if they’re right in front of you.',
   },
   {
-    id: 'vig-teen', type: 'vignette', domain: 'presence', title: '“You Don’t Get It”',
+    id: 'vig-teen', type: 'vignette', domain: 'communication', title: '“You Don’t Get It”',
     scenario: 'Someone you love — a teenager, a younger sibling — snaps "you don’t get it, you never have," and turns to walk out of the room.',
     prompt: 'What do you say in that moment? Speak it the way you actually would.',
   },
   {
-    id: 'vig-credit', type: 'vignette', domain: 'presence', title: 'Credit Taken',
+    id: 'vig-credit', type: 'vignette', domain: 'communication', title: 'Credit Taken',
     scenario: 'In a meeting, a colleague presents an idea that was yours as if it were theirs, and people nod along. They glance at you.',
     prompt: 'What do you say — to them, or to the room? Say it out loud.',
   },
   {
-    id: 'vig-spiral', type: 'vignette', domain: 'presence', title: 'The Small Thing That Isn’t',
+    id: 'vig-spiral', type: 'vignette', domain: 'communication', title: 'The Small Thing That Isn’t',
     scenario: 'A friend is spiraling, near tears, over something that seems small to you. You can feel the urge to tell them it’ll be fine.',
     prompt: 'What do you actually say to them? Speak it.',
   },
   {
-    id: 'vig-doubt', type: 'vignette', domain: 'presence', title: 'The Confession',
+    id: 'vig-doubt', type: 'vignette', domain: 'communication', title: 'The Confession',
     scenario: 'Over coffee, someone you care about admits quietly that they’ve stopped believing — stopped praying — and they’re watching your face to see how you react.',
     prompt: 'What do you say? Say it the way you would if it were real.',
   },
@@ -907,6 +927,8 @@ export function pickExercise(targetDomain, opts = {}) {
     case 'persistence':
     case 'ai_autonomy':
     case 'presence':
+    case 'communication':
+    case 'emotion_regulation':
     case 'values':
       return notSeen(REFLECTIONS.filter((r) => r.domain === targetDomain));
     case 'interior':

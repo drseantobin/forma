@@ -62,8 +62,20 @@ export const BASELINE_ITEMS = [
   // Relational Presence
   { id: 'pre1', domain: 'presence', reverse: false, text: 'In conversation I give people my full attention, phone away.' },
   { id: 'pre2', domain: 'presence', reverse: true, text: 'I check my phone during meals or conversations with people I care about.' },
-  { id: 'pre3', domain: 'presence', reverse: false, text: 'I can sit with someone’s difficulty without rushing to fix or change the subject.' },
+  { id: 'pre3', domain: 'presence', reverse: false, text: 'I can stay with someone’s difficulty without rushing to fix or change the subject.' },
   { id: 'pre4', domain: 'presence', reverse: true, text: 'I am often physically present but mentally elsewhere.' },
+
+  // Communication & Emotional Intelligence
+  { id: 'com1', domain: 'communication', reverse: false, text: 'I can usually tell what someone is feeling even when they don’t say it directly.' },
+  { id: 'com2', domain: 'communication', reverse: true, text: 'In hard conversations I tend to jump to solutions before the other person feels heard.' },
+  { id: 'com3', domain: 'communication', reverse: false, text: 'I can name an emotion accurately — mine or someone else’s — rather than just "good" or "bad."' },
+  { id: 'com4', domain: 'communication', reverse: true, text: 'When someone is upset with me, I get defensive before I understand them.' },
+
+  // Emotional Regulation
+  { id: 'reg1', domain: 'emotion_regulation', reverse: false, text: 'When a strong feeling hits, I can notice it without being run by it.' },
+  { id: 'reg2', domain: 'emotion_regulation', reverse: true, text: 'I react in the heat of the moment and regret how I came across.' },
+  { id: 'reg3', domain: 'emotion_regulation', reverse: false, text: 'I can sit with an uncomfortable emotion long enough to understand it.' },
+  { id: 'reg4', domain: 'emotion_regulation', reverse: true, text: 'When I feel bad, my first move is to reach for a screen to make it go away.' },
 
   // Values Alignment
   { id: 'val1', domain: 'values', reverse: false, text: 'I know what matters most to me and could name it clearly.' },
