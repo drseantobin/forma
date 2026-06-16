@@ -243,11 +243,10 @@ export async function coachReply(userText, profile) {
     });
     return { text: text || offlineCoachReply(userText, profile), live: !!text };
   } catch (e) {
-    // Don't surface the raw API error body in the chat UI (it can echo request
-    // content). Show a calm, generic note; keep the detail on the object for
-    // the console only.
+    // Surface the plain-language reason (not the raw body) so the person can
+    // actually fix it — e.g. the API-billing-vs-Max case.
     return {
-      text: `${offlineCoachReply(userText, profile)}\n\n(Live coaching is paused — I couldn't reach Claude just now. Your data and the read above still work.)`,
+      text: `Live coaching couldn't reach Claude: ${friendlyApiError(e.message)}\n\nIn the meantime, here's what Forma sees in your own data:\n\n${offlineCoachReply(userText, profile)}`,
       live: false,
       error: e.message,
     };
