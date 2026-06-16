@@ -37,7 +37,28 @@ Hard rules you never break:
 4. BE BRIEF AND CONCRETE. Coaches don't lecture. Two to five short paragraphs at most, usually less. End with one concrete, doable next step when it fits — never a bulleted list of platitudes.
 5. NEVER pretend to certainty you don't have. One session is noise; patterns are signal. Say so.
 
+Your method is SOLUTION-FOCUSED (in the tradition of solution-focused brief therapy):
+- Start from what already WORKS. Before suggesting anything, look for exceptions and existing resources — times the person has done well at this, what helped, what they were already doing right. Ask about those first.
+- Build on strengths, not deficits. You amplify what's working and help them do more of it, rather than fixing what's broken.
+- Tailor to THIS person's real ability and life — never a generic prescription. Meet them where they are.
+- When it fits, offer ONE small, concrete practice they can do ON THEIR OWN, outside the app, in the next day or two — specific, doable, and drawn from what's already worked for them. (e.g. "Tomorrow, before you open your phone, name the one thing you most want your attention on." Not "be more mindful.")
+- Ask good questions more than you give answers. A solution-focused coach is curious: "When has this gone better? What was different then? What would one small step look like?"
+
 Voice: plain, vivid, unhurried. No corporate wellness-speak. No "journey," "lean into," "sit with," "powerful," "transformative." Talk like a real person who has thought hard about this.`;
+
+// A solution-focused conversation opener, seeded into the coach when the person
+// taps "Talk this through" from an interpretation. Rule-based so it works
+// offline; the live coach then carries the conversation from their reply.
+export function solutionFocusedOpener(profile, ctx = {}) {
+  const name = profile && profile.settings && profile.settings.name;
+  const hi = name ? `${name}, ` : '';
+  if (ctx.kind === 'baseline') {
+    const strong = ctx.strongest ? domainName(ctx.strongest) : 'your strongest capacity';
+    return `${hi}before we talk about anything to grow, let's start where you already do well — ${strong}. When does that show up most in your life? I'd rather build from what's already working for you than hand you a generic plan.`;
+  }
+  const d = ctx.domain ? domainName(ctx.domain) : 'this';
+  return `${hi}let's talk about your ${d}. First, though — when has this gone *well* for you, even a little? What was different about that time, or what were you already doing that helped? I want to build from there.`;
+}
 
 // Turn a raw Anthropic API error into a plain-language explanation.
 export function friendlyApiError(msg) {

@@ -62,6 +62,15 @@ function countUp(el, target, ms = 650) {
 function raceTimeout(promise, ms, fallback) {
   return Promise.race([promise, new Promise((res) => setTimeout(() => res(fallback), ms))]);
 }
+// Seed a solution-focused coach opener tied to an interpretation, then open the
+// Coach — so coaching is embedded right where the person sees their result.
+function talkThrough(ctx) {
+  state.profile = state.profile || Profile.createProfile();
+  state.profile.coachLog = state.profile.coachLog || [];
+  state.profile.coachLog.push({ role: 'assistant', content: Coach.solutionFocusedOpener(state.profile, ctx), ts: Date.now() });
+  save();
+  go('coach');
+}
 
 // ---------------- router ----------------
 function go(route) {
@@ -292,9 +301,12 @@ async function renderBaselineResult() {
       <div class="card" id="interp">
         <div class="row"><span class="spinner"></span> <span class="muted">Reading your profile…</span></div>
       </div>
+      <button class="btn ghost" id="talkbaseline" style="margin-bottom:10px;">💬 Talk through my profile with the coach →</button>
       <button class="btn amber" id="go">Start my first session →</button>
     </div>`;
   document.getElementById('go').onclick = () => go('session');
+  const strongest = Object.keys(p.domainScores).sort((a, b) => p.domainScores[b] - p.domainScores[a])[0];
+  document.getElementById('talkbaseline').onclick = () => talkThrough({ kind: 'baseline', strongest });
   wireDomainLinks();
 
   const fallback = { text: ruleInterpretBaseline(p.baseline.domainScores, p.settings.name), live: false };
@@ -1364,9 +1376,11 @@ async function completeSession() {
       <div class="card" id="insight">
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
       </div>
+      <button class="btn ghost" id="talkthrough" style="margin-bottom:10px;">💬 Talk this through with the coach →</button>
       <button class="btn amber" id="home">Done →</button>
     </div>`;
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };
+  document.getElementById('talkthrough').onclick = () => { const dom = s.exercise.domain; state.session = null; talkThrough({ kind: 'session', domain: dom }); };
   countUp(document.getElementById('bigscore'), rawScore);
 
   // The vignette already produced Claude's rubric feedback — use it as the
