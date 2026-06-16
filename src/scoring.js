@@ -169,6 +169,7 @@ export function scoreExercise(exercise, response) {
     case 'memory':
       return scoreMemory(response.recalled || [], exercise.sequence);
     case 'decision':
+    case 'tradeoff':
       return scoreDecision(response.optionId, exercise.options);
     case 'crt':
       return scoreCRT(response.optionId, exercise.options);

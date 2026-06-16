@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -77,6 +77,12 @@ export function chooseExercise(profile, opts = {}) {
     // Alternate the behavioral "Stay" drill with a frustration-tolerance reflection.
     if (!recentTypes.includes('stay')) return pickFrom(STAY, seen, rng);
     return pickExercise('persistence', { seenIds: seen, rng });
+  }
+
+  if (focus === 'ai_autonomy') {
+    // "The Trade" scenario activity, alternated with a reflection.
+    if (!recentTypes.includes('tradeoff')) return pickFrom(TRADEOFFS, seen, rng);
+    return pickExercise('ai_autonomy', { seenIds: seen, rng });
   }
 
   if (focus === 'communication') {

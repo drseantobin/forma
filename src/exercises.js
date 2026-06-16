@@ -871,6 +871,60 @@ export const STAY = [
   },
 ];
 
+// ----- THE TRADE: automation/atrophy tradeoff scenarios (AI Independence) -----
+// Near-future scenarios where AI could take over a whole human capacity. The
+// person chooses what they'd trade and at what cost. Scored by ENGAGEMENT
+// QUALITY, not by how little they use AI: deliberate heavy use that keeps the
+// load-bearing effort scores HIGHEST; reflexive total surrender scores low;
+// knee-jerk total refusal is middling; using-everything-while-vaguely-guilty is
+// low (guilt isn't a choice). The rationale teaches the atrophy tradeoff.
+export const TRADEOFFS = [
+  {
+    id: 'trade-navigation', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
+    scenario: 'Soon you could let AI handle all wayfinding — turn-by-turn for everything, forever. You’d never again need to know where you are or how you got there.',
+    prompt: 'What’s the wise trade?',
+    options: [
+      { id: 'a', text: 'Take it fully — never think about directions again.', score: 25, rationale: 'The convenience is real, but spatial memory is use-it-or-lose-it. Hand it over entirely and the felt sense of where you are quietly atrophies — you’ve traded a capacity for a crutch without deciding to.' },
+      { id: 'b', text: 'Use it freely for new or complex trips, but keep finding your own way in places you know.', score: 100, rationale: 'This is the move. You take the tool’s full value AND keep the muscle alive. Independence isn’t using AI less — it’s staying awake to which efforts you choose to keep.' },
+      { id: 'c', text: 'Refuse it on principle and navigate everything yourself.', score: 55, rationale: 'Honorable, and it preserves the skill — but it forfeits genuine value and usually isn’t sustainable. Independence is conscious choosing, not blanket abstaining.' },
+      { id: 'd', text: 'Use it for everything, but feel a little guilty about it.', score: 30, rationale: 'Guilt without a decision changes nothing — the capacity erodes either way. Awareness only protects you when it turns into an actual choice.' },
+    ],
+  },
+  {
+    id: 'trade-writing', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
+    scenario: 'AI can now draft everything you write — emails, reports, even the notes where you figure out what you think. It’s faster and often better than your first draft.',
+    prompt: 'Where’s the line worth holding?',
+    options: [
+      { id: 'a', text: 'Let it write everything — output is what matters.', score: 25, rationale: 'For low-stakes text, fine. But writing is also how you think; outsource all of it and you slowly lose the ability to work an idea out for yourself. The cost is invisible until you need it.' },
+      { id: 'b', text: 'Use it heavily to polish and pressure-test, but draft the thinking that matters yourself first.', score: 100, rationale: 'Exactly — keep the formative effort (working the idea out), delegate the finishing. You can use it constantly and still stay the one who actually thinks.' },
+      { id: 'c', text: 'Don’t use it for writing at all.', score: 55, rationale: 'Preserves the skill but leaves real leverage on the table. The goal isn’t purity; it’s knowing which effort is load-bearing and keeping that.' },
+      { id: 'd', text: 'Let it write everything but tell yourself you could do it if you had to.', score: 30, rationale: 'A story you tell yourself isn’t practice. The capacity is maintained by using it, not by believing you still have it.' },
+    ],
+  },
+  {
+    id: 'trade-decisions', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
+    scenario: 'An AI that knows you well could make most of your daily decisions — what to eat, buy, read, prioritize — and on average get better outcomes than you do.',
+    prompt: 'How much of deciding do you hand over?',
+    options: [
+      { id: 'a', text: 'All of it — better outcomes are better outcomes.', score: 25, rationale: 'Deciding is a muscle and an identity. Optimize away every small choice and you may get better outcomes while slowly becoming a person who can no longer choose — and who no longer knows what they actually want.' },
+      { id: 'b', text: 'Let it handle trivial logistics, but keep making the choices that express who you are.', score: 100, rationale: 'Right line. Offload the decisions that don’t form you; guard the ones that do. Heavy use of the tool, full ownership of the self.' },
+      { id: 'c', text: 'Make every decision yourself, ignore its suggestions.', score: 55, rationale: 'Keeps your agency intact but wastes genuine help and attention you’d want for what matters. Independence is choosing where to delegate, not refusing to.' },
+      { id: 'd', text: 'Follow its suggestions but pretend they’re your own ideas.', score: 30, rationale: 'Borrowed agency dressed as your own is the most seductive trade — you feel autonomous while quietly handing it over. Naming it is the only thing that protects it.' },
+    ],
+  },
+  {
+    id: 'trade-memory', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
+    scenario: 'You’ll soon never need to remember anything — every fact, name, and detail instantly retrievable. Why hold anything in your own head?',
+    prompt: 'What’s worth still knowing by heart?',
+    options: [
+      { id: 'a', text: 'Nothing — offload all of it, that’s what the tools are for.', score: 25, rationale: 'Retained knowledge is what lets you notice when an answer is wrong, connect ideas, and think in the moment. With nothing in your head, you can only ever look things up — never actually reason across them.' },
+      { id: 'b', text: 'Look up what’s lookup-able, but deliberately keep building deep knowledge in what matters to you.', score: 100, rationale: 'Yes. Externalize the trivia; internalize the things you want to think WITH. You can use retrieval constantly and still cultivate a furnished mind.' },
+      { id: 'c', text: 'Refuse to rely on it; memorize everything the old way.', score: 55, rationale: 'Admirable discipline, but not all knowledge is worth the shelf space. The skill is choosing what to hold, not holding everything.' },
+      { id: 'd', text: 'Offload everything, but feel uneasy that you’re forgetting how to think.', score: 30, rationale: 'The unease is accurate — and useless until it becomes a decision about what you’ll keep building yourself.' },
+    ],
+  },
+];
+
 // ----- VIGNETTES: AI-scored communication / emotional-intelligence exercise -----
 // A charged interpersonal moment. The person responds OUT LOUD (or types), and
 // Claude scores the transcript on a relational-presence rubric (see coach.js

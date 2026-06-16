@@ -629,6 +629,7 @@ function renderSession() {
     case 'reading': return renderReading();
     case 'memory': return renderMemory();
     case 'decision': return renderDecision();
+    case 'tradeoff': return renderDecision();
     case 'crt': return renderCRT();
     case 'nback': return renderNBack();
     case 'stream': return renderStream();
@@ -642,7 +643,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', crt: 'Reflection Test', nback: 'Working Memory', stream: 'Sustained Attention', vigilance: 'Live Attention', vignette: 'Communication', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', stream: 'Sustained Attention', vigilance: 'Live Attention', vignette: 'Communication', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
@@ -1602,8 +1603,12 @@ function renderSettings() {
             <option value="claude-haiku-4-5-20251001" ${p.settings.model === 'claude-haiku-4-5-20251001' ? 'selected' : ''}>Claude Haiku 4.5 (fastest)</option>
           </select>
         </div>
-        <button class="btn sm" id="savekey">Save</button>
-        <span id="saved" class="trendpill up" style="display:none; margin-left:8px;">saved ✓</span>
+        <div class="row" style="gap:8px;">
+          <button class="btn sm" id="savekey">Save</button>
+          <button class="btn ghost sm" id="testkey">Test connection</button>
+          <span id="saved" class="trendpill up" style="display:none;">saved ✓</span>
+        </div>
+        <p id="testresult" class="small" style="margin-top:10px;"></p>
       </div>
 
       <div class="card">
@@ -1632,6 +1637,25 @@ function renderSettings() {
     save();
     const s = document.getElementById('saved'); s.style.display = 'inline-block';
     setTimeout(() => { s.style.display = 'none'; }, 1500);
+  };
+  document.getElementById('testkey').onclick = async () => {
+    // Saves the current key/model, then makes a tiny real call and shows the
+    // actual result — so a failure reveals WHY (bad key, model, CORS, credits).
+    p.settings.apiKey = document.getElementById('key').value.trim();
+    p.settings.model = document.getElementById('model').value;
+    save();
+    const r = document.getElementById('testresult');
+    if (!p.settings.apiKey) { r.style.color = 'var(--red)'; r.textContent = 'Add a key first.'; return; }
+    r.style.color = 'var(--ink-faint)';
+    r.textContent = 'Testing…';
+    try {
+      const txt = await Coach.complete(p, { system: 'Reply with exactly: ok', messages: [{ role: 'user', content: 'ping' }], maxTokens: 8 });
+      r.style.color = 'var(--green)';
+      r.textContent = txt ? `✓ Connected — live coaching is on (model: ${p.settings.model}).` : '✓ Connected.';
+    } catch (e) {
+      r.style.color = 'var(--red)';
+      r.textContent = `✗ ${e.message}`;
+    }
   };
   document.getElementById('export').onclick = () => {
     const blob = new Blob([Profile.exportProfile(p)], { type: 'application/json' });
