@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -66,12 +66,19 @@ export function chooseExercise(profile, opts = {}) {
   }
 
   if (focus === 'attention') {
-    // Rotate the live vigilance test, the SART "Stream", and deep reading so the
-    // attention scale is sampled by several distinct task types.
+    // Rotate the vigilance test, the "Follow the Dot" pursuit tracker, the SART
+    // "Stream", and deep reading — several distinct attention task types.
     const level = Math.max(1, Math.round(score / 25));
     if (!recentTypes.includes('vigilance')) return makeVigilanceExercise(level);
+    if (!recentTypes.includes('pursuit')) return makePursuitExercise(level);
     if (!recentTypes.includes('stream')) return makeStreamExercise(level, rng);
     return pickExercise('attention', { seenIds: seen, rng });
+  }
+
+  if (focus === 'reading') {
+    // Alternate the maze/cloze test with full-passage comprehension.
+    if (!recentTypes.includes('maze')) return pickFrom(MAZE, seen, rng);
+    return pickExercise('reading', { seenIds: seen, rng });
   }
 
   if (focus === 'persistence') {

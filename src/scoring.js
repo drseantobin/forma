@@ -73,6 +73,21 @@ export function scoreStay(stayed, selfRating) {
   return clamp(round(behavioral * 0.7 + scoreSelfRating(selfRating || 3) * 0.3));
 }
 
+// --- Pursuit tracking: proportion of time the cursor stayed on the target ---
+// Validated visuomotor sustained-attention paradigm. onFrames/totalFrames.
+export function scorePursuit(onFrames, totalFrames) {
+  if (!totalFrames) return 0;
+  return clamp(round((onFrames / totalFrames) * 100));
+}
+
+// --- Maze/cloze reading: proportion of blanks filled with the right word ---
+export function scoreMaze(answers, blanks) {
+  if (!blanks || !blanks.length) return 0;
+  let correct = 0;
+  blanks.forEach((b, i) => { if (answers[i] === b.answer) correct++; });
+  return round((correct / blanks.length) * 100);
+}
+
 // --- Mental Math fluency: throughput (correct answers vs a target) ---
 export function scoreMathFluency(correct, target = 14) {
   if (!target) return 0;
@@ -194,6 +209,10 @@ export function scoreExercise(exercise, response) {
       return clamp(round(response.aiScore != null ? response.aiScore : 60));
     case 'mathfluency':
       return scoreMathFluency(response.correct || 0, exercise.target);
+    case 'maze':
+      return scoreMaze(response.answers || [], (exercise.parts || []).filter((p) => p.blank).map((p) => p.blank));
+    case 'pursuit':
+      return scorePursuit(response.onFrames || 0, response.totalFrames || 0);
     case 'reflection':
       return scoreSelfRating(response.selfRating || 3);
     default:

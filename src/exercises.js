@@ -345,6 +345,46 @@ export const READING = [
 // Attention scale (at a gentler weight — see profile.applySession).
 READING.forEach((e) => { e.secondaryDomain = 'attention'; });
 
+// ----- MAZE: cloze reading-comprehension test (Deep Reading) -----
+// CBM-Maze paradigm (validated): every so often a word is replaced by a choice
+// of three; only the meaning-correct word fits. Picking it requires actually
+// constructing the sense of the text. Score = proportion correct.
+export const MAZE = [
+  {
+    id: 'maze-attention', type: 'maze', domain: 'reading', secondaryDomain: 'attention', title: 'Read for the Sense',
+    parts: [
+      { text: 'For most of history, information was ' },
+      { blank: { options: ['scarce', 'loud', 'digital'], answer: 0 } },
+      { text: ' and attention was abundant. Today the ratio has ' },
+      { blank: { options: ['inverted', 'improved', 'paused'], answer: 0 } },
+      { text: ': information is effectively infinite, and attention is the resource everyone ' },
+      { blank: { options: ['competes', 'sleeps', 'forgets'], answer: 0 } },
+      { text: ' for. Platforms do not sell you content; they sell your ' },
+      { blank: { options: ['attention', 'furniture', 'silence'], answer: 0 } },
+      { text: ' to advertisers. The danger is not any single notification but the slow ' },
+      { blank: { options: ['reshaping', 'cleaning', 'lowering'], answer: 0 } },
+      { text: ' of what your mind expects.' },
+    ],
+  },
+  {
+    id: 'maze-effort', type: 'maze', domain: 'reading', secondaryDomain: 'attention', title: 'Read for the Sense',
+    parts: [
+      { text: 'Cognitive effort behaves much like physical effort: it is ' },
+      { blank: { options: ['use-it-or-lose-it', 'free', 'permanent'], answer: 0 } },
+      { text: '. When you stop calculating, recalling, and reasoning, those capacities quietly ' },
+      { blank: { options: ['decline', 'multiply', 'wait'], answer: 0 } },
+      { text: '. This is not an argument against tools — calculators did not ' },
+      { blank: { options: ['destroy', 'invent', 'replace'], answer: 0 } },
+      { text: ' mathematics. The difference now is ' },
+      { blank: { options: ['scale', 'color', 'price'], answer: 0 } },
+      { text: ': AI can absorb an entire domain of effort at once, so the skill is choosing, on purpose, where to keep the ' },
+      { blank: { options: ['effort', 'money', 'silence'], answer: 0 } },
+      { text: '.' },
+    ],
+  },
+];
+
+
 // ----- MEMORY: sequence recall (objective) -----
 const WORD_POOL = [
   'river', 'candle', 'iron', 'meadow', 'anchor', 'lantern', 'thistle', 'harbor',
@@ -882,6 +922,22 @@ export function makeVigilanceExercise(level = 1) {
     faint,
     isiMin: 1500, // ms — minimum wait before the dot appears
     isiMax: 4500, // ms — maximum wait (the unpredictability is the point)
+  };
+}
+
+// ----- FOLLOW THE DOT: visuomotor pursuit tracking (Attention) -----
+// Validated visuomotor sustained-attention paradigm: keep your finger/cursor on
+// a moving target. Score = proportion of time on target (see scoring.scorePursuit).
+export function makePursuitExercise(level = 1) {
+  const lv = Math.max(1, Math.min(4, Math.round(level)));
+  return {
+    id: `pursuit-${Date.now()}`,
+    type: 'pursuit',
+    domain: 'attention',
+    title: 'Follow the Dot',
+    durationSec: 24,
+    speed: 0.55 + lv * 0.18, // higher level → faster, less predictable path
+    radiusPx: Math.max(32, 58 - lv * 7), // on-target threshold shrinks with level
   };
 }
 

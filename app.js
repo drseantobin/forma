@@ -71,6 +71,10 @@ function go(route) {
     clearInterval(state.session._timer);
     state.session._timer = null;
   }
+  if (route !== 'session' && state.session && state.session._raf) {
+    cancelAnimationFrame(state.session._raf);
+    state.session._raf = null;
+  }
   // Leaving the Focus Check: clear its pending timer so a stale closure can't
   // log a bogus reaction time.
   if (route !== 'focuscheck' && state._focus && state._focus._t) {
@@ -553,6 +557,7 @@ function initialPhase(ex) {
     : ex.type === 'stream' ? 'stream-intro'
     : ex.type === 'vigilance' ? 'vigilance-intro'
     : ex.type === 'mathfluency' ? 'math-intro'
+    : ex.type === 'pursuit' ? 'pursuit-intro'
     : ex.type === 'contemplation' ? 'contempl-intro'
     : 'play';
 }
@@ -636,6 +641,8 @@ function renderSession() {
     case 'stream': return renderStream();
     case 'vigilance': return renderVigilance();
     case 'mathfluency': return renderMathFluency();
+    case 'maze': return renderMaze();
+    case 'pursuit': return renderPursuit();
     case 'vignette': return renderVignette();
     case 'stay': return renderStay();
     case 'contemplation': return renderContemplation();
@@ -645,7 +652,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', stream: 'Sustained Attention', vigilance: 'Live Attention', vignette: 'Communication', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
@@ -1075,6 +1082,93 @@ function renderMathFluency() {
       if (timeEl) timeEl.textContent = s.timeLeft + 's';
       if (s.timeLeft <= 0) { clearInterval(s._timer); s._timer = null; completeSession(); }
     }, 1000);
+  }
+}
+
+// Maze — cloze reading comprehension. Pick the word that fits the meaning.
+function renderMaze() {
+  const s = state.session;
+  const ex = s.exercise;
+  let bi = -1;
+  const body = ex.parts.map((p) => {
+    if (p.text != null) return esc(p.text);
+    bi += 1;
+    const idx = bi;
+    return `<select class="mazesel" data-bi="${idx}" aria-label="choose the word that fits">
+      <option value="-1" selected disabled>—</option>
+      ${p.blank.options.map((o, i) => `<option value="${i}">${esc(o)}</option>`).join('')}
+    </select>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <p class="muted small">Pick the word that fits the meaning of each gap. Read for the sense.</p>
+      <div class="passage" style="line-height:2.4;">${body}</div>
+      <button class="btn amber" id="mazedone">Check my reading</button>
+    </div>`;
+  document.getElementById('mazedone').onclick = () => {
+    s.response.answers = [...app.querySelectorAll('.mazesel')].map((el) => Number(el.value));
+    completeSession();
+  };
+}
+
+// Follow the Dot — visuomotor pursuit tracking. Keep your finger/cursor on the
+// moving target; we measure the proportion of time you stay on it.
+function renderPursuit() {
+  const s = state.session;
+  const ex = s.exercise;
+  if (s.phase === 'pursuit-intro') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="card">
+          <p>A dot will drift around the panel for ${ex.durationSec} seconds. Keep your <strong>finger (or cursor) right on it</strong> the whole time.</p>
+          <p class="muted small">It measures how steadily you can hold and track attention. Don’t lift off — just follow.</p>
+        </div>
+        <button class="btn amber" id="begin">Begin</button>
+      </div>`;
+    document.getElementById('begin').onclick = () => { s.phase = 'pursuit-run'; s.response.onFrames = 0; s.response.totalFrames = 0; s._started = false; render(); };
+    return;
+  }
+  const W = 320; const H = 320;
+  app.innerHTML = `
+    <div class="fade-in">
+      <p class="muted small center" id="ptime">${ex.durationSec}s</p>
+      <svg id="pstage" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:340px; display:block; margin:0 auto; background:#0e1018; border-radius:18px; touch-action:none;">
+        <circle id="ptarget" cx="${W / 2}" cy="${H / 2}" r="15" fill="var(--accent)"/>
+        <circle id="pcursor" cx="${W / 2}" cy="${H / 2}" r="6" fill="#fff" opacity="0.9"/>
+      </svg>
+      <p class="muted small center" style="margin-top:8px;">On target: <span id="ponpct">—</span></p>
+    </div>`;
+  const stage = document.getElementById('pstage');
+  const target = document.getElementById('ptarget');
+  const cursor = document.getElementById('pcursor');
+  const timeEl = document.getElementById('ptime');
+  const pctEl = document.getElementById('ponpct');
+  let px = W / 2; let py = H / 2;
+  const toSvg = (clientX, clientY) => {
+    const rect = stage.getBoundingClientRect();
+    return { x: ((clientX - rect.left) / rect.width) * W, y: ((clientY - rect.top) / rect.height) * H };
+  };
+  stage.onpointermove = (e) => { const q = toSvg(e.clientX, e.clientY); px = q.x; py = q.y; cursor.setAttribute('cx', px); cursor.setAttribute('cy', py); };
+  if (!s._started) {
+    s._started = true;
+    s.startT = performance.now();
+    const dur = ex.durationSec * 1000;
+    const loop = () => {
+      if (state.session !== s || state.route !== 'session') { s._raf = null; return; }
+      const t = performance.now() - s.startT;
+      const cx = W / 2 + (W / 2 - 28) * Math.sin((ex.speed * t) / 1000);
+      const cy = H / 2 + (H / 2 - 28) * Math.sin((ex.speed * t) / 1000 * 1.4 + 1);
+      target.setAttribute('cx', cx); target.setAttribute('cy', cy);
+      s.response.totalFrames += 1;
+      if (Math.hypot(px - cx, py - cy) <= ex.radiusPx) s.response.onFrames += 1;
+      if (timeEl) timeEl.textContent = Math.max(0, Math.ceil((dur - t) / 1000)) + 's';
+      if (pctEl && s.response.totalFrames % 6 === 0) pctEl.textContent = Math.round((s.response.onFrames / s.response.totalFrames) * 100) + '%';
+      if (t >= dur) { s._raf = null; completeSession(); return; }
+      s._raf = requestAnimationFrame(loop);
+    };
+    s._raf = requestAnimationFrame(loop);
   }
 }
 
