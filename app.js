@@ -288,6 +288,7 @@ async function renderBaselineResult() {
       <button class="btn amber" id="go">Start my first session →</button>
     </div>`;
   document.getElementById('go').onclick = () => go('session');
+  wireDomainLinks();
 
   const fallback = { text: ruleInterpretBaseline(p.baseline.domainScores, p.settings.name), live: false };
   const { text, live } = await raceTimeout(Coach.interpretBaseline(p), 10000, fallback);
@@ -457,6 +458,7 @@ function renderHome() {
   document.getElementById('startsession').onclick = () => go('session');
   const wp = document.getElementById('toplan');
   if (wp) wp.onclick = () => go('plan');
+  wireDomainLinks();
 }
 
 const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -519,6 +521,7 @@ function radarCard(scores) {
       <div class="domain-list">
         ${order.map((id) => domainRow(id, scores[id])).join('')}
       </div>
+      <p class="muted small center" style="margin-top:10px;">Tap any capacity to train it directly.</p>
     </div>`;
 }
 
@@ -527,29 +530,51 @@ function domainRow(id, score) {
   if (score == null) return '';
   const band = bandFor(score);
   return `
-    <div class="domain-row">
+    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="Train ${esc(d.name)}">
       <span class="ico">${d.icon}</span>
       <div class="meta">
         <div class="dn">${esc(d.name)}</div>
         <div class="bar"><div style="width:${score}%; background:${band.color}"></div></div>
       </div>
       <span class="sc">${score}</span>
+      <span class="chev" aria-hidden="true">›</span>
     </div>`;
 }
 
 // ---------------- daily session ----------------
 // The Orchestrator picks the focus domain (via the weekly plan) AND the
 // exercise modality for it; we only create the session when the user hits Begin.
-function startTodaysSession() {
-  const ex = Orchestrator.chooseExercise(state.profile);
-  const initPhase = ex.type === 'memory' ? 'memo-show'
+function initialPhase(ex) {
+  return ex.type === 'memory' ? 'memo-show'
     : ex.type === 'nback' ? 'nback-intro'
     : ex.type === 'stream' ? 'stream-intro'
     : ex.type === 'vigilance' ? 'vigilance-intro'
     : ex.type === 'contemplation' ? 'contempl-intro'
     : 'play';
-  state.session = { exercise: ex, phase: initPhase, response: {}, started: Date.now() };
+}
+
+function startTodaysSession() {
+  const ex = Orchestrator.chooseExercise(state.profile);
+  state.session = { exercise: ex, phase: initialPhase(ex), response: {}, started: Date.now() };
   render();
+}
+
+// Start a session aimed at a specific capacity (tapped from the radar/scales).
+function startDomainSession(domain) {
+  const ex = Orchestrator.chooseExercise(state.profile, { focus: domain });
+  state.session = { exercise: ex, phase: initialPhase(ex), response: {}, started: Date.now() };
+  state.route = 'session';
+  render();
+  window.scrollTo(0, 0);
+}
+
+// Make every [data-domain] row a link into a tailored session.
+function wireDomainLinks() {
+  app.querySelectorAll('[data-domain]').forEach((el) => {
+    const fire = () => startDomainSession(el.dataset.domain);
+    el.onclick = fire;
+    el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); } };
+  });
 }
 
 // The "Today" landing — a calm runway before the session, not a cold start.
@@ -1001,32 +1026,24 @@ function renderVignette() {
     return;
   }
   const supported = speechSupported();
-  const useType = s.useType || !supported;
   app.innerHTML = `
     <div class="fade-in">
       ${sessionHeader(ex)}
       <div class="passage">${esc(ex.scenario)}</div>
       <p class="likert-q" style="font-size:1.05rem;">${esc(ex.prompt)}</p>
-      ${!useType ? `
-        <div class="center" style="margin:10px 0;">
-          <button class="btn ${s.recording ? 'green' : 'amber'}" id="mic" style="width:auto;">${s.recording ? '■ Stop' : '🎤 Tap to speak'}</button>
+      <p class="muted small">${supported ? 'Speak your answer or type it — either way your words land in the box, and you can edit before sending.' : 'Type your response below.'}</p>
+      ${supported ? `
+        <div class="center" style="margin:8px 0 2px;">
+          <button class="btn ${s.recording ? 'green' : 'amber'}" id="mic" style="width:auto;">${s.recording ? '■ Stop recording' : '🎤 Speak'}</button>
         </div>
-        <p class="muted small center">${s.recording ? 'Listening… speak naturally, then stop.' : 'Your words appear below — you can edit them before sending.'}</p>
+        ${s.recording ? '<p class="muted small center">Listening… speak naturally, then tap Stop.</p>' : ''}
       ` : ''}
-      <textarea class="reflect-area" id="vresp" placeholder="${useType ? 'Type your response…' : 'Your spoken words will appear here…'}">${esc(s.response.transcript)}</textarea>
-      ${supported ? (useType
-        ? `<p class="muted small" style="margin-top:8px;"><button class="inlinelink" id="usevoice">Use voice instead</button></p>`
-        : `<p class="muted small center" style="margin-top:6px;"><button class="inlinelink" id="usetype">Prefer to type?</button></p>`)
-        : '<p class="muted small" style="margin-top:8px;">Voice isn’t available on this device — type your response.</p>'}
+      <textarea class="reflect-area" id="vresp" placeholder="${supported ? 'Speak or type your response…' : 'Type your response…'}">${esc(s.response.transcript)}</textarea>
       <button class="btn amber" id="vsubmit" style="margin-top:14px;">Send my response →</button>
     </div>`;
 
   const ta = document.getElementById('vresp');
   ta.oninput = () => { s.response.transcript = ta.value; };
-  const usetype = document.getElementById('usetype');
-  if (usetype) usetype.onclick = () => { stopMic(s); s.recording = false; s.useType = true; render(); };
-  const usevoice = document.getElementById('usevoice');
-  if (usevoice) usevoice.onclick = () => { s.useType = false; render(); };
 
   const mic = document.getElementById('mic');
   if (mic) mic.onclick = () => {
@@ -1040,12 +1057,13 @@ function renderVignette() {
       onError: () => { s.recording = false; stopMic(s); render(); },
       onEnd: () => {
         // iOS often auto-ends; reflect that in the button without nuking text.
-        if (s.recording) { s.recording = false; const m = document.getElementById('mic'); if (m) { m.classList.remove('green'); m.classList.add('amber'); m.textContent = '🎤 Tap to speak'; } }
+        if (s.recording) { s.recording = false; const m = document.getElementById('mic'); if (m) { m.classList.remove('green'); m.classList.add('amber'); m.textContent = '🎤 Speak'; } }
       },
     });
-    if (!s.recognizer) { s.useType = true; render(); return; }
+    // If the recognizer can't start, the text box is already there to type into.
+    if (!s.recognizer) { return; }
     try { s.recognizer.start(); s.recording = true; render(); }
-    catch (e) { s.useType = true; render(); }
+    catch (e) { s.recording = false; }
   };
 
   document.getElementById('vsubmit').onclick = async () => {
@@ -1241,6 +1259,7 @@ function renderProgress() {
       </div>
     </div>`;
   document.getElementById('toproof').onclick = () => go('proof');
+  wireDomainLinks();
 }
 
 // ---------------- weekly formation plan ----------------
@@ -1459,7 +1478,7 @@ function progressRow(id) {
   const dir = t.direction;
   const sign = t.delta > 0 ? '+' : '';
   return `
-    <div class="domain-row" style="align-items:center;">
+    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="Train ${esc(d.name)}" style="align-items:center;">
       <span class="ico">${d.icon}</span>
       <div class="meta">
         <div class="row"><span class="dn">${esc(d.name)}</span>
@@ -1470,6 +1489,7 @@ function progressRow(id) {
         </svg>
       </div>
       <span class="sc">${score}</span>
+      <span class="chev" aria-hidden="true">›</span>
     </div>`;
 }
 

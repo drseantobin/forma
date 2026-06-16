@@ -211,6 +211,12 @@ button { font-family: inherit; cursor: pointer; }
 /* inline text button that reads as a link */
 .inlinelink { background:none; border:none; color:var(--accent); font:inherit; font-weight:600; padding:0; cursor:pointer; text-decoration:underline; }
 
+/* tappable capacity rows → launch a targeted session */
+.domain-row.tappable { cursor: pointer; border-radius: 12px; margin: 0 -8px; padding: 6px 8px; transition: background .1s; }
+.domain-row.tappable:active { background: var(--accent-soft); }
+.domain-row .chev { color: var(--ink-faint); font-size: 1.3rem; font-weight: 700; margin-left: 4px; }
+@media (hover: hover) { .domain-row.tappable:hover { background: var(--accent-soft); } }
+
 /* the "what Forma is noticing" list */
 .noticing { list-style:none; padding:0; margin:0; }
 .noticing li { position:relative; padding-left:18px; margin-bottom:8px; line-height:1.5; }
