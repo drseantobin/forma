@@ -1,0 +1,44 @@
+// team.js — employer/team aggregate signals (the B2B layer, preview-stage).
+//
+// Privacy is the whole point: an employer view shows only AGGREGATED development
+// signals across a team — never an individual's raw data, and NEVER the optional
+// Interior Life track. There is no backend yet, so the dashboard runs on a
+// deterministic sample cohort, clearly labeled as a preview.
+
+import { DOMAINS } from './domains.js';
+
+// The capacities an employer sees — the core ten, never the interior/faith track.
+const CORE = DOMAINS.map((d) => d.id);
+
+// The composite that tells an employer what they actually want to know in the
+// AI transition: can this team exercise judgment over AI output, stay independent,
+// read deeply, and communicate well.
+export const AI_READINESS_DOMAINS = ['judgment', 'ai_autonomy', 'reading', 'communication'];
+
+// A deterministic synthetic cohort (no RNG — seeded by index, so it's stable).
+export function sampleCohort(n = 8) {
+  const members = [];
+  for (let i = 0; i < n; i++) {
+    const domainScores = {};
+    CORE.forEach((id, j) => {
+      domainScores[id] = 42 + ((i * 17 + j * 23 + 7) % 47); // spread 42..88
+    });
+    members.push({ id: `Member ${i + 1}`, domainScores });
+  }
+  return members;
+}
+
+// Aggregate a cohort into team-level signals.
+export function aggregate(members) {
+  if (!members || !members.length) return { n: 0, avgIndex: 0, perDomain: {}, aiReadiness: 0 };
+  const perDomain = {};
+  CORE.forEach((id) => {
+    const vals = members.map((m) => m.domainScores && m.domainScores[id]).filter((v) => v != null);
+    perDomain[id] = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+  });
+  const avgIndex = Math.round(CORE.reduce((a, id) => a + perDomain[id], 0) / CORE.length);
+  const aiReadiness = Math.round(
+    AI_READINESS_DOMAINS.reduce((a, id) => a + (perDomain[id] || 0), 0) / AI_READINESS_DOMAINS.length,
+  );
+  return { n: members.length, avgIndex, perDomain, aiReadiness };
+}

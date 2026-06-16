@@ -1,6 +1,6 @@
 // sw.js — Forma service worker. Makes the app installable and offline-capable.
 // Bump CACHE when shipping changes so clients pick up the new files.
-const CACHE = 'forma-v20';
+const CACHE = 'forma-v21';
 const SHELL = [
   './',
   './index.html',
@@ -21,6 +21,7 @@ const SHELL = [
   './src/planner.js',
   './src/orchestrator.js',
   './src/speech.js',
+  './src/team.js',
 ];
 
 self.addEventListener('install', (e) => {

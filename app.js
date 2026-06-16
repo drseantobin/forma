@@ -16,6 +16,7 @@ import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import * as Orchestrator from './src/orchestrator.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
+import * as Team from './src/team.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
 // The domains to display for the current user (adds Interior Life when the
@@ -134,6 +135,7 @@ function render() {
     case 'session': return renderSession();
     case 'progress': return renderProgress();
     case 'plan': return renderPlan();
+    case 'team': return renderTeam();
     case 'proof': return renderProof();
     case 'focuscheck': return renderFocusCheck();
     case 'coach': return renderCoach();
@@ -1625,6 +1627,43 @@ function renderPlan() {
   });
 }
 
+// ---------------- employer / team dashboard (preview) ----------------
+function renderTeam() {
+  const cohort = Team.sampleCohort(8);
+  const agg = Team.aggregate(cohort);
+  app.innerHTML = `
+    <div class="fade-in">
+      <div class="row"><h1 style="margin:0;">Team</h1><span class="spacer"></span>
+        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>
+      <p class="muted small">Preview · a sample cohort of ${agg.n}. In production, an employer would see only <strong>aggregated development signals</strong> across a team — never an individual's raw data, scores, or reflections, and never the Interior Life track.</p>
+
+      <div class="card index-hero">
+        <div class="index-num kbig">${agg.avgIndex}</div>
+        <div class="index-label">Team Formation Index</div>
+        <div class="streakchip" style="margin-top:8px;">⚡ AI-readiness ${agg.aiReadiness}</div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:1.05rem;">Capacity averages</h2>
+        <div class="domain-list">
+          ${DOMAIN_ORDER.map((id) => {
+            const sc = agg.perDomain[id]; const d = getDomain(id); const band = bandFor(sc);
+            return `<div class="domain-row"><span class="ico">${d.icon}</span>
+              <div class="meta"><div class="dn">${esc(d.name)}</div>
+              <div class="bar"><div style="width:${sc}%; background:${band.color}"></div></div></div>
+              <span class="sc">${sc}</span></div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">What "AI-readiness" means</div>
+        <p class="muted small" style="margin-top:6px;">A blend of Judgment, AI Independence, Deep Reading, and Communication — the capacities that most predict working <em>well</em> alongside AI rather than being replaced by it. A development signal for growth, never a tool to rank or surveil individuals.</p>
+      </div>
+    </div>`;
+  document.getElementById('back').onclick = () => go('settings');
+}
+
 // ---------------- 90-day proof ----------------
 function renderProof() {
   const p = state.profile;
@@ -1916,6 +1955,14 @@ function renderSettings() {
       </div>
 
       <div class="card">
+        <div class="row"><span style="font-size:1.3rem;">🏢</span>
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">For employers</h2>
+            <p class="muted small" style="margin:2px 0 0;">A preview of the team dashboard — aggregated development signals, never individual raw data.</p></div>
+          <button class="btn ghost sm" id="toteam" style="width:auto;">Preview →</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
         <p class="muted small">Everything Forma knows about you lives on this device. You own it.</p>
         <div class="stack">
@@ -1928,6 +1975,7 @@ function renderSettings() {
     </div>`;
 
   document.getElementById('name').onchange = (e) => { p.settings.name = e.target.value.trim(); save(); };
+  const tt = document.getElementById('toteam'); if (tt) tt.onclick = () => go('team');
   document.getElementById('faith').onclick = () => {
     state.profile = p.settings.faithTrack ? Profile.disableFaithTrack(p) : Profile.enableFaithTrack(p);
     // Regenerate the plan so the change takes effect immediately.
