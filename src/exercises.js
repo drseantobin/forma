@@ -980,6 +980,40 @@ export const STAY = [
   },
 ];
 
+// ----- MATRIX REASONING: non-verbal fluid reasoning (Judgment) -----
+// Raven's-lineage: a 2×2 grid follows a rule across rows and columns; pick the
+// option that completes it. Cells are {shape, n, fill}. Answer keys verified.
+export const MATRICES = [
+  {
+    id: 'mat-count-shape', type: 'matrix', domain: 'judgment', title: 'Complete the Pattern',
+    grid: [{ shape: 'circle', n: 1, fill: 0 }, { shape: 'circle', n: 2, fill: 0 }, { shape: 'square', n: 1, fill: 0 }],
+    options: [{ shape: 'square', n: 2, fill: 0 }, { shape: 'square', n: 1, fill: 0 }, { shape: 'circle', n: 2, fill: 0 }, { shape: 'square', n: 3, fill: 0 }],
+    answer: 0,
+    explanation: 'Across each row the count goes up by one; down each column the shape changes (circle → square). So the missing cell is two squares.',
+  },
+  {
+    id: 'mat-fill', type: 'matrix', domain: 'judgment', title: 'Complete the Pattern',
+    grid: [{ shape: 'circle', n: 2, fill: 0 }, { shape: 'circle', n: 2, fill: 1 }, { shape: 'triangle', n: 2, fill: 0 }],
+    options: [{ shape: 'triangle', n: 2, fill: 1 }, { shape: 'triangle', n: 2, fill: 0 }, { shape: 'circle', n: 2, fill: 1 }, { shape: 'triangle', n: 3, fill: 1 }],
+    answer: 0,
+    explanation: 'Across each row the shapes go from outline to filled; the shape and count stay constant down each column. So the missing cell is two filled triangles.',
+  },
+  {
+    id: 'mat-count2', type: 'matrix', domain: 'judgment', title: 'Complete the Pattern',
+    grid: [{ shape: 'triangle', n: 1, fill: 1 }, { shape: 'triangle', n: 3, fill: 1 }, { shape: 'square', n: 1, fill: 1 }],
+    options: [{ shape: 'square', n: 3, fill: 1 }, { shape: 'square', n: 1, fill: 1 }, { shape: 'triangle', n: 3, fill: 1 }, { shape: 'square', n: 2, fill: 1 }],
+    answer: 0,
+    explanation: 'Across each row the count jumps from one to three; down each column the shape changes. So the missing cell is three filled squares.',
+  },
+  {
+    id: 'mat-shape-count', type: 'matrix', domain: 'judgment', title: 'Complete the Pattern',
+    grid: [{ shape: 'circle', n: 3, fill: 0 }, { shape: 'square', n: 3, fill: 0 }, { shape: 'circle', n: 1, fill: 0 }],
+    options: [{ shape: 'square', n: 1, fill: 0 }, { shape: 'circle', n: 1, fill: 0 }, { shape: 'square', n: 3, fill: 0 }, { shape: 'square', n: 2, fill: 0 }],
+    answer: 0,
+    explanation: 'Across each row the shape changes (circle → square); down each column the count drops from three to one. So the missing cell is one square.',
+  },
+];
+
 // ----- SENTENCE COMPLETION: AI-scored self-knowledge (Values Alignment) -----
 // Rotter RISB lineage: finish open stems; Claude scores honesty/self-awareness/
 // coherence formatively (see coach.scoreSentences). Requires a live key.

@@ -195,6 +195,9 @@ export function scoreExercise(exercise, response) {
     case 'decision':
     case 'tradeoff':
       return scoreDecision(response.optionId, exercise.options);
+    case 'matrix':
+      // Fluid-reasoning item: right or wrong, but a wrong attempt still engaged.
+      return response.optionId === exercise.answer ? 100 : 35;
     case 'crt':
       return scoreCRT(response.optionId, exercise.options);
     case 'nback':

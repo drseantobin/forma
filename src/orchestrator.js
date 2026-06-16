@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -61,8 +61,9 @@ export function chooseExercise(profile, opts = {}) {
   }
 
   if (focus === 'judgment') {
-    // Alternate cognitive-reflection ("The Lure") with decision scenarios.
+    // Rotate cognitive-reflection ("The Lure"), matrix reasoning, and decisions.
     if (!recentTypes.includes('crt')) return pickFrom(CRT, seen, rng);
+    if (!recentTypes.includes('matrix')) return pickFrom(MATRICES, seen, rng);
     return pickExercise('judgment', { seenIds: seen, rng });
   }
 

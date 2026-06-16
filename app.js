@@ -650,6 +650,7 @@ function renderSession() {
     case 'digitspan': return renderDigitSpan();
     case 'decision': return renderDecision();
     case 'tradeoff': return renderDecision();
+    case 'matrix': return renderMatrix();
     case 'crt': return renderCRT();
     case 'nback': return renderNBack();
     case 'stream': return renderStream();
@@ -667,7 +668,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
@@ -1125,6 +1126,52 @@ function renderMaze() {
     s.response.answers = [...app.querySelectorAll('.mazesel')].map((el) => Number(el.value));
     completeSession();
   };
+}
+
+// Matrix reasoning — SVG shapes; pick the option completing the pattern.
+function matrixShape(shape, fill) {
+  const f = fill ? 'var(--accent)' : 'none';
+  const st = 'var(--accent)';
+  if (shape === 'circle') return `<svg width="20" height="20" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8" fill="${f}" stroke="${st}" stroke-width="2.5"/></svg>`;
+  if (shape === 'square') return `<svg width="20" height="20" viewBox="0 0 22 22"><rect x="3" y="3" width="16" height="16" rx="2" fill="${f}" stroke="${st}" stroke-width="2.5"/></svg>`;
+  return `<svg width="20" height="20" viewBox="0 0 22 22"><polygon points="11,3 19,19 3,19" fill="${f}" stroke="${st}" stroke-width="2.5" stroke-linejoin="round"/></svg>`;
+}
+function matrixCell(spec) {
+  if (!spec) return '<span style="font-size:1.6rem; color:var(--ink-faint); font-weight:800;">?</span>';
+  let out = '';
+  for (let i = 0; i < spec.n; i++) out += matrixShape(spec.shape, spec.fill);
+  return `<span style="display:inline-flex; gap:3px; align-items:center;">${out}</span>`;
+}
+function renderMatrix() {
+  const s = state.session;
+  const ex = s.exercise;
+  const chosen = s.response.optionId;
+  const revealed = s.revealed;
+  const cells = [ex.grid[0], ex.grid[1], ex.grid[2], null];
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <p class="muted small">Which option completes the pattern?</p>
+      <div class="matgrid">${cells.map((c) => `<div class="matcell">${matrixCell(c)}</div>`).join('')}</div>
+      <p class="muted small" style="margin-top:14px;">Choose:</p>
+      <div class="matopts">
+        ${ex.options.map((o, i) => {
+          let cls = 'matopt';
+          if (revealed) { if (i === ex.answer) cls += ' correct'; else if (i === chosen) cls += ' wrong'; }
+          else if (i === chosen) cls += ' selected';
+          return `<button class="${cls}" data-i="${i}" ${revealed ? 'disabled' : ''}>${matrixCell(o)}</button>`;
+        }).join('')}
+      </div>
+      ${revealed
+        ? `<div class="rationale" style="margin-top:14px;">${esc(ex.explanation)}</div><button class="btn" id="fin" style="margin-top:12px;">Continue →</button>`
+        : `<button class="btn" id="reveal" ${chosen == null ? 'disabled' : ''} style="margin-top:16px;">Lock in my answer</button>`}
+    </div>`;
+  if (!revealed) {
+    app.querySelectorAll('.matopt').forEach((b) => b.onclick = () => { s.response.optionId = Number(b.dataset.i); render(); });
+    document.getElementById('reveal').onclick = () => { s.revealed = true; render(); };
+  } else {
+    document.getElementById('fin').onclick = completeSession;
+  }
 }
 
 // Digit Span Backward — memorize digits, recall them in reverse.
