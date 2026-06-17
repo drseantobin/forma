@@ -1025,6 +1025,30 @@ export const STAY = [
     answer: '20',
     explanation: 'Ten 7s in the ones place (7, 17, … 97) and ten in the tens place (70–79) = 20. The discipline is doing the count internally instead of reaching for a tool.',
   },
+  {
+    id: 'stay-lookandsay', type: 'stay', domain: 'persistence', title: 'Stay With It',
+    prompt: 'Stay with this before moving on: 1, 11, 21, 1211, 111221, …  What comes next?',
+    answer: '312211',
+    explanation: 'It’s the “look-and-say” sequence — each line describes the one before it out loud. 111221 reads as “three 1s, two 2s, one 1” → 312211. It only clicks if you resist looking it up and keep turning it over.',
+  },
+  {
+    id: 'stay-photographer', type: 'stay', domain: 'persistence', title: 'Stay With It',
+    prompt: 'Stay past the first reading: a woman shoots her husband, then holds him underwater for five minutes, then hangs him. Five minutes later they sit down to a pleasant dinner together. How?',
+    answer: 'She’s a photographer.',
+    explanation: 'She shot his photo, developed it underwater, and hung it up to dry. It only resolves once you drop the violent literal frame — frustration tolerance is staying past the interpretation that traps you.',
+  },
+  {
+    id: 'stay-paintedcube', type: 'stay', domain: 'persistence', title: 'Stay With It',
+    prompt: 'Hold this in your mind, no paper: a cube is painted red on every face, then cut into 27 equal small cubes (3×3×3). How many of the small cubes have paint on exactly two faces?',
+    answer: '12',
+    explanation: 'The two-face cubes are the edge pieces — not the 8 corners (three faces), not the 6 face-centres (one face), not the 1 hidden middle (none). A cube has 12 edges, one small cube each = 12. The work is keeping the cube assembled in your head.',
+  },
+  {
+    id: 'stay-chessboard', type: 'stay', domain: 'persistence', title: 'Stay With It',
+    prompt: 'Without writing it down: how many squares are on a standard 8×8 chessboard when you count every size, from 1×1 all the way up to 8×8?',
+    answer: '204',
+    explanation: 'There are 8² of the 1×1, 7² of the 2×2, and so on down to 1² of the 8×8 — that’s 64+49+36+25+16+9+4+1 = 204. The discipline is grinding the sum out in your head rather than bailing for a calculator.',
+  },
 ];
 
 // ----- MATRIX REASONING: non-verbal fluid reasoning (Judgment) -----
