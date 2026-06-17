@@ -2100,7 +2100,7 @@ function renderSnapshot() {
           <div class="logo" aria-hidden="true">F</div>
           <div>
             <div class="snaptitle">Forma · Capacity Snapshot</div>
-            <div class="muted small">${snap.name ? esc(snap.name) + ' · ' : ''}${snap.sessionCount} session${snap.sessionCount === 1 ? '' : 's'}${snap.since ? ` over ${snap.days} days` : ''}</div>
+            <div class="muted small">${snap.name ? esc(snap.name) + ' · ' : ''}${snap.sessionCount} session${snap.sessionCount === 1 ? '' : 's'}${snap.since ? ` over ${snap.days} days` : ''}${snap.generated ? ` · generated ${esc(snap.generated)}` : ''}</div>
           </div>
         </div>
         <div class="snaphero">
