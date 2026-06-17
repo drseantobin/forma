@@ -48,7 +48,14 @@ export function chooseExercise(profile, opts = {}) {
   const rng = opts.rng || Math.random;
   const focus = opts.focus || nextFocus(profile);
   const score = (profile.domainScores && profile.domainScores[focus]) ?? 40;
-  const seen = recentSeenIds(profile);
+  // Rotate through the FULL item bank before any repeat. A short recent window
+  // (the old default of 4, shared across all domains) let single-use items —
+  // CRT especially, where knowing "the bat and the ball" answer is permanent —
+  // recycle within a week, inflating the longitudinal scale with memorization
+  // rather than capacity. Using every item the person has ever seen makes
+  // pickFrom/pickExercise prefer unseen items and fall back to reuse ONLY once a
+  // bank is genuinely exhausted. (slice(-Infinity) returns the whole history.)
+  const seen = recentSeenIds(profile, Infinity);
   const recentTypes = (profile.sessions || []).slice(-3).map((s) => s.type);
 
   if (focus === 'memory') {
