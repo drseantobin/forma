@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -96,9 +96,12 @@ export function chooseExercise(profile, opts = {}) {
   }
 
   if (focus === 'communication') {
-    // The AI-scored vignette is the showcase for communication/EI, but it needs
-    // a live key. With a key, alternate it with reflection; without, reflection.
+    // The AI-scored vignette is the richest showcase for communication, but it
+    // needs a live key. With a key, lead with the vignette. Without one, the
+    // keyless communication SJT is still a real performance measure (so this
+    // AI-Readiness pillar isn't self-report only) — rotated with reflection.
     if (hasKey(profile) && !recentTypes.includes('vignette')) return pickFrom(VIGNETTES, seen, rng);
+    if (!recentTypes.includes('comm')) return pickFrom(COMM, seen, rng);
     return pickExercise('communication', { seenIds: seen, rng });
   }
 

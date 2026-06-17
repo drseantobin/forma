@@ -1194,6 +1194,74 @@ export const STEM = [
   },
 ];
 
+// ----- COMM: Communication situational-judgment measure (keyless) -----
+// A validated-paradigm SJT of interpersonal communication competence. The rich
+// AI-scored vignette is key-gated, so without it the communication pillar of
+// AI-Readiness was self-report only — a hole, since communication is one of the
+// four capacities employers most care about in the AI transition. This gives
+// EVERY user a real performance measure: read a charged interpersonal moment and
+// choose the most effective response. Scored by communication effectiveness —
+// clear + respectful + perspective-taking scores high; aggressive, passive,
+// defensive, or vague scores low. Growth-framed rationales; exactly one best
+// option (>=80) per item so the shared reveal coloring marks the effective move.
+export const COMM = [
+  {
+    id: 'comm-feedback', type: 'comm', domain: 'communication', title: 'The Effective Word',
+    scenario: 'A teammate, Dana, hands you work that misses the brief in a few important ways. You have to tell her.',
+    prompt: 'What’s the most effective way to give the feedback?',
+    options: [
+      { id: 'a', text: 'Name what’s working, then be specific about what missed and why it matters — and ask how you can help get it there.', score: 100, rationale: 'Specific, respectful, and collaborative: she can act on it and the relationship stays intact. Effective feedback is clear about the gap AND keeps the person on your side.' },
+      { id: 'b', text: 'Soften it so far (“maybe just a couple tiny tweaks?”) that the real problems never land.', score: 45, rationale: 'Kindness without clarity isn’t kind — she’ll polish the wrong things and the gap persists. Vagueness protects your comfort, not her growth.' },
+      { id: 'c', text: 'List everything wrong, bluntly, so there’s no doubt about the standard.', score: 30, rationale: 'Accurate but harsh: she hears an attack, gets defensive, and the useful signal drowns in the tone. Being right isn’t the same as being effective.' },
+      { id: 'd', text: 'Quietly fix it yourself and say nothing, to avoid the awkwardness.', score: 25, rationale: 'Avoids the moment and robs her of the feedback — the same gap returns next time, and now you own her work too.' },
+    ],
+  },
+  {
+    id: 'comm-listen', type: 'comm', domain: 'communication', title: 'The Effective Word',
+    scenario: 'A close friend is venting about a hard week — not asking for anything, just clearly upset.',
+    prompt: 'What’s the most effective way to respond?',
+    options: [
+      { id: 'a', text: 'Reflect back what you’re hearing and ask what would help, before offering any advice.', score: 100, rationale: 'Attuned: you meet them where they are and let them set the agenda. Most venting wants to be understood first — solutions only land after that.' },
+      { id: 'b', text: 'Jump in with the solution you can already see.', score: 45, rationale: 'Well-meant but premature — unsolicited fixing can feel like being managed rather than heard, and they stop opening up.' },
+      { id: 'c', text: 'Top their story with a worse one of your own to show you relate.', score: 30, rationale: '“Relating” by redirecting to yourself takes the floor away. They came to be heard, not to hear about you.' },
+      { id: 'd', text: 'Reassure them it’s “not that bad” so they feel better.', score: 35, rationale: 'Minimizing the feeling, however kindly, tells them the feeling is wrong — it closes the conversation instead of opening it.' },
+    ],
+  },
+  {
+    id: 'comm-dissent', type: 'comm', domain: 'communication', title: 'The Effective Word',
+    scenario: 'In a meeting, your manager proposes a plan you think has a real flaw.',
+    prompt: 'What’s the most effective way to handle it?',
+    options: [
+      { id: 'a', text: 'Acknowledge the goal, raise the specific concern as a question, and offer an alternative.', score: 100, rationale: 'Respectful and substantive: you stay on the same team while surfacing the risk, which makes it safe for them to actually weigh it.' },
+      { id: 'b', text: 'Stay quiet now and share your doubts with colleagues afterward.', score: 35, rationale: 'The concern never reaches the person who can act on it, and side-channel venting erodes trust. Silence in the room isn’t tact.' },
+      { id: 'c', text: 'Flatly say the plan won’t work.', score: 30, rationale: 'May be true, but a verdict with no path forward triggers defensiveness and shuts down the exchange.' },
+      { id: 'd', text: 'Go along with it fully to keep the peace, despite the flaw.', score: 25, rationale: 'Harmony bought by withholding what you see costs the team the very thing you were there to add.' },
+    ],
+  },
+  {
+    id: 'comm-repair', type: 'comm', domain: 'communication', title: 'The Effective Word',
+    scenario: 'A message you sent landed wrong, and the other person is clearly hurt — though that wasn’t your intent.',
+    prompt: 'What’s the most effective way to respond?',
+    options: [
+      { id: 'a', text: 'Acknowledge the impact, clarify what you meant without arguing it, and check how they’re taking it now.', score: 100, rationale: 'Leads with their experience, not your intent: impact gets repaired first, meaning clarified second. That’s what restores trust.' },
+      { id: 'b', text: 'Explain at length that they misread you and you did nothing wrong.', score: 30, rationale: 'Defending your intent over their impact tells them their hurt is invalid — it deepens the rupture even when you’re technically right.' },
+      { id: 'c', text: 'Apologize over and over, then go quiet for days.', score: 40, rationale: 'Over-apology plus withdrawal makes them manage your guilt and leaves the actual misunderstanding uncleared.' },
+      { id: 'd', text: 'Pretend you didn’t notice and hope it passes.', score: 25, rationale: 'Ignoring a visible hurt reads as not caring; the misunderstanding hardens into distance.' },
+    ],
+  },
+  {
+    id: 'comm-no', type: 'comm', domain: 'communication', title: 'The Effective Word',
+    scenario: 'A colleague asks you to take on yet another task you genuinely don’t have capacity for.',
+    prompt: 'What’s the most effective way to respond?',
+    options: [
+      { id: 'a', text: 'Decline clearly and warmly, name the reason briefly, and offer what you CAN do.', score: 100, rationale: 'Assertive without aggression: honest about your limit, respectful of their need, still helpful. A clean no protects both the work and the relationship.' },
+      { id: 'b', text: 'Say yes to avoid friction, then resent it or quietly drop the ball.', score: 35, rationale: 'A yes you can’t honor costs more later — for them and for your credibility. Dodging the small no creates a bigger problem.' },
+      { id: 'c', text: 'Snap that you’re swamped and they should ask someone else.', score: 30, rationale: 'The boundary is right but the delivery makes it a rebuff — they hear hostility, not a limit.' },
+      { id: 'd', text: 'Give a vague “maybe, we’ll see” and hope they forget.', score: 40, rationale: 'Ambiguity leaves them planning around a no you never actually said. Clarity is kinder than false hope.' },
+    ],
+  },
+];
+
 // Pick an exercise for a given target domain. Objective domains get their
 // matching family; reflective domains get a reflection prompt. `seen` lets the
 // caller rotate variety (avoid repeating the last exercise).
@@ -1217,10 +1285,13 @@ export function pickExercise(targetDomain, opts = {}) {
     case 'emotion_regulation':
       // Prefer the validated performance measure (STEM); fall back to reflection.
       return notSeen(STEM.concat(REFLECTIONS.filter((r) => r.domain === targetDomain)));
+    case 'communication':
+      // Keyless communication SJT first (so the AI-Readiness communication pillar
+      // isn't self-report only), then reflection.
+      return notSeen(COMM.concat(REFLECTIONS.filter((r) => r.domain === targetDomain)));
     case 'persistence':
     case 'ai_autonomy':
     case 'presence':
-    case 'communication':
     case 'values':
       return notSeen(REFLECTIONS.filter((r) => r.domain === targetDomain));
     case 'interior':
