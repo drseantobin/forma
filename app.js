@@ -378,14 +378,10 @@ async function renderBaselineResult() {
       <button class="btn ghost" id="talkbaseline" style="margin-bottom:10px;">💬 Talk through my profile with the coach →</button>
       <div class="card" id="researchconsent-card" style="text-align:left;">
         <div class="eyebrow" style="color:var(--green);">Help improve Forma — optional</div>
-        <p class="muted small" style="margin-top:4px;">You can share <strong>anonymous</strong> results to help us learn what actually builds these capacities. It changes nothing about how Forma works for you.</p>
-        <ul class="muted small" style="margin:8px 0 10px; padding-left:18px;">
-          <li><strong>Shared if you opt in:</strong> your capacity scores and which answer you picked, dated only to the day — never tied to you.</li>
-          <li><strong>Never shared:</strong> your name, any contact info, anything you type, and anything from the Interior Life track.</li>
-        </ul>
+        <p class="muted small" style="margin-top:4px;">Share your <strong>anonymous</strong> results so we can learn what actually helps people grow. It changes nothing about your experience — and never includes your name, anything you write, or your Interior Life. Just anonymous scores.</p>
         <label class="consent-row" for="researchconsent">
           <input type="checkbox" id="researchconsent" />
-          <span>Yes, share my anonymous results to improve Forma</span>
+          <span>Share my anonymous results to help improve Forma</span>
         </label>
         <div id="research-demo" hidden style="margin-top:12px;">
           <p class="muted small" style="margin-bottom:6px;">A few optional, anonymous details help us see what builds these capacities for different people. Leave any blank — every one is optional, and coarse on purpose so it can't identify you.</p>
@@ -1551,16 +1547,23 @@ function renderSentence() {
   app.innerHTML = `
     <div class="fade-in">
       ${sessionHeader(ex)}
-      <p class="muted small">Finish each sentence honestly — the first true thing, not the polished one. No wrong answers; this stays on your device.</p>
+      <p class="muted small">Finish each sentence honestly — the first true thing, not the polished one. No wrong answers.</p>
       ${ex.stems.map((st, i) => `
         <div class="card" style="padding:14px;">
           <div class="likert-q" style="font-size:1rem;">${esc(st)} …</div>
-          <input class="reflect-area sentinput" data-i="${i}" style="min-height:auto; height:auto; padding:10px; font-size:1rem;" value="${esc(s.response.completions[i])}" placeholder="…" />
+          <div class="microw">
+            <input class="reflect-area sentinput" data-i="${i}" style="min-height:auto; height:auto; padding:10px; font-size:1rem;" value="${esc(s.response.completions[i])}" placeholder="…" />
+            <button class="btn ghost mic-inline amber" data-mic="${i}" aria-label="Dictate this answer by voice">🎤</button>
+          </div>
         </div>`).join('')}
+      ${micPrivacyNote()}
       <button class="btn amber" id="sentdone">Done →</button>
       <p class="muted small center" id="senthint" style="margin-top:8px;"></p>
     </div>`;
-  app.querySelectorAll('.sentinput').forEach((el) => { el.oninput = () => { s.response.completions[Number(el.dataset.i)] = el.value; }; });
+  app.querySelectorAll('.sentinput').forEach((el) => {
+    el.oninput = () => { s.response.completions[Number(el.dataset.i)] = el.value; };
+    attachMicButton(app.querySelector(`[data-mic="${el.dataset.i}"]`), el);
+  });
   document.getElementById('sentdone').onclick = async () => {
     const done = s.response.completions.filter((c) => c.trim()).length;
     if (done < Math.ceil(ex.stems.length / 2)) {
@@ -1905,7 +1908,7 @@ function renderContemplationReflect() {
 
       <p class="likert-q" style="font-size:1.05rem; margin-top:14px;">Where did your mind go? What was it like — and did anything pull you out?</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
-        <textarea class="reflect-area" id="cnote" placeholder="A few honest words. Type or speak. Typing stays on your device.">${esc(r.note || '')}</textarea>
+        <textarea class="reflect-area" id="cnote" placeholder="A few honest words. Type or speak.">${esc(r.note || '')}</textarea>
         <button class="btn amber" id="cnotemic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
       </div>
       ${micPrivacyNote()}
@@ -1947,7 +1950,7 @@ function renderReflection() {
       ${sessionHeader(ex)}
       <p class="likert-q" style="font-size:1.05rem;">${esc(ex.prompt)}</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
-        <textarea class="reflect-area" id="ref" placeholder="Write or speak a few honest sentences. Typing stays on your device.">${esc(s.response.text || '')}</textarea>
+        <textarea class="reflect-area" id="ref" placeholder="Write or speak a few honest sentences.">${esc(s.response.text || '')}</textarea>
         <button class="btn amber" id="refmic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
       </div>
       ${micPrivacyNote()}

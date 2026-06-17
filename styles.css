@@ -150,6 +150,10 @@ button { font-family: inherit; cursor: pointer; }
 .demo-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .demo-field { display:flex; flex-direction:column; gap:3px; font-size:.78rem; font-weight:700; color:var(--ink-faint); }
 .demo-field select { font:inherit; font-weight:500; color:var(--ink); padding:8px 10px; border:1.5px solid var(--line); border-radius:10px; background:var(--card); }
+/* Inline mic beside a short-answer input (e.g. sentence completion). */
+.microw { display:flex; align-items:flex-end; gap:8px; }
+.microw .sentinput { flex:1; }
+.mic-inline { width:auto; flex:none; padding:8px 12px; font-size:1rem; }
 @media (max-width:380px) { .demo-grid { grid-template-columns:1fr; } }
 
 .insight {
