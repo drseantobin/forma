@@ -49,6 +49,12 @@ export function updateStreak(streak, dateStr) {
   const s = streak || { current: 0, longest: 0, lastDate: null, heldOnce: false };
   if (s.lastDate === dateStr) return { ...s, graced: false };
   const gap = s.lastDate ? daysBetween(s.lastDate, dateStr) : null;
+  // A non-positive gap means a stale / out-of-order timestamp (device clock pushed
+  // back, multi-device sync, a travel/DST edge). Ignore it entirely: never let an
+  // OLDER date erase a healthy chain or move lastDate backward — daysBetween is
+  // signed, so without this the negative gap falls into the reset branch below and
+  // silently wipes a long streak (and corrupts every later calc) over a clock blip.
+  if (gap != null && gap <= 0) return { ...s, graced: false };
   let current = s.current || 0;
   let heldOnce = !!s.heldOnce;
   let graced = false;
