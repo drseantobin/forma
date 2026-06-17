@@ -1,7 +1,7 @@
 // app.js — Forma UI controller. Vanilla JS SPA, no build step.
 // Renders views into #app and persists everything locally via profile.js.
 
-import { DOMAINS, getDomain, bandFor, activeDomainIds } from './src/domains.js';
+import { DOMAINS, getDomain, bandFor, activeDomainIds, BANDS } from './src/domains.js';
 import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
 import { pickExercise, nextMathProblem, shuffledIndices } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
@@ -1859,6 +1859,8 @@ function renderPlan() {
 function renderTeam() {
   const cohort = Team.sampleCohort(8);
   const agg = Team.aggregate(cohort);
+  const hi = Team.teamHighlights(agg.perDomain, 3);
+  const tag = (e) => `<span class="airchip" style="margin:0;"><span class="airdot" style="background:${bandFor(e.score).color};"></span><span class="airnm">${esc(getDomain(e.id).name)}</span><span class="airsc">${e.score}</span></span>`;
   app.innerHTML = `
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">Team</h1><span class="spacer"></span>
@@ -1872,15 +1874,31 @@ function renderTeam() {
       </div>
 
       <div class="card">
-        <h2 style="font-size:1.05rem;">Capacity averages</h2>
-        <div class="domain-list">
+        <h2 style="font-size:1.05rem; margin-top:0;">Strengths & development priorities</h2>
+        <div class="eyebrow" style="margin-top:8px;">Team strengths</div>
+        <div class="airgrid">${hi.strengths.map(tag).join('')}</div>
+        <div class="eyebrow" style="margin-top:12px;">Where to invest</div>
+        <div class="airgrid">${hi.priorities.map(tag).join('')}</div>
+        <p class="muted small" style="margin-top:10px;">A development signal for where coaching and practice would move the team most — never a ranking of people.</p>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:1.05rem; margin-top:0;">Capacity spread</h2>
+        <p class="muted small">An average hides the spread. Each bar shows how the ${agg.n} sit across the bands — so you can see strength that's shared versus strength that's concentrated.</p>
+        <div class="domain-list" style="margin-top:8px;">
           ${DOMAIN_ORDER.map((id) => {
-            const sc = agg.perDomain[id]; const d = getDomain(id); const band = bandFor(sc);
+            const sc = agg.perDomain[id]; const d = getDomain(id);
+            const dist = Team.bandDistribution(cohort, id);
+            const segs = BANDS.map((b) => dist[b.key]
+              ? `<span class="distseg" title="${dist[b.key]} ${b.label}" style="flex:${dist[b.key]}; background:${b.color};"></span>` : '').join('');
             return `<div class="domain-row"><span class="ico">${d.icon}</span>
               <div class="meta"><div class="dn">${esc(d.name)}</div>
-              <div class="bar"><div style="width:${sc}%; background:${band.color}"></div></div></div>
+              <div class="distbar">${segs}</div></div>
               <span class="sc">${sc}</span></div>`;
           }).join('')}
+        </div>
+        <div class="distlegend">
+          ${BANDS.map((b) => `<span class="distkey"><span class="airdot" style="background:${b.color};"></span>${esc(b.label)}</span>`).join('')}
         </div>
       </div>
 

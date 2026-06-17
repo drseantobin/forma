@@ -5,7 +5,7 @@
 // Interior Life track. There is no backend yet, so the dashboard runs on a
 // deterministic sample cohort, clearly labeled as a preview.
 
-import { DOMAINS } from './domains.js';
+import { DOMAINS, bandFor, BANDS } from './domains.js';
 
 // The capacities an employer sees — the core ten, never the interior/faith track.
 const CORE = DOMAINS.map((d) => d.id);
@@ -50,4 +50,29 @@ export function aggregate(members) {
   const avgIndex = Math.round(CORE.reduce((a, id) => a + perDomain[id], 0) / CORE.length);
   const aiReadiness = aiReadinessOf(perDomain) || 0;
   return { n: members.length, avgIndex, perDomain, aiReadiness };
+}
+
+// How a team is SPREAD across the bands for one capacity — the signal an average
+// hides. Two teams can share an average of 60 while one is uniformly Strong and
+// the other is half Thriving, half Emerging. Returns counts keyed by band.
+export function bandDistribution(members, domainId) {
+  const counts = {};
+  BANDS.forEach((b) => { counts[b.key] = 0; });
+  (members || []).forEach((m) => {
+    const v = m.domainScores && m.domainScores[domainId];
+    if (v == null) return;
+    counts[bandFor(v).key] += 1;
+  });
+  return counts;
+}
+
+// A team's clearest strengths and development priorities, from per-domain averages
+// — the actionable takeaway an employer wants. Returns sorted [{id, score}] lists.
+export function teamHighlights(perDomain, n = 3) {
+  const entries = Object.keys(perDomain).map((id) => ({ id, score: perDomain[id] }));
+  const byScore = entries.slice().sort((a, b) => b.score - a.score);
+  return {
+    strengths: byScore.slice(0, n),
+    priorities: byScore.slice().reverse().slice(0, n),
+  };
 }

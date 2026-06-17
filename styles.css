@@ -170,6 +170,12 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- progress ---------- */
 .kbig { font-variant-numeric: tabular-nums; }
+/* Team capacity-spread distribution bar */
+.distbar { display:flex; height:10px; border-radius:999px; overflow:hidden; margin-top:5px; background:var(--line, #e6e4dd); gap:1px; }
+.distseg { display:block; min-width:2px; }
+.distlegend { display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; }
+.distkey { display:inline-flex; align-items:center; gap:5px; font-size:.72rem; color:var(--ink-faint); }
+
 /* AI-Readiness contributor chips */
 .airgrid { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
 .airchip {
