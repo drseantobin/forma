@@ -21,6 +21,7 @@ import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
 import * as Research from './src/research.js';
 import * as Contact from './src/contact.js';
+import * as Release from './src/release.js';
 import { PROVIDERS, providerFor, defaultModelFor } from './src/llm.js';
 import { summarizeResearch } from './src/analytics.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
@@ -2885,6 +2886,7 @@ function renderSettings() {
   const keyHint = { anthropic: 'sk-ant-…', openai: 'sk-…', gemini: 'AIza…', openrouter: 'sk-or-…' }[prov.id] || 'your API key';
   const res = p.research || {};
   const rsum = summarizeResearch(res.queue || []);
+  const rel = p.release || {};
   app.innerHTML = `
     <div class="fade-in">
       <h1>Settings</h1>
@@ -2991,6 +2993,26 @@ function renderSettings() {
       </div>
 
       <div class="card">
+        <div class="row"><span style="font-size:1.3rem;">🤝</span>
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Share results with an employer</h2>
+            <p class="muted small" style="margin:2px 0 0;">Optional. Org sharing isn’t built yet — opt in now and your authorization, plus a dated copy of your Capacity Snapshot, is stored <strong>only on this device</strong> and never sent anywhere, until it ships. It would release only your snapshot (capacity scores + confidence) — <strong>never</strong> your reflections, coach chats, or Interior Life.</p>
+            <p class="muted small" style="margin:6px 0 0;"><strong>This is entirely your choice.</strong> Forma never requires it, no one can turn it on for you, and sharing or not has no effect on your use of Forma.</p>
+          </div>
+        </div>
+        ${rel.consent ? `
+        <p class="muted small" style="margin-top:10px;">Authorized for <strong>${esc(rel.recipient)}</strong>${rel.snapshot && rel.snapshot.generated ? ` · snapshot dated ${esc(rel.snapshot.generated)}` : ''}. Withdrawing <strong>deletes</strong> this authorization and the stored copy.</p>
+        <button class="btn ghost sm" id="withdrawrelease" style="margin-top:8px;">Withdraw authorization</button>
+        ` : `
+        <div class="field" style="margin-top:10px;">
+          <label>Who are you authorizing?</label>
+          <input id="releaserecipient" type="text" maxlength="120" placeholder="e.g. Acme Corp / my manager" />
+        </div>
+        <button class="btn sm" id="optrelease" style="width:auto;">Authorize</button>
+        <p id="releaseerr" class="small" style="margin-top:8px; color:var(--red); display:none;"></p>
+        `}
+      </div>
+
+      <div class="card">
         <div class="row"><span style="font-size:1.3rem;">🔬</span>
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Anonymous research</h2>
             <p class="muted small" style="margin:2px 0 0;">${res.consent ? 'On — you’re sharing anonymous results to help improve Forma and ground its validity.' : 'Off — nothing is collected. You can help improve Forma by sharing de-identified results.'}</p></div>
@@ -3075,6 +3097,23 @@ function renderSettings() {
   };
   const withdrawC = document.getElementById('withdrawcontact');
   if (withdrawC) withdrawC.onclick = () => { state.profile = Contact.clearContact(p); save(); render(); };
+  // Release-of-information (employer): the individual's own choice. Authorize freezes
+  // a copy of the interior-excluded snapshot for a NAMED recipient; withdraw deletes it.
+  const optR = document.getElementById('optrelease');
+  if (optR) optR.onclick = () => {
+    const err = document.getElementById('releaseerr');
+    const recipient = (document.getElementById('releaserecipient').value || '').trim();
+    try {
+      state.profile = Release.setRelease(p, { recipient, snapshot: buildSnapshot(p) });
+      save(); render();
+      announce('Release authorized — stored on this device only.');
+    } catch (e) { if (err) { err.textContent = e.message; err.style.display = 'block'; } }
+  };
+  const wR = document.getElementById('withdrawrelease');
+  if (wR) wR.onclick = () => {
+    state.profile = Release.clearRelease(p); save(); render();
+    announce('Authorization withdrawn and deleted.');
+  };
   // Anonymous-research management: view what's shared + turn on / withdraw (which
   // deletes the queue). Re-renders directly, so announce + refocus (v157 pattern).
   const rt = document.getElementById('researchtoggle');

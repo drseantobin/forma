@@ -40,6 +40,10 @@ export function createProfile() {
     // CONTACT tier (identified, opt-in): an email for future reminders. SEPARATE
     // from research and deliberately NOT linkable to it — no installId here, ever.
     contact: { consent: false, email: '', consentedAt: null },
+    // RELEASE-OF-INFORMATION tier (identified, opt-in, the person's choice): authorize
+    // sharing the interior-excluded snapshot with a named third party. Default OFF;
+    // only the user can enable it. Also no installId — not linkable to research.
+    release: { consent: false, recipient: '', scope: 'snapshot', snapshot: null, consentedAt: null },
   };
 }
 
@@ -428,6 +432,14 @@ function migrate(p) {
   if (typeof p.contact.consent !== 'boolean') p.contact.consent = false;
   if (typeof p.contact.email !== 'string') p.contact.email = '';
   if (p.contact.consentedAt === undefined) p.contact.consentedAt = null;
+  // Release-of-information tier (identified) — coerce by type; default OFF. Also kept
+  // separate from research; never carries an installId.
+  p.release = obj(p.release);
+  if (typeof p.release.consent !== 'boolean') p.release.consent = false;
+  if (typeof p.release.recipient !== 'string') p.release.recipient = '';
+  if (typeof p.release.scope !== 'string') p.release.scope = 'snapshot';
+  if (p.release.snapshot === undefined) p.release.snapshot = null;
+  if (p.release.consentedAt === undefined) p.release.consentedAt = null;
   if (p.bandPeak != null && (typeof p.bandPeak !== 'object' || Array.isArray(p.bandPeak))) p.bandPeak = null;
   // Backfill the band high-water mark (added v98) for profiles saved BEFORE it
   // existed. Without this, a returning pre-v98 user who already reached a band
