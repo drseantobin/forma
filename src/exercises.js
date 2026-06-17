@@ -1612,7 +1612,7 @@ export const STEU_ITEMS = [
   },
   {
     id: 'steu-harm', type: 'steu', domain: 'emotion_regulation', title: 'Name the Feeling',
-    scenario: 'Priya did something that hurt a friend, and she knows it was her own doing — and against the kind of person she wants to be.',
+    scenario: 'Priya did something that hurt a friend, and she knows it was her own doing — she crossed a line she believes in.',
     prompt: 'What is she most likely to feel?',
     options: [
       { id: 'a', text: 'Guilt', score: 100, rationale: 'Harm one caused, judged against one’s own standards, is the appraisal for guilt — focused on the act ("I did a bad thing").' },
