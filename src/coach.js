@@ -41,7 +41,7 @@ Hard rules you never break:
 3. GROUND EVERYTHING IN THEIR DATA. You are given the person's actual scores, trends, and recent sessions. Refer to specifics. The whole value is that you see THEM, not a generic user.
 4. BE BRIEF AND CONCRETE. Coaches don't lecture. Two to five short paragraphs at most, usually less. End with one concrete, doable next step when it fits — never a bulleted list of platitudes.
 5. NEVER pretend to certainty you don't have. One session is noise; patterns are signal. Say so.
-6. ROLL WITH RESISTANCE; DON'T PUSH. If they doubt, dismiss, or decline a suggestion ("I've tried that," "that won't work," "I don't want to"), do NOT defend it or pile on another — reflect what they're telling you, get curious about it, and let them lead. Their reasons are data, not obstacles. And when they ask you a direct question ("what should I do?", "am I making progress?"), give an honest, grounded answer FIRST, then open it back up. Never deflect every question back with another question; that frustrates more than it helps.
+6. ROLL WITH RESISTANCE; DON'T PUSH. If they doubt, dismiss, or decline a suggestion ("I've tried that," "that won't work," "I don't want to"), do NOT defend it or pile on another — reflect what they're telling you, get curious about it, and let them lead. Their reasons are data, not obstacles. And if their frustration is with YOU or the app itself ("this is pointless," "you're not helping," "you don't get it"), that's discord, not resistance: name it plainly, take it as fair information, do NOT defend the app or problem-solve, and ask what would actually be useful right now. And when they ask you a direct question ("what should I do?", "am I making progress?"), give an honest, grounded answer FIRST, then open it back up. Never deflect every question back with another question; that frustrates more than it helps.
 7. WITNESS BEFORE SOLVING. Some messages ask for help; others just need to be heard. When someone is venting or naming a hard feeling and has NOT asked for help, reflect and stay with them first — do not reach for an exception question, a scale, or a next step in the same breath. Premature problem-solving reads as "you're not listening." Acknowledge fully, then earn the pivot: ask if they want to look at it, or simply what would help right now.
 
 Your method is SOLUTION-FOCUSED (in the tradition of solution-focused brief therapy):
@@ -425,6 +425,29 @@ export function offlineCoachReply(userText, profile) {
     return `Fair enough — if it didn't work or doesn't fit you, that's worth taking seriously, not arguing with. `
       + `I'd rather understand it than re-pitch it: what was it about that approach that missed for you? `
       + `Often the useful thing is hiding in why a suggestion doesn't land — what would have to be different for something to actually be worth your time?`;
+  }
+
+  // 2d) Discord — frustration aimed at the COACH or the app itself, not at a
+  // suggestion (2c handles that). In MI terms this is a rupture in the alliance,
+  // and it's the highest-stakes moment in the always-available offline mode: a
+  // skeptical user testing whether this is a real coach or just keyword-matching.
+  // Don't defend, don't problem-solve, don't mine it as a half-formed answer —
+  // name the rupture, take it as fair information, and hand control back. Must
+  // precede the struggle branch (3) and the short continuation default (4b), or a
+  // brief "this is dumb" mid-chat gets swallowed and answered as if it were content.
+  if (
+    /this is (stupid|dumb|pointless|useless|a waste|ridiculous|garbage|nonsense)/.test(t)
+    || /this (is ?n['’]?t|isnt|is not|ai ?n['’]?t) (helping|working)/.test(t)
+    || /waste of (my )?time/.test(t)
+    || /(you ?['’]?re|youre|you are) (useless|wrong|a robot|not helping|no help|the worst|pointless)/.test(t)
+    || /(that|it)( ?['’]?s| is) (really |just )?not helping/.test(t)
+    || /you (do ?n['’]?t|don['’]?t) (get|understand)/.test(t)
+    || /\b(hate (this|you|it)|leave me alone)\b/.test(t)
+    || /why am i (even )?(doing|talking|here|bothering)/.test(t)
+  ) {
+    return `That's fair — and I'd rather hear it than have you go quiet on me. `
+      + `I'm not going to talk you out of it: if this isn't landing, that's real information, not something to argue with. `
+      + `What would actually be useful right now — a different question, something off your chest, or nothing for a minute?`;
   }
 
   // 3) Struggle / hard feelings → WITNESS first, then offer to explore (SFBT/MI:
