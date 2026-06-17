@@ -41,6 +41,11 @@
     </div>
   </main>
 
+  <!-- Global assistive-tech announcer. Lives OUTSIDE #app (which app.js re-renders
+       wholesale on every view swap) so announce() survives those re-renders — used
+       to speak exercise correctness, results, and other transient outcomes. -->
+  <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
   <!-- Bottom navigation (hidden until onboarded) -->
   <nav id="tabbar" class="tabbar" aria-label="Primary" hidden>
     <button data-route="home" class="tab"><span class="tab-ico">🏠</span><span>Home</span></button>

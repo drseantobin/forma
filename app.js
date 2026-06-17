@@ -957,6 +957,27 @@ function renderMemory() {
   document.getElementById('done').onclick = completeSession;
 }
 
+// Speak a one-off message to assistive tech via the persistent #live region (which
+// lives OUTSIDE #app, so it survives the innerHTML re-render every view swap does).
+// Clearing first, then setting on a later tick, forces a screen reader to re-announce
+// even when the new text repeats a prior message.
+function announce(msg) {
+  const el = document.getElementById('live');
+  if (!el) return;
+  el.textContent = '';
+  setTimeout(() => { const e = document.getElementById('live'); if (e) e.textContent = msg; }, 30);
+}
+
+// A non-color correctness marker for a revealed answer option — a glyph (hidden from
+// AT, which gets the text twin) plus an .sr-only phrase. Correctness was conveyed by
+// red/green background ALONE: invisible to screen readers and to red-green color
+// blindness. The class string already encodes the state ('correct' / 'wrong').
+function revealMark(cls) {
+  if (/\bcorrect\b/.test(cls)) return ` <span class="mark correct" aria-hidden="true">✓</span><span class="sr-only"> (strong answer)</span>`;
+  if (/\bwrong\b/.test(cls)) return ` <span class="mark wrong" aria-hidden="true">✕</span><span class="sr-only"> (your answer — not the strongest)</span>`;
+  return '';
+}
+
 function renderDecision() {
   const s = state.session;
   const ex = s.exercise;
@@ -975,7 +996,7 @@ function renderDecision() {
             else if (o.score >= 80) cls = 'correct reveal';
             else cls = 'reveal';
           } else if (o.id === chosen) cls = 'selected';
-          return `<button class="opt ${cls}" data-id="${o.id}" aria-pressed="${!revealed && o.id === chosen}" ${revealed ? 'disabled' : ''}>${esc(o.text)}
+          return `<button class="opt ${cls}" data-id="${o.id}" aria-pressed="${!revealed && o.id === chosen}" ${revealed ? 'disabled' : ''}>${esc(o.text)}${revealed ? revealMark(cls) : ''}
             ${revealed ? `<div class="rationale">${esc(o.rationale)}</div>` : ''}</button>`;
         }).join('')}
       </div>
@@ -985,7 +1006,18 @@ function renderDecision() {
     </div>`;
   if (!revealed) {
     app.querySelectorAll('.opt').forEach((b) => b.onclick = () => { s.response.optionId = b.dataset.id; render(); });
-    document.getElementById('reveal').onclick = () => { s.revealed = true; render(); };
+    document.getElementById('reveal').onclick = () => {
+      s.revealed = true;
+      // Announce the outcome so an AT user hears it regardless of where focus lands
+      // after re-render. Decision items have no single "right" answer — strong vs.
+      // weaker — so frame it as such, not pass/fail.
+      const picked = ex.options.find((o) => o.id === s.response.optionId);
+      const best = ex.options.find((o) => o.score >= 80);
+      announce(picked && picked.score >= 80
+        ? `Strong choice. ${picked.rationale || ''}`
+        : `A workable choice, but not the strongest. ${best ? 'The strongest option was: ' + best.text : ''}`);
+      render();
+    };
   } else {
     document.getElementById('fin').onclick = completeSession;
   }
@@ -1012,7 +1044,7 @@ function renderCRT() {
             else if (o.id === chosen) cls = 'wrong';
             else cls = 'reveal';
           } else if (o.id === chosen) cls = 'selected';
-          return `<button class="opt ${cls}" data-id="${o.id}" aria-pressed="${!revealed && o.id === chosen}" ${revealed ? 'disabled' : ''}>${esc(o.text)}</button>`;
+          return `<button class="opt ${cls}" data-id="${o.id}" aria-pressed="${!revealed && o.id === chosen}" ${revealed ? 'disabled' : ''}>${esc(o.text)}${revealed ? revealMark(cls) : ''}</button>`;
         }).join('')}
       </div>
       ${revealed ? `
@@ -1025,7 +1057,14 @@ function renderCRT() {
     </div>`;
   if (!revealed) {
     app.querySelectorAll('.opt').forEach((b) => b.onclick = () => { s.response.optionId = b.dataset.id; render(); });
-    document.getElementById('reveal').onclick = () => { s.revealed = true; render(); };
+    document.getElementById('reveal').onclick = () => {
+      s.revealed = true;
+      const picked = ex.options.find((o) => o.id === s.response.optionId);
+      announce(picked && picked.kind === 'reflective'
+        ? `You overrode the lure. ${ex.explanation}`
+        : `That was the intuitive lure. ${ex.explanation}`);
+      render();
+    };
   } else {
     document.getElementById('fin').onclick = completeSession;
   }
@@ -1365,7 +1404,13 @@ function renderMatrix() {
           let cls = 'matopt';
           if (revealed) { if (i === ex.answer) cls += ' correct'; else if (i === chosen) cls += ' wrong'; }
           else if (i === chosen) cls += ' selected';
-          return `<button class="${cls}" data-i="${i}" aria-pressed="${!revealed && i === chosen}" aria-label="Pattern option ${o.n} ${o.fill ? 'filled' : 'outline'} ${o.shape}${o.n === 1 ? '' : 's'}" ${revealed ? 'disabled' : ''}>${matrixCell(o)}</button>`;
+          // Correctness twin: matrix buttons carry an aria-label (it overrides the
+          // SVG content for AT), so the right/wrong state must ride ON that label,
+          // and a glyph carries it for color-blind sighted users — the matopt
+          // background color was the only signal before.
+          const mark = revealed ? (i === ex.answer ? ', correct answer' : i === chosen ? ', your answer, not correct' : '') : '';
+          const glyph = revealed ? (i === ex.answer ? '<span class="mark correct" aria-hidden="true">✓</span>' : i === chosen ? '<span class="mark wrong" aria-hidden="true">✕</span>' : '') : '';
+          return `<button class="${cls}" data-i="${i}" aria-pressed="${!revealed && i === chosen}" aria-label="Pattern option ${o.n} ${o.fill ? 'filled' : 'outline'} ${o.shape}${o.n === 1 ? '' : 's'}${mark}" ${revealed ? 'disabled' : ''}>${matrixCell(o)}${glyph}</button>`;
         }).join('')}
       </div>
       ${revealed
@@ -1374,7 +1419,11 @@ function renderMatrix() {
     </div>`;
   if (!revealed) {
     app.querySelectorAll('.matopt').forEach((b) => b.onclick = () => { s.response.optionId = Number(b.dataset.i); render(); });
-    document.getElementById('reveal').onclick = () => { s.revealed = true; render(); };
+    document.getElementById('reveal').onclick = () => {
+      s.revealed = true;
+      announce(chosen === ex.answer ? `Correct. ${ex.explanation}` : `Not quite. ${ex.explanation}`);
+      render();
+    };
   } else {
     document.getElementById('fin').onclick = completeSession;
   }

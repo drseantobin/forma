@@ -317,6 +317,14 @@ button { font-family: inherit; cursor: pointer; }
 .matopt.selected { border-color:var(--accent); background:var(--accent-soft); }
 .matopt.correct { border-color:var(--green); background:var(--green-soft); }
 .matopt.wrong { border-color:var(--red); background:#f9e7e6; }
+/* Non-color correctness glyph on a revealed answer (✓/✕). The background tint was
+   the ONLY right/wrong signal — useless to red-green color blindness. The glyph is a
+   redundant, shape-based twin; on matrix cells it sits in the corner over the SVG. */
+.mark { font-weight:800; }
+.mark.correct { color: var(--green-ink); }
+.mark.wrong { color: var(--red-ink); }
+.matopt { position:relative; }
+.matopt .mark { position:absolute; top:4px; right:8px; font-size:1rem; }
 
 /* maze/cloze inline word-choice select */
 .mazesel { font: inherit; font-weight: 700; color: var(--accent); border: 1.5px solid var(--line); border-radius: 8px; padding: 2px 6px; margin: 0 3px; background: var(--accent-soft); min-height: 36px; }
