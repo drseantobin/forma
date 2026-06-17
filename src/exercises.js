@@ -1184,17 +1184,23 @@ export function makeDigitSpan(level = 1, rng = Math.random) {
 // intervals; press the instant you see it. Real-time reaction + lapses +
 // false-starts = a genuine sustained-attention measure, not self-report.
 export function makeVigilanceExercise(level = 1) {
-  const trials = Math.min(12, 7 + level);
-  const faint = Math.max(0.32, 0.62 - level * 0.06); // higher level → fainter dot
+  // Psychomotor Vigilance Task (PVT; Dinges & Powell, 1985) — the validated standard
+  // for sustained attention. A clearly-visible target appears after a random wait and
+  // you respond as fast as you can; the measure is reaction time + lapses (RT>500ms) +
+  // false starts. NOT detecting a faint dot — that confounds visual sensitivity with
+  // vigilance (and made a fast responder score mid). Trial count is extendable so a
+  // longer run probes sustained attention over time.
+  const ladder = [10, 20, 30];
+  const trials = ladder[Math.min(ladder.length - 1, Math.max(0, (level || 1) - 1))];
   return {
     id: `vigilance-${Date.now()}`,
     type: 'vigilance',
     domain: 'attention',
-    title: 'Catch the Signal',
+    title: 'Reaction & Vigilance',
     trials,
-    faint,
-    isiMin: 1500, // ms — minimum wait before the dot appears
-    isiMax: 4500, // ms — maximum wait (the unpredictability is the point)
+    trialLadder: ladder,
+    isiMin: 1500, // ms — minimum random wait before the target appears
+    isiMax: 6000, // ms — maximum wait; the unpredictability is what makes it a vigilance demand
   };
 }
 

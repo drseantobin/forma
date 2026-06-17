@@ -1251,26 +1251,38 @@ function renderVigilance() {
   const s = state.session;
   const ex = s.exercise;
   if (s.phase === 'vigilance-intro') {
+    const ladder = ex.trialLadder || [ex.trials];
+    const chosen = s.chosenTrials || ex.trials;
     app.innerHTML = `
       <div class="fade-in">
         ${sessionHeader(ex)}
         <div class="card">
-          <p>Watch the dark panel. At random moments a <strong>faint dot</strong> will appear — tap the panel the <strong>instant</strong> you see it.</p>
-          <p class="muted small">Don’t tap before it appears. There are ${ex.trials} signals, spaced unpredictably. This measures how steadily you hold attention and how fast you respond.</p>
+          <p>A bright dot will appear at random moments, in random spots — tap the panel (or press Space) the <strong>instant</strong> you see it. Don’t tap before it appears.</p>
+          <p class="muted small">This is a <strong>measure, not a drill</strong> — a reaction-time vigilance test (the Psychomotor Vigilance Task, the standard used in attention and fatigue research). It reads your speed, your consistency, and the lapses you don’t notice.</p>
+          <p class="muted small" style="margin-top:10px;">How many signals? A longer run is a truer read on <em>sustained</em> attention — build up over time.</p>
+          <div class="row" style="gap:8px; flex-wrap:wrap;">
+            ${ladder.map((n) => `<button class="chip${chosen === n ? ' sel' : ''}" data-trials="${n}" aria-pressed="${chosen === n}">${n} signals</button>`).join('')}
+          </div>
         </div>
         <button class="btn amber" id="begin">Begin</button>
       </div>`;
-    document.getElementById('begin').onclick = () => { s.phase = 'vigilance-run'; s.response.trials = []; s.trialIndex = 0; s._started = false; render(); };
+    app.querySelectorAll('[data-trials]').forEach((b) => b.onclick = () => { s.chosenTrials = Number(b.dataset.trials); render(); });
+    document.getElementById('begin').onclick = () => {
+      ex.trials = s.chosenTrials || ex.trials; // honor the chosen length for this run
+      s.phase = 'vigilance-run'; s.response.trials = []; s.trialIndex = 0; s._started = false; render();
+    };
     return;
   }
   // run — build the stage once; the trial loop manipulates the DOM directly so
-  // re-renders don't restart it.
+  // re-renders don't restart it. The target is CLEARLY visible (no faintness
+  // confound); difficulty is the unpredictable wait + the duration, and it appears
+  // at a random position and size each trial so it can't be anticipated spatially.
   app.innerHTML = `
     <div class="fade-in">
       <p class="muted small center" id="vcount">Signal 1 of ${ex.trials}</p>
-      <div id="vstage" tabindex="0" role="button" aria-label="Respond the moment the dot appears — tap or press Space" style="height:300px; border-radius:18px; background:#0e1018; display:grid; place-items:center; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;">
-        <div id="vmsg" style="color:#9aa0b4; font-size:1.05rem;">watch…</div>
-        <div id="vdot" style="display:none; width:48px; height:48px; border-radius:50%; background:#ffffff; opacity:${ex.faint}; box-shadow:0 0 24px rgba(255,255,255,.5);"></div>
+      <div id="vstage" tabindex="0" role="button" aria-label="Respond the moment the dot appears — tap or press Space" style="position:relative; height:320px; border-radius:18px; background:#0e1018; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; overflow:hidden;">
+        <div id="vmsg" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#3a4055; font-size:1.5rem;">+</div>
+        <div id="vdot" style="display:none; position:absolute; width:48px; height:48px; border-radius:50%; background:#ffffff; box-shadow:0 0 26px rgba(255,255,255,.65);"></div>
       </div>
       <p class="muted small center" style="margin-top:10px;">Tap — or press Space — the moment the dot appears, not before.</p>
     </div>`;
@@ -1288,14 +1300,22 @@ function renderVigilance() {
     count.textContent = `Signal ${s.trialIndex + 1} of ${ex.trials}`;
     s.stage = 'waiting';
     dot.style.display = 'none';
-    msg.style.display = 'block';
-    msg.textContent = 'watch…';
+    msg.style.display = 'block'; // a neutral fixation '+', not the word "watch"
+    msg.textContent = '+';
     const isi = ex.isiMin + Math.random() * (ex.isiMax - ex.isiMin);
     s._timer = setTimeout(() => {
       if (aborted()) { clearT(); return; }
       s.stage = 'signal';
       s.signalAt = performance.now();
       msg.style.display = 'none';
+      // Random size + position each trial (clearly visible — opacity is full).
+      const size = 34 + Math.round(Math.random() * 42); // 34–76px
+      const w = stage.clientWidth || 320; const h = stage.clientHeight || 320;
+      const left = Math.round(Math.random() * Math.max(0, w - size));
+      const top = Math.round(Math.random() * Math.max(0, h - size));
+      dot.style.width = dot.style.height = size + 'px';
+      dot.style.left = left + 'px';
+      dot.style.top = top + 'px';
       dot.style.display = 'block';
       s._timer = setTimeout(() => { // no response in time → miss
         if (aborted()) { clearT(); return; }
