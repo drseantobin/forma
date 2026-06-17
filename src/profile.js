@@ -332,6 +332,22 @@ function migrate(p) {
   p.goals = p.goals || [];
   p.coachLog = p.coachLog || [];
   p.streak = p.streak || { current: 0, longest: 0, lastDate: null };
+  // Backfill the band high-water mark (added v98) for profiles saved BEFORE it
+  // existed. Without this, a returning pre-v98 user who already reached a band
+  // (then drifted down via the EMA) gets a false "you've reached X" re-celebration
+  // the first time the scale wobbles back over that boundary — the exact hollow
+  // re-fire the latch was built to prevent. Fully reconstructable: history stores
+  // {domain, newDomainScore} for every measured session. Idempotent (only when
+  // absent); domains with baseline-only / no history fall back to bandIndex(prev)
+  // in applySession, matching post-v98 behavior.
+  if (!p.bandPeak) {
+    p.bandPeak = {};
+    for (const h of p.history) {
+      if (h.newDomainScore == null) continue;
+      const b = bandIndex(h.newDomainScore);
+      if (b > (p.bandPeak[h.domain] ?? -1)) p.bandPeak[h.domain] = b;
+    }
+  }
   return p;
 }
 
