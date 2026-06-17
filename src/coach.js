@@ -442,6 +442,23 @@ export function offlineCoachReply(userText, profile) {
       + `If you wanted one more day like that this week, what's the smallest thing you'd repeat on purpose?`;
   }
 
+  // 4b) A short, generic CONTINUATION of an ongoing conversation. The offline coach
+  // is otherwise stateless, so a bare "yes" / "ok" / "not really" would fall to the
+  // default below and RE-ASK — reading as "not listening." Only fires when we're
+  // genuinely mid-conversation (a prior coach turn exists in coachLog) and the reply
+  // matched none of the richer branches above (named-domain, work-on, I-don't-know,
+  // pushback, struggle, win). Carry the thread forward; no API, no echoing prior text.
+  const lastCoach = (profile.coachLog || []).slice().reverse().find((m) => m && m.role === 'assistant');
+  if (lastCoach && t.length <= 24) {
+    if (/^(yes|yeah|yep|sure|ok|okay|i think so|kind of|sort of|exactly|right|true|it did|i did)\b/.test(t)) {
+      return `Good — stay with that. What did it look like, concretely, the last time it happened?`;
+    }
+    if (/^(no|nope|not really|don'?t think so|it didn'?t|i didn'?t)\b/.test(t)) {
+      return `Fair enough. What would have to be different for it to feel even a little possible?`;
+    }
+    return `Say a bit more — even a rough, half-formed answer is the useful part. What's underneath it?`;
+  }
+
   // 5) Open commitment? Follow up on it — solution-focused work is built on the
   // small next steps a person chose for themselves, so a check-in beats a generic
   // prompt. (Ties the commitments a person sets on Home back into the coaching.)
