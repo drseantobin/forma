@@ -765,15 +765,15 @@ function radarCard(scores) {
     return `<text x="${a.labelX}" y="${a.labelY + 4}" font-size="13" text-anchor="${anchor}" fill="var(--ink-faint)">${d.icon}</text>`;
   }).join('');
 
-  const ariaSummary = order.map((id) => `${getDomain(id).name} ${scores[id] ?? 0}`).join(', ');
+  const ariaSummary = order.map((id) => `${getDomain(id).name} ${scores[id] ?? 0}, ${bandFor(scores[id] ?? 0).label}`).join('; ');
   return `
     <div class="card">
       <h2 style="font-size:1.05rem;">Your formation profile</h2>
       <div class="radarwrap">
         <svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:320px;" role="img" aria-label="Your formation profile, out of 100: ${esc(ariaSummary)}">
           ${rings}${axes}
-          <polygon points="${geo.points}" fill="rgba(76,95,213,.18)" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
-          ${geo.axes.map((a) => `<circle cx="${a.x}" cy="${a.y}" r="3" fill="var(--accent)"/>`).join('')}
+          <polygon points="${geo.points}" fill="rgba(76,95,213,.14)" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+          ${geo.axes.map((a) => `<circle cx="${a.x}" cy="${a.y}" r="4.5" fill="${bandFor(scores[a.id] ?? 0).color}" stroke="#fff" stroke-width="1.5"/>`).join('')}
           ${labels}
         </svg>
       </div>
