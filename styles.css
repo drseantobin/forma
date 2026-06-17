@@ -139,6 +139,9 @@ button { font-family: inherit; cursor: pointer; }
   border-radius:999px; padding:6px 14px; font-weight:700; font-size:.9rem; margin-top:10px;
 }
 .streakchip.cold { background: var(--line); color: var(--ink-faint); }
+/* A streak that has never started yet (brand-new user) — invite, don't scold.
+   Warm growth-green, not the grey "cold/relight it" branch a lapse would get. */
+.streakchip.fresh { background: var(--green-soft); color: var(--green-ink); }
 
 .insight {
   background: linear-gradient(180deg, #fff, #fbfaf7); border:1px solid var(--line);

@@ -534,6 +534,9 @@ function renderHome() {
   const p = state.profile;
   const fi = formationIndex(p.domainScores);
   const alive = streakAlive(p.streak);
+  // A brand-new user (baseline done, no session yet) has never started a streak.
+  // "Relight it" presupposes a flame they never lit — invite instead of scolding.
+  const neverStarted = !(p.streak && p.streak.lastDate);
   const focus = Planner.focusForToday(p) || recommendFocus(p);
   const fd = getDomain(focus);
   const doneToday = (p.sessions || []).some((s) => s.date === todayStr());
@@ -559,7 +562,7 @@ function renderHome() {
           const ic = indexConfidence(p);
           return ic.thin ? `<div class="muted small" style="margin-top:4px;">${esc(ic.note)}</div>` : '';
         })()}
-        <div class="streakchip ${alive ? '' : 'cold'}">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}-day streak${alive ? (() => {
+        <div class="streakchip ${alive ? '' : neverStarted ? 'fresh' : 'cold'}">${alive ? '🔥' : neverStarted ? '✨' : '🕯️'} ${neverStarted ? 'Your first session starts your streak' : `${p.streak.current || 0}-day streak${alive ? (() => {
           // Honest forward-pull: the true number of days to the next real mark.
           // Only when the streak is alive (don't compete with the warmer "relight
           // it" copy) and a mark is still ahead (silent past 365). No fake urgency.
@@ -567,7 +570,7 @@ function renderHome() {
           if (!nm) return '';
           const left = nm - (p.streak.current || 0);
           return ` · ${left} ${left === 1 ? 'day' : 'days'} to ${nm}`;
-        })() : ' — relight it'}</div>
+        })() : ' — relight it'}`}</div>
       </div>
 
       ${welcomeBackCard(p)}
@@ -788,12 +791,13 @@ function renderTodayLanding() {
   const doneToday = (p.sessions || []).some((s) => s.date === todayStr());
   const planDay = p.plan && p.plan.days.find((d) => d.date === todayStr());
   const alive = streakAlive(p.streak);
+  const neverStarted = !(p.streak && p.streak.lastDate); // brand-new: never lit a streak
   const last = p._lastInsight;
 
   app.innerHTML = `
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">Today</h1><span class="spacer"></span>
-        <span class="streakchip ${alive ? '' : 'cold'}" style="margin:0;">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}</span></div>
+        <span class="streakchip ${alive ? '' : neverStarted ? 'fresh' : 'cold'}" style="margin:0;">${alive ? '🔥' : neverStarted ? '✨' : '🕯️'} ${neverStarted ? 'Day 1 awaits' : (p.streak.current || 0)}</span></div>
 
       ${doneToday ? `
         <div class="card" style="text-align:center;">
