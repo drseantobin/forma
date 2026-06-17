@@ -4,7 +4,7 @@
 // SHELL must list EVERY src/*.js module — otherwise a freshly-installed user who
 // goes offline before that module is fetched at runtime hits a broken dynamic
 // import. Keep in sync with src/; the deploy step diffs SHELL against src/*.js.
-const CACHE = 'forma-v146';
+const CACHE = 'forma-v147';
 const SHELL = [
   './',
   './index.html',
@@ -34,6 +34,7 @@ const SHELL = [
   './src/snapshot.js',
   './src/research.js',
   './src/contact.js',
+  './src/llm.js',
 ];
 
 self.addEventListener('install', (e) => {
@@ -56,8 +57,10 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
-  // Never cache calls to the Claude API (coaching) — always go to network.
-  if (req.url.includes('api.anthropic.com')) return;
+  // Never cache live coaching API calls — always go to network. Covers every
+  // bring-your-own-key provider (kept in sync with src/llm.js PROVIDERS hosts).
+  const NO_CACHE_HOSTS = ['api.anthropic.com', 'api.openai.com', 'generativelanguage.googleapis.com', 'openrouter.ai', 'localhost', '127.0.0.1'];
+  if (NO_CACHE_HOSTS.some((h) => req.url.includes(h))) return;
 
   // Network-first for EVERYTHING: always fetch the latest when online, refresh
   // the cache, and fall back to cache only when offline. This guarantees a

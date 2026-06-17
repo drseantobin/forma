@@ -21,10 +21,9 @@ import {
   weeklyPatterns,
 } from './insights.js';
 import { domainTrend } from './progress.js';
+import { providerFor } from './llm.js';
 
 export const DEFAULT_MODEL = 'claude-opus-4-8';
-const API_URL = 'https://api.anthropic.com/v1/messages';
-const ANTHROPIC_VERSION = '2023-06-01';
 
 // Derive the capacity list from DOMAINS so the coach's mental model can never
 // drift out of sync with the measures the app actually offers (it used to list
@@ -123,9 +122,7 @@ export async function sessionOpener(profile, ctx = {}) {
   parts.push(`Their fuller picture:\n${profileSummary(profile)}`);
   parts.push('Write your FIRST message to them: 2-4 short sentences. Reflect back something specific and true about what just happened for them, connect it to them as a person, and end with one open, inviting question that helps them process it. Solution-focused in spirit — curious about what worked, where this lives in their real life — but grounded in THIS exact moment, not a formula. No preamble, no "great job," no recap of the numbers.');
   try {
-    const text = await callClaude({
-      apiKey: profile.settings.apiKey,
-      model: model(profile),
+    const text = await callLLM(profile, {
       system: FORMA_SYSTEM,
       maxTokens: 350,
       messages: [{ role: 'user', content: parts.join('\n\n') }],
@@ -139,14 +136,14 @@ export async function sessionOpener(profile, ctx = {}) {
 // Turn a raw Anthropic API error into a plain-language explanation.
 export function friendlyApiError(msg) {
   const m = String(msg || '');
-  if (/credit balance is too low/i.test(m)) {
-    return 'Your Anthropic API account is out of credit. Note: this is separate from a Claude Max or Pro subscription — those don’t fund API calls. Add pay-as-you-go credit at console.anthropic.com → Billing.';
+  if (/credit balance is too low|insufficient_quota|exceeded your current quota|billing/i.test(m)) {
+    return 'Your API account is out of credit/quota. (For Claude, note that’s separate from a Pro/Max subscription — those don’t fund API calls.) Add pay-as-you-go credit in your provider’s billing console.';
   }
-  if (/authentication|invalid x-api-key|\b401\b/i.test(m)) {
-    return 'That API key wasn’t accepted. Double-check you copied the whole key (starts with sk-ant-) from console.anthropic.com.';
+  if (/authentication|invalid x-api-key|invalid api key|\b401\b|\b403\b/i.test(m)) {
+    return 'That API key wasn’t accepted. Double-check you copied the whole key from your provider’s console, and that it matches the provider selected in Settings.';
   }
-  if (/model/i.test(m) && /(not found|does not exist|invalid|unknown)/i.test(m)) {
-    return 'That model isn’t available on your account. Try Sonnet or Haiku in the Model dropdown.';
+  if (/model/i.test(m) && /(not found|does not exist|invalid|unknown|unsupported)/i.test(m)) {
+    return 'That model isn’t available on your account for the selected provider. Pick a different model in Settings.';
   }
   if (/rate limit|\b429\b/i.test(m)) {
     return 'Rate limit reached — wait a moment and try again.';
@@ -191,34 +188,28 @@ export function profileSummary(profile) {
   return lines.join('\n');
 }
 
-// Low-level call to Claude, directly from the browser.
-async function callClaude({ apiKey, model, system, messages, maxTokens = 1024 }) {
-  const res = await fetch(API_URL, {
+// The single network call for ALL live coaching — directly from the browser, with
+// the user's own key, to whichever provider they chose (Claude by default). This is
+// the ONLY place provider differences live: it resolves provider/key/model from the
+// profile, then hands PRIMITIVES to a pure adapter (llm.js) for request-shaping and
+// response-parsing. Everything above it — the system prompt, the interior/faith
+// scrub (profileSummary), the crisis gate — stays provider-agnostic, so no provider
+// can bypass a guardrail. Adapters never receive the profile.
+async function callLLM(profile, { system, messages, maxTokens = 1024 }) {
+  const p = providerFor(profile.settings?.provider);
+  const key = (profile.settings?.apiKey || '').trim();
+  const mdl = profile.settings?.model || p.defaultModel;
+  const res = await fetch(p.endpoint(mdl, key), {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': ANTHROPIC_VERSION,
-      // Opt-in flag that allows calling the API from a browser. The user has
-      // explicitly entered their own key; nothing is proxied through us.
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({ model, max_tokens: maxTokens, system, messages }),
+    headers: p.headers(key),
+    body: JSON.stringify(p.buildBody({ model: mdl, system, messages, maxTokens })),
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    throw new Error(`Claude API ${res.status}: ${body.slice(0, 300)}`);
+    throw new Error(`${p.label} API ${res.status}: ${body.slice(0, 300)}`);
   }
   const data = await res.json();
-  return (data.content || [])
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('')
-    .trim();
-}
-
-function model(profile) {
-  return profile.settings?.model || DEFAULT_MODEL;
+  return p.parseResponse(data);
 }
 
 // --- Interpretive feedback on the baseline (onboarding) ---
@@ -226,9 +217,7 @@ export async function interpretBaseline(profile) {
   const offline = ruleInterpretBaseline(profile.baseline.domainScores, profile.settings?.name);
   if (!hasKey(profile)) return { text: offline, live: false };
   try {
-    const text = await callClaude({
-      apiKey: profile.settings.apiKey,
-      model: model(profile),
+    const text = await callLLM(profile, {
       system: FORMA_SYSTEM,
       maxTokens: 900,
       messages: [
@@ -255,9 +244,7 @@ export async function dailyInsight(session, profile) {
   // dailyInsight emits directly.)
   if (session.domain === 'interior') return { text: offline, live: false };
   try {
-    const text = await callClaude({
-      apiKey: profile.settings.apiKey,
-      model: model(profile),
+    const text = await callLLM(profile, {
       system: FORMA_SYSTEM,
       maxTokens: 400,
       messages: [
@@ -327,9 +314,7 @@ export async function coachReply(userText, profile) {
   }
   try {
     const messages = buildCoachMessages(profile.coachLog, userText);
-    const text = await callClaude({
-      apiKey: profile.settings.apiKey,
-      model: model(profile),
+    const text = await callLLM(profile, {
       system: `${FORMA_SYSTEM}\n\n--- THE PERSON YOU ARE COACHING ---\n${profileSummary(profile)}`,
       maxTokens: 1024,
       messages,
@@ -339,7 +324,7 @@ export async function coachReply(userText, profile) {
     // Surface the plain-language reason (not the raw body) so the person can
     // actually fix it — e.g. the API-billing-vs-Max case.
     return {
-      text: `Live coaching couldn't reach Claude: ${friendlyApiError(e.message)}\n\nIn the meantime, here's what Forma sees in your own data:\n\n${offlineCoachReply(userText, profile)}`,
+      text: `Live coaching couldn't reach your AI provider: ${friendlyApiError(e.message)}\n\nIn the meantime, here's what Forma sees in your own data:\n\n${offlineCoachReply(userText, profile)}`,
       live: false,
       error: e.message,
     };
@@ -566,13 +551,7 @@ export async function scoreSentences(stems, completions, profile) {
 // Generic completion helper so other modules (e.g. the Diagnostic Agent) can
 // reuse the same browser-direct Claude plumbing and the user's key/model.
 export async function complete(profile, { system, messages, maxTokens = 1024 }) {
-  return callClaude({
-    apiKey: profile.settings.apiKey,
-    model: model(profile),
-    system,
-    messages,
-    maxTokens,
-  });
+  return callLLM(profile, { system, messages, maxTokens });
 }
 
 export { weeklyPatterns };

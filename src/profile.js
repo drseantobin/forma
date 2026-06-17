@@ -22,7 +22,7 @@ export function createProfile() {
   return {
     version: VERSION,
     createdAt: new Date().toISOString(),
-    settings: { apiKey: '', model: 'claude-opus-4-8', name: '', faithTrack: false },
+    settings: { provider: 'anthropic', apiKey: '', model: 'claude-opus-4-8', name: '', faithTrack: false },
     baseline: null, // { date, domainScores, responses }
     domainScores: {}, // current EMA scale per domain (0..100)
     sessions: [], // raw daily-loop results
@@ -366,6 +366,7 @@ function migrate(p) {
   const obj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
   p.settings = obj(p.settings);
   if (p.settings.apiKey == null) p.settings.apiKey = '';
+  if (p.settings.provider == null) p.settings.provider = 'anthropic';
   if (p.settings.model == null) p.settings.model = 'claude-opus-4-8';
   if (p.settings.name == null) p.settings.name = '';
   if (p.settings.faithTrack == null) p.settings.faithTrack = false;
