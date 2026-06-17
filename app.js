@@ -2494,7 +2494,7 @@ function renderCoach() {
     p.coachLog.push({ role: 'user', content: text, ts: Date.now() });
     p.coachLog.push({ role: 'assistant', content: reply.text, ts: Date.now() });
     save();
-    appendBubble({ role: 'assistant', content: reply.text });
+    appendBubble({ role: 'assistant', content: reply.text, assertive: !!reply.escalated });
     if (document.getElementById('ci')) document.getElementById('ci').focus();
   };
   sendBtn.onclick = send;
@@ -2504,11 +2504,16 @@ function renderCoach() {
 function bubble(m) {
   return `<div class="bubble ${m.role === 'user' ? 'me' : 'coach'}">${esc(m.content)}</div>`;
 }
-function appendBubble({ role, content, typing }) {
+function appendBubble({ role, content, typing, assertive }) {
   const chat = document.getElementById('chat');
   if (!chat) return null; // user navigated away while a reply was in flight
   const div = document.createElement('div');
   div.className = `bubble ${role === 'user' ? 'me' : 'coach'}${typing ? ' typing' : ''}`;
+  // A crisis escalation is the most time-critical message in the app. The chat
+  // log is aria-live="polite", which QUEUES the 988/emergency pointer behind
+  // whatever a screen reader is already reading. role="alert" (assertive) makes
+  // it interrupt and be spoken first — for a user in genuine distress.
+  if (assertive) { div.setAttribute('role', 'alert'); div.setAttribute('aria-live', 'assertive'); }
   div.textContent = content;
   chat.appendChild(div);
   div.scrollIntoView({ behavior: 'smooth', block: 'end' });
