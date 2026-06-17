@@ -1,4 +1,5 @@
-// domains.js — the eight formation domains Forma measures and trains.
+// domains.js — the core formation domains Forma measures and trains (ten, plus
+// an optional Interior Life track).
 //
 // These are the capacities named in the Forma working document: the distinctly
 // human faculties that become MORE valuable as AI does more of the cognitive
@@ -123,7 +124,7 @@ export const DOMAINS = [
 
 // The optional, opt-in Interior Life / Spiritual Formation domain. Kept OUT of
 // the core DOMAINS array so that, with the faith track off, every iteration over
-// the core eight is unchanged. Grounded in the DSES / Fetzer BMMRS lineage
+// the core set is unchanged. Grounded in the DSES / Fetzer BMMRS lineage
 // (see docs/measurement-architecture.md). Never shown to employers.
 export const INTERIOR_DOMAIN = {
   id: 'interior',

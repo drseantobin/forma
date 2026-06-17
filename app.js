@@ -459,7 +459,7 @@ async function finishConversation() {
   }
   if (!scored) {
     d.busy = false;
-    d.error = "I had trouble turning that into a profile. Let's try the quick check — it'll get you the same eight scales.";
+    d.error = "I had trouble turning that into a profile. Let's try the quick check — it builds the same profile, just a different way.";
     state.onboard.mode = null;
     state.onboard.step = 1;
     render();

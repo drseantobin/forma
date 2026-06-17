@@ -1129,6 +1129,22 @@ export const SENTENCES = [
     id: 'sent-interior', type: 'sentence', domain: 'values', title: 'Finish the Thought',
     stems: ['I feel free when', 'The thing I am quietly proud of is', 'What I am afraid to lose is', 'I know I am off-track when', 'What I most need to forgive is'],
   },
+  {
+    id: 'sent-relationships', type: 'sentence', domain: 'values', title: 'Finish the Thought',
+    stems: ['The people closest to me would say I', 'I hold back from others when', 'What I need but rarely ask for is', 'I am at my best with people when', 'The relationship I most want to tend is'],
+  },
+  {
+    id: 'sent-work', type: 'sentence', domain: 'values', title: 'Finish the Thought',
+    stems: ['The work that feels most like mine is', 'I put off', 'I feel I am wasting myself when', 'Success, to me, actually means', 'The effort I am most tempted to hand to a machine is'],
+  },
+  {
+    id: 'sent-time', type: 'sentence', domain: 'values', title: 'Finish the Thought',
+    stems: ['When I have an unplanned hour, I', 'I lose whole evenings to', 'The habit I keep meaning to start is', 'My attention goes, without my permission, to', 'If I had my time back, I would spend more of it'],
+  },
+  {
+    id: 'sent-fear', type: 'sentence', domain: 'values', title: 'Finish the Thought',
+    stems: ['What I am most reluctant to look at is', 'I tell myself I will deal with it later when', 'The story I keep telling about myself is', 'I would change, if I were not afraid to', 'Underneath the busyness, I am really'],
+  },
 ];
 
 // ----- THE TRADE: automation/atrophy tradeoff scenarios (AI Independence) -----
