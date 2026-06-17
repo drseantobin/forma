@@ -21,6 +21,7 @@ import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
 import * as Research from './src/research.js';
 import * as Contact from './src/contact.js';
+import { PROVIDERS, providerFor, defaultModelFor } from './src/llm.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
@@ -2729,6 +2730,8 @@ function appendBubble({ role, content, typing, assertive }) {
 // ---------------- settings ----------------
 function renderSettings() {
   const p = state.profile;
+  const prov = providerFor(p.settings.provider);
+  const keyHint = { anthropic: 'sk-ant-…', openai: 'sk-…', gemini: 'AIza…', openrouter: 'sk-or-…' }[prov.id] || 'your API key';
   app.innerHTML = `
     <div class="fade-in">
       <h1>Settings</h1>
@@ -2753,23 +2756,34 @@ function renderSettings() {
 
       <div class="card">
         <h2 style="font-size:1.05rem;">Live AI coaching</h2>
-        <p class="muted small">Optional. Paste your own Anthropic (Claude) API key to turn on live, personalized coaching. Your key is stored only in this browser and is sent only to Anthropic — never to any Forma server (there isn't one).</p>
+        <p class="muted small">Optional. Bring your own API key from any supported provider to turn on live, personalized coaching. Your key is stored only in this browser and is sent only to the provider you pick — never to a Forma server (there isn't one), and never with your Interior Life content.</p>
         <div class="field">
-          <label>Claude API key</label>
-          <input id="key" type="password" value="${esc(p.settings.apiKey || '')}" placeholder="sk-ant-…" />
+          <label>Provider</label>
+          <select id="provider">
+            ${Object.values(PROVIDERS).map((pv) => `<option value="${esc(pv.id)}" ${prov.id === pv.id ? 'selected' : ''}>${esc(pv.label)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>${esc(prov.label)} API key</label>
+          <input id="key" type="password" value="${esc(p.settings.apiKey || '')}" placeholder="${esc(keyHint)}" />
         </div>
         <div class="field">
           <label>Model</label>
           <select id="model">
-            <option value="claude-opus-4-8" ${p.settings.model === 'claude-opus-4-8' ? 'selected' : ''}>Claude Opus 4.8 (best)</option>
-            <option value="claude-sonnet-4-6" ${p.settings.model === 'claude-sonnet-4-6' ? 'selected' : ''}>Claude Sonnet 4.6 (faster/cheaper)</option>
-            <option value="claude-haiku-4-5-20251001" ${p.settings.model === 'claude-haiku-4-5-20251001' ? 'selected' : ''}>Claude Haiku 4.5 (fastest)</option>
+            ${prov.models.map((m) => `<option value="${esc(m)}" ${p.settings.model === m ? 'selected' : ''}>${esc(m)}</option>`).join('')}
           </select>
         </div>
-        <div class="row" style="gap:8px;">
+        <div class="row" style="gap:8px; flex-wrap:wrap;">
           <button class="btn sm" id="savekey">Save</button>
           <button class="btn ghost sm" id="testkey">Test connection</button>
+          <button class="btn ghost sm" id="howkey" style="width:auto;">How to get a key →</button>
           <span id="saved" class="trendpill up" style="display:none;">saved ✓</span>
+        </div>
+        <div id="howkeybox" hidden style="margin-top:10px; background:var(--accent-soft); border-radius:12px; padding:12px;">
+          <ol class="muted small" style="margin:0 0 8px; padding-left:18px;">
+            ${prov.howTo.steps.map((st) => `<li>${esc(st)}</li>`).join('')}
+          </ol>
+          <a class="btn ghost sm" href="${esc(prov.howTo.url)}" target="_blank" rel="noopener noreferrer" style="width:auto; display:inline-block;">Open the ${esc(prov.label)} console →</a>
         </div>
         <p id="testresult" class="small" style="margin-top:10px;"></p>
       </div>
@@ -2835,6 +2849,23 @@ function renderSettings() {
     state.profile.plan = Planner.generatePlan(state.profile);
     save();
     render();
+  };
+  // Switching provider MUST reset the model to that provider's default BEFORE the
+  // re-render — otherwise a stale Claude model id would ride into an OpenAI/Gemini
+  // call and 4xx. Stash the half-typed key first so toggling never wipes it.
+  document.getElementById('provider').onchange = (e) => {
+    p.settings.apiKey = document.getElementById('key').value;
+    p.settings.provider = e.target.value;
+    p.settings.model = defaultModelFor(e.target.value);
+    save();
+    render();
+  };
+  // Track the model selection immediately so the persisted state never diverges
+  // from what's shown.
+  document.getElementById('model').onchange = (e) => { p.settings.model = e.target.value; save(); };
+  document.getElementById('howkey').onclick = () => {
+    const box = document.getElementById('howkeybox');
+    if (box) box.hidden = !box.hidden;
   };
   document.getElementById('savekey').onclick = () => {
     p.settings.apiKey = document.getElementById('key').value.trim();
