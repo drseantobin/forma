@@ -220,7 +220,12 @@ export async function dailyInsight(session, profile) {
 // Forma does NOT try to coach it — and does NOT route the content to the API.
 // It steps back and points the person to a real human. This applies in BOTH
 // live and offline modes.
-const CRISIS_PATTERN = /\b(kill myself|killing myself|suicid|end (my|it) (life|all)|want to die|wanna die|don'?t want to (live|be here|exist)|hurt myself|harm myself|self[-\s]?harm|cut(ting)? myself|no reason to live|better off dead|can'?t go on)\b/i;
+// Crisis-language detector. Deliberately tuned to over-detect rather than miss:
+// on a safety guardrail a false negative (missing a real crisis) is the costly
+// error, while a false positive only surfaces a gentle, compassionate pointer to
+// real human help. Still kept precise enough that ordinary frustration ("this is
+// killing me", "I give up on this puzzle") does NOT trip it.
+const CRISIS_PATTERN = /\b(kill(ing)? myself|suicid|end (my|it) (life|all)|tak(e|ing) my (own )?life|want to die|wanna die|don'?t want to (live|be here|exist|wake up|go on)|wish I (was|were|wasn'?t) (dead|here|alive)|wish I (wouldn'?t|didn'?t) wake up|hurt myself|harm myself|self[-\s]?harm|cut(ting)? (myself|my wrists)|slit (my )?wrists?|no reason to live|nothing (left )?to live for|better off (dead|without me)|no point (in )?(living|going on|being here)|give up on life|can'?t go on)\b/i;
 
 export function looksLikeDistress(text) {
   return CRISIS_PATTERN.test(text || '');
