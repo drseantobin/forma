@@ -122,6 +122,20 @@ function go(route) {
   state.route = route;
   render();
   window.scrollTo(0, 0);
+  focusViewHeading();
+}
+
+// Accessibility: after a navigation, move keyboard/screen-reader focus into the
+// new view's heading (otherwise focus is stranded on the tapped tab and SR users
+// don't hear the new content). If the view already focused something meaningful
+// inside the content (e.g. the coach's text input), leave that alone.
+function focusViewHeading() {
+  const ae = document.activeElement;
+  if (ae && ae !== app && app.contains(ae)) return; // view set its own focus
+  const h = app.querySelector('h1, h2');
+  const target = h || app;
+  if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+  try { target.focus({ preventScroll: true }); } catch (e) { target.focus(); }
 }
 
 function ensurePlan() {
@@ -141,8 +155,11 @@ function render() {
 
   // Tabs are always visible; highlight the active one.
   tabbar.hidden = false;
-  [...tabbar.querySelectorAll('.tab')].forEach((t) =>
-    t.classList.toggle('active', t.dataset.route === state.route));
+  [...tabbar.querySelectorAll('.tab')].forEach((t) => {
+    const on = t.dataset.route === state.route;
+    t.classList.toggle('active', on);
+    if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+  });
 
   if (!onboarded) {
     // Before the baseline exists: Coach and Settings are usable; every other
@@ -1687,7 +1704,7 @@ async function completeSession() {
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
       </div>
       ${milestoneBanner}
-      <div class="card" id="insight">
+      <div class="card" id="insight" aria-live="polite">
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
       </div>
       <button class="btn ghost" id="talkthrough" style="margin-bottom:10px;">💬 Talk this through with the coach →</button>

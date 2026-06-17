@@ -279,6 +279,18 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes mileRise { from { opacity:0; transform: translateY(8px) scale(.97); } to { opacity:1; transform:none; } }
 
 /* ---------- accessibility ---------- */
+/* Skip link: off-screen until focused, then pinned top-left for keyboard users. */
+.skip-link {
+  position: absolute; left: 8px; top: -48px; z-index: 1000;
+  background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 8px;
+  font-weight: 700; text-decoration: none; transition: top .15s ease;
+}
+.skip-link:focus { top: calc(env(safe-area-inset-top, 0px) + 8px); outline: none; }
+/* The main content region is programmatically focused on navigation; never show
+   a focus ring on the container itself. */
+#app:focus { outline: none; }
+#app:focus-visible { outline: none; }
+h1[tabindex]:focus, h2[tabindex]:focus { outline: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 :focus:not(:focus-visible) { outline: none; }
 .btn:focus-visible, .opt:focus-visible, .chip:focus-visible, .tab:focus-visible {

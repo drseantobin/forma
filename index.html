@@ -15,13 +15,14 @@
   <meta name="apple-mobile-web-app-title" content="Forma" />
 </head>
 <body>
-  <div id="app">
+  <a class="skip-link" href="#app">Skip to content</a>
+  <main id="app" role="main" tabindex="-1">
     <!-- Rendered by app.js -->
     <div class="boot">Loading Forma…</div>
-  </div>
+  </main>
 
   <!-- Bottom navigation (hidden until onboarded) -->
-  <nav id="tabbar" class="tabbar" hidden>
+  <nav id="tabbar" class="tabbar" aria-label="Primary" hidden>
     <button data-route="home" class="tab"><span class="tab-ico">🏠</span><span>Home</span></button>
     <button data-route="session" class="tab"><span class="tab-ico">✦</span><span>Today</span></button>
     <button data-route="progress" class="tab"><span class="tab-ico">📈</span><span>Progress</span></button>
