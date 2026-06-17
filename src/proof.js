@@ -53,7 +53,12 @@ function metricFromDomain(profile, domain) {
 }
 
 function focusMetric(profile) {
-  const fc = profile.focusChecks || [];
+  // Filter to well-formed checks BEFORE any computation. A malformed entry (e.g.
+  // medianMs null from an old schema or a partial import) would otherwise corrupt
+  // the metric: Math.min(...[250, null, 245]) coerces null→0, reporting an
+  // impossible 0ms "best" — the catastrophic opposite of the real value — and a
+  // null score would poison points/baseline/delta. Guard once, here.
+  const fc = (profile.focusChecks || []).filter((c) => c && typeof c.score === 'number' && typeof c.medianMs === 'number');
   const points = fc.map((c) => c.score);
   const baseline = points.length ? points[0] : null;
   const current = points.length ? points[points.length - 1] : null;
