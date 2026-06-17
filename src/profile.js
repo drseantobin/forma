@@ -196,6 +196,7 @@ function summarizeResponse(exercise, response) {
       return {
         seconds: response.seconds,
         presence: response.presence,
+        distraction: response.distraction,
         eyes: response.eyes,
         timeFelt: response.timeFelt,
         note: response.note || '',

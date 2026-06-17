@@ -1083,14 +1083,18 @@ export const INTERIOR_REFLECTIONS = [
 // Contemplative-silence practice — sit without input. Both a formation practice
 // and a behavioral signal that bridges to Attention.
 export function makeContemplation(level = 1) {
-  const seconds = level <= 1 ? 60 : level <= 3 ? 90 : 120;
+  // A ladder you climb: start at 90s and extend by increments as stillness gets
+  // easier. The intro lets the practitioner pick/extend; level sets the default.
+  const ladder = [90, 120, 180, 240];
+  const seconds = ladder[Math.min(ladder.length - 1, Math.max(0, (level || 1) - 1))];
   return {
     id: `contemplation-${seconds}`,
     type: 'contemplation',
     domain: 'interior',
-    title: 'A Minute of Silence',
-    prompt: 'Sit still, put the screen down, and simply be present — to God, to your own breath, to the quiet. No goal but to stay. The timer will tell you when.',
+    title: 'Stillness',
+    prompt: 'Sit still, put the screen down, and simply be present — to God, to your own breath, to the quiet. No goal but to stay.',
     targetSeconds: seconds,
+    durations: ladder,
   };
 }
 

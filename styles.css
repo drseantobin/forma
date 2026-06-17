@@ -154,6 +154,11 @@ button { font-family: inherit; cursor: pointer; }
 .microw { display:flex; align-items:flex-end; gap:8px; }
 .microw .sentinput { flex:1; }
 .mic-inline { width:auto; flex:none; padding:8px 12px; font-size:1rem; }
+/* Calm focal point for the silence practice — replaces the numeric countdown so
+   the practitioner can close their eyes; the chimes keep time. */
+.stillness-dot { width:64px; height:64px; border-radius:50%; margin:48px auto; background:radial-gradient(circle at 50% 42%, var(--accent-soft), var(--accent)); opacity:.85; animation:breathe 8s ease-in-out infinite; }
+@keyframes breathe { 0%,100% { transform:scale(.78); opacity:.5; } 50% { transform:scale(1.12); opacity:.92; } }
+@media (prefers-reduced-motion: reduce) { .stillness-dot { animation:none; } }
 @media (max-width:380px) { .demo-grid { grid-template-columns:1fr; } }
 
 .insight {

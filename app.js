@@ -1825,22 +1825,31 @@ function renderContemplation() {
   const ex = s.exercise;
   if (s.phase === 'contempl-intro') {
     const soundLine = (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext))
-      ? 'A soft chime marks every 30 seconds and the final 10 — so you can close your eyes and let your ears keep time.'
+      ? 'A soft chime sounds at the halfway point and again at the end — so you can close your eyes and let your ears keep time.'
       : '';
+    const durations = ex.durations || [ex.targetSeconds];
+    const chosen = s.chosenSeconds || ex.targetSeconds;
+    const fmt = (d) => (d < 120 ? `${d}s` : `${d / 60} min`);
     app.innerHTML = `
       <div class="fade-in">
         ${sessionHeader(ex)}
         <div class="card"><p>${esc(ex.prompt)}</p>
-        <p class="muted small">${ex.targetSeconds} seconds. If your mind wanders, just come back. Coming back <em>is</em> the practice.</p>
-        ${soundLine ? `<p class="muted small">${soundLine}</p>` : ''}</div>
+        <p class="muted small">If your mind wanders, just come back. Coming back <em>is</em> the practice.</p>
+        ${soundLine ? `<p class="muted small">${soundLine}</p>` : ''}
+        <p class="muted small" style="margin-top:10px;">How long? You can extend as stillness gets easier.</p>
+        <div class="row" style="gap:8px; flex-wrap:wrap;">
+          ${durations.map((d) => `<button class="chip${chosen === d ? ' sel' : ''}" data-dur="${d}" aria-pressed="${chosen === d}">${fmt(d)}</button>`).join('')}
+        </div></div>
         <button class="btn amber" id="begin">Begin the silence</button>
       </div>`;
+    app.querySelectorAll('[data-dur]').forEach((b) => b.onclick = () => { s.chosenSeconds = Number(b.dataset.dur); render(); });
     document.getElementById('begin').onclick = () => {
       // Create + unlock audio inside the tap — iOS only allows it here.
       s._tones = createTones();
       if (s._tones) { s._tones.unlock(); s._tones.start(); }
+      s.targetSeconds = s.chosenSeconds || ex.targetSeconds;
       s.phase = 'contempl-run';
-      s.remaining = ex.targetSeconds;
+      s.remaining = s.targetSeconds;
       s.response.seconds = 0;
       render();
     };
@@ -1851,11 +1860,16 @@ function renderContemplation() {
   if (s.phase === 'contempl-reflect') return renderContemplationReflect();
 
   // ----- the silence itself -----
+  // No numeric countdown on purpose: a ticking number pulls you out and contradicts
+  // "close your eyes." A calm breathing dot is the only focal point, and the ears
+  // keep time — one chime at the halfway mark, one at the end.
+  const target = s.targetSeconds || ex.targetSeconds;
+  const half = Math.max(1, Math.floor(target / 2));
   app.innerHTML = `
     <div class="fade-in center">
       <p class="muted small" style="margin-top:20px;">${esc(getDomain('interior').icon)} Be still.</p>
-      <div class="memo-countdown" id="cd" style="font-size:3.4rem; margin-top:30px;">${s.remaining}</div>
-      <p class="muted small" style="margin-top:30px;">Put the phone down. Close your eyes if you like. Breathe.</p>
+      <div class="stillness-dot" aria-hidden="true"></div>
+      <p class="muted small" style="margin-top:30px;">Put the phone down. Close your eyes if you like. Breathe — a chime will mark the halfway point and the end.</p>
       <button class="btn ghost sm" id="endearly" style="width:auto; margin-top:24px;">End early</button>
     </div>`;
   const toReflect = () => {
@@ -1867,24 +1881,22 @@ function renderContemplation() {
     render();
   };
   document.getElementById('endearly').onclick = () => {
-    s.response.seconds = ex.targetSeconds - s.remaining;
+    s.response.seconds = target - s.remaining;
     toReflect();
   };
   if (!s._timer) {
     s._timer = setInterval(() => {
       if (state.session !== s || state.route !== 'session') { clearInterval(s._timer); s._timer = null; return; }
       s.remaining--;
-      const cd = document.getElementById('cd');
-      if (cd) cd.textContent = Math.max(0, s.remaining);
-      const elapsed = ex.targetSeconds - s.remaining;
+      const elapsed = target - s.remaining;
       if (s.remaining <= 0) {
-        s.response.seconds = ex.targetSeconds;
+        s.response.seconds = target;
         if (s._tones) s._tones.done();
         toReflect();
-      } else if (s.remaining <= 10) {
-        if (s._tones) s._tones.tick();
-      } else if (elapsed > 0 && elapsed % 30 === 0) {
+      } else if (elapsed === half) {
+        // Single halfway chime (no every-30s marker, no final-10 ticks).
         if (s._tones) s._tones.interval();
+        announce('Halfway.');
       }
     }, 1000);
   }
@@ -1900,7 +1912,8 @@ function renderContemplationReflect() {
   const eyesOpts = [['closed', 'Closed'], ['open', 'Open'], ['both', 'Some of each']];
   const timeOpts = [['short', 'Shorter than it was'], ['right', 'About right'], ['long', 'Longer than it was']];
   const presence = r.presence;
-  const sat = r.seconds != null ? r.seconds : ex.targetSeconds; // 0 is a real value — don't fall back
+  const distraction = r.distraction;
+  const sat = r.seconds != null ? r.seconds : (s.targetSeconds || ex.targetSeconds); // 0 is a real value — don't fall back
   app.innerHTML = `
     <div class="fade-in">
       ${sessionHeader(ex)}
@@ -1928,6 +1941,11 @@ function renderContemplationReflect() {
         ${[1, 2, 3, 4, 5, 6, 7].map((n) => `<button class="${presence === n ? 'on' : ''}" data-n="${n}" aria-pressed="${presence === n}" aria-label="${n} of 7, ${n === 1 ? 'scattered' : n === 7 ? 'fully present' : ''}">${n}</button>`).join('')}
       </div>
 
+      <p class="muted small" style="margin-top:18px;">How stirred up or distracted were you? <span style="opacity:.7;">(1 calm &amp; settled · 7 very stirred)</span></p>
+      <div class="rating">
+        ${[1, 2, 3, 4, 5, 6, 7].map((n) => `<button class="${distraction === n ? 'on' : ''}" data-d="${n}" aria-pressed="${distraction === n}" aria-label="${n} of 7, ${n === 1 ? 'calm and settled' : n === 7 ? 'very stirred' : ''}">${n}</button>`).join('')}
+      </div>
+
       <button class="btn" id="cfin" ${presence == null ? 'disabled' : ''}>Complete session</button>
     </div>`;
 
@@ -1937,7 +1955,9 @@ function renderContemplationReflect() {
 
   app.querySelectorAll('[data-eyes]').forEach((b) => b.onclick = () => { r.eyes = b.dataset.eyes; render(); });
   app.querySelectorAll('[data-time]').forEach((b) => b.onclick = () => { r.timeFelt = b.dataset.time; render(); });
-  app.querySelectorAll('.rating button').forEach((b) => b.onclick = () => { r.presence = Number(b.dataset.n); render(); });
+  // Scope each Likert by its own data attribute so the two scales never cross-wire.
+  app.querySelectorAll('[data-n]').forEach((b) => b.onclick = () => { r.presence = Number(b.dataset.n); render(); });
+  app.querySelectorAll('[data-d]').forEach((b) => b.onclick = () => { r.distraction = Number(b.dataset.d); render(); });
   document.getElementById('cfin').onclick = completeSession;
 }
 
