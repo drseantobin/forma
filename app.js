@@ -515,6 +515,8 @@ function renderHome() {
 
       ${weekStripCard(p)}
 
+      ${commitmentsCard(p)}
+
       ${radarCard(p.domainScores)}
     </div>`;
 
@@ -522,6 +524,7 @@ function renderHome() {
   const wp = document.getElementById('toplan');
   if (wp) wp.onclick = () => go('plan');
   wireDomainLinks();
+  wireCommitments();
 }
 
 const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -632,6 +635,63 @@ function startDomainSession(domain) {
   state.route = 'session';
   render();
   window.scrollTo(0, 0);
+}
+
+// Commitments — solution-focused, self-chosen next steps. Closes a real loop:
+// the coach already reads "Active goals" into its context, but until now there
+// was no way for a person to set one. Tiny, concrete, theirs.
+function commitmentsCard(p) {
+  const goals = p.goals || [];
+  const open = goals.filter((g) => !g.done);
+  const kept = goals.length - open.length;
+  const ids = activeDomainIds(p.settings && p.settings.faithTrack);
+  const row = (g) => {
+    const d = getDomain(g.domain);
+    return `<div class="goalrow">
+      <button class="goalcheck" data-goal="${g.id}" aria-label="Mark “${esc(g.text)}” complete">○</button>
+      <span class="ico" aria-hidden="true">${d ? d.icon : '•'}</span>
+      <span class="goaltext">${esc(g.text)}</span>
+    </div>`;
+  };
+  return `
+    <div class="card">
+      <div class="row"><strong>Your commitments</strong><span class="spacer"></span>
+        ${kept ? `<span class="muted small">${kept} kept ✓</span>` : ''}</div>
+      <p class="muted small" style="margin-top:2px;">One small step you’re choosing — concrete, doable, yours. The coach can help you find the next one.</p>
+      ${open.length ? `<div class="stack" style="margin-top:10px;">${open.map(row).join('')}</div>`
+        : `<p class="muted small" style="margin-top:10px;">No open commitment yet — name one small thing you’ll do.</p>`}
+      <details class="goaladd" style="margin-top:12px;">
+        <summary class="btn ghost sm" style="display:inline-block; width:auto;">+ Add a commitment</summary>
+        <div class="goaladd-body" style="margin-top:10px;">
+          <input id="goaltext" type="text" maxlength="120" placeholder="e.g. Read 10 minutes before I open my phone" />
+          <div class="row" style="gap:8px; margin-top:8px;">
+            <select id="goaldomain" aria-label="Which capacity">
+              ${ids.map((id) => `<option value="${id}">${esc(getDomain(id).name)}</option>`).join('')}
+            </select>
+            <button class="btn sm" id="goaladd" style="width:auto;">Add</button>
+          </div>
+        </div>
+      </details>
+    </div>`;
+}
+
+function wireCommitments() {
+  const add = document.getElementById('goaladd');
+  if (add) add.onclick = () => {
+    const text = (document.getElementById('goaltext').value || '').trim();
+    const domain = document.getElementById('goaldomain').value;
+    if (!text) { document.getElementById('goaltext').focus(); return; }
+    state.profile = Profile.addGoal(state.profile, domain, text);
+    save();
+    render();
+  };
+  app.querySelectorAll('.goalcheck').forEach((b) => {
+    b.onclick = () => {
+      state.profile = Profile.toggleGoal(state.profile, b.dataset.goal);
+      save();
+      render();
+    };
+  });
 }
 
 // Make every [data-domain] row a link into a tailored session.

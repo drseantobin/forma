@@ -170,6 +170,19 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- progress ---------- */
 .kbig { font-variant-numeric: tabular-nums; }
+/* Commitments (solution-focused goals) */
+.goalrow { display:flex; align-items:center; gap:10px; padding:7px 0; }
+.goalcheck {
+  flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:2px solid var(--ink-faint);
+  background:#fff; color:var(--green); font-size:.8rem; line-height:1; cursor:pointer; padding:0;
+}
+.goalcheck:hover { border-color:var(--green); }
+.goalrow .goaltext { flex:1; }
+.goaladd summary { list-style:none; cursor:pointer; }
+.goaladd summary::-webkit-details-marker { display:none; }
+.goaladd-body input[type="text"] { width:100%; }
+.goaladd-body select { flex:1; }
+
 /* Team capacity-spread distribution bar */
 .distbar { display:flex; height:10px; border-radius:999px; overflow:hidden; margin-top:5px; background:var(--line, #e6e4dd); gap:1px; }
 .distseg { display:block; min-width:2px; }
