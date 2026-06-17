@@ -52,16 +52,29 @@ export function generatePlan(profile, opts = {}) {
   const scores = profile.domainScores || {};
   const order = activeDomainIds(profile.settings && profile.settings.faithTrack);
 
-  // Rank weakest-first; unseen domains treated as mid (50).
-  const ranked = order.slice().sort((a, b) => (scores[a] ?? 50) - (scores[b] ?? 50));
-  const pick = (i) => ranked[i] || ranked[0] || ORDER[0];
+  // Days since each domain was last the focus of a session (Infinity if never).
+  const lastSeen = {};
+  for (const s of (profile.sessions || [])) {
+    if (!s.domain) continue;
+    if (!lastSeen[s.domain] || s.date > lastSeen[s.domain]) lastSeen[s.domain] = s.date;
+  }
+  const staleness = (id) => (lastSeen[id] ? Math.max(0, daysBetween(lastSeen[id], start)) : Infinity);
 
-  // Emphasize the weakest (the theme gets 2 of 7 days) while covering SIX distinct
-  // capacities across the week — so no domain's scale goes stale from never being
-  // the daily focus. Earlier this only ever rotated the 4 weakest, leaving 6+ of
-  // the capacities untouched in a given week.
-  const pattern = [pick(0), pick(1), pick(2), pick(3), pick(0), pick(4), pick(5)];
-  const theme = pick(0);
+  // The THEME is the weakest by score — the "biggest opening" framing depends on
+  // that — and it gets 2 of the 7 days.
+  const byScore = order.slice().sort((a, b) => (scores[a] ?? 50) - (scores[b] ?? 50));
+  const theme = byScore[0] || ORDER[0];
+
+  // The other five slots are ranked by NEED = weak AND/OR stale, so a mid-scoring
+  // capacity that's gone unpracticed for weeks still cycles back in (otherwise its
+  // scale silently goes stale). Staleness is capped so one very old domain can't
+  // dominate; a never-practiced domain (Infinity) sorts to the front.
+  const need = (id) => (scores[id] ?? 50) - Math.min(staleness(id), 30) * 1.5;
+  const rest = order.filter((id) => id !== theme).sort((a, b) => need(a) - need(b));
+  const r = (i) => rest[i] || rest[rest.length - 1] || theme;
+
+  // Weakest theme ×2, plus five distinct need-ranked capacities = SIX distinct/week.
+  const pattern = [theme, r(0), r(1), r(2), theme, r(3), r(4)];
 
   const days = pattern.map((domain, i) => {
     const score = scores[domain] ?? 50;
