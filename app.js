@@ -1673,7 +1673,7 @@ function renderContemplationReflect() {
   const eyesOpts = [['closed', 'Closed'], ['open', 'Open'], ['both', 'Some of each']];
   const timeOpts = [['short', 'Shorter than it was'], ['right', 'About right'], ['long', 'Longer than it was']];
   const presence = r.presence;
-  const sat = r.seconds || ex.targetSeconds;
+  const sat = r.seconds != null ? r.seconds : ex.targetSeconds; // 0 is a real value — don't fall back
   app.innerHTML = `
     <div class="fade-in">
       ${sessionHeader(ex)}
