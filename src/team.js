@@ -15,6 +15,17 @@ const CORE = DOMAINS.map((d) => d.id);
 // read deeply, and communicate well.
 export const AI_READINESS_DOMAINS = ['judgment', 'ai_autonomy', 'reading', 'communication'];
 
+// AI-Readiness composite for a single scores map (an individual OR a team's
+// per-domain averages): the mean of the four AI-transition capacities. Returns
+// null when none of them have a score yet, so callers can show "—" honestly.
+export function aiReadinessOf(domainScores) {
+  const vals = AI_READINESS_DOMAINS
+    .map((id) => domainScores && domainScores[id])
+    .filter((v) => v != null);
+  if (!vals.length) return null;
+  return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+}
+
 // A deterministic synthetic cohort (no RNG — seeded by index, so it's stable).
 export function sampleCohort(n = 8) {
   const members = [];
@@ -37,8 +48,6 @@ export function aggregate(members) {
     perDomain[id] = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
   });
   const avgIndex = Math.round(CORE.reduce((a, id) => a + perDomain[id], 0) / CORE.length);
-  const aiReadiness = Math.round(
-    AI_READINESS_DOMAINS.reduce((a, id) => a + (perDomain[id] || 0), 0) / AI_READINESS_DOMAINS.length,
-  );
+  const aiReadiness = aiReadinessOf(perDomain) || 0;
   return { n: members.length, avgIndex, perDomain, aiReadiness };
 }

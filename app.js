@@ -15,7 +15,7 @@ import * as Diagnostic from './src/diagnostic.js';
 import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import { bandAscension, ascensionLine, streakMilestone } from './src/milestones.js';
-import { confidenceTag, milestoneEligible } from './src/reliability.js';
+import { confidenceTag, confidence, milestoneEligible } from './src/reliability.js';
 import * as Orchestrator from './src/orchestrator.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
@@ -1716,6 +1716,39 @@ async function completeSession() {
     </div>`;
 }
 
+// The individual's own AI-Readiness — the headline metric of the whole thesis,
+// previously visible only in the employer/cohort view. Composite of the four
+// AI-transition capacities, with each contributor and an honest "incomplete"
+// note when a feeding capacity hasn't been measured yet.
+function aiReadinessCard(p) {
+  const air = Team.aiReadinessOf(p.domainScores);
+  const contributors = Team.AI_READINESS_DOMAINS
+    .filter((id) => p.domainScores[id] != null)
+    .map((id) => ({ id, name: getDomain(id).name, score: p.domainScores[id], band: bandFor(p.domainScores[id]), conf: confidence(p, id).level }));
+  const missing = Team.AI_READINESS_DOMAINS
+    .filter((id) => p.domainScores[id] == null)
+    .map((id) => getDomain(id).name);
+  const anyProvisional = contributors.some((c) => c.conf === 'provisional');
+  return `
+    <div class="card airead" style="border-left:4px solid var(--accent);">
+      <div class="row"><strong>AI-Readiness</strong>
+        <span class="spacer"></span>
+        <span class="kbig" style="font-size:1.7rem; color:var(--accent);">${air == null ? '—' : air}</span></div>
+      <p class="muted small" style="margin-top:2px;">The capacities that keep you irreplaceable as AI does more of the cognitive work — judgment over its output, independence from it, deep reading, and clear communication.</p>
+      <div class="airgrid">
+        ${contributors.map((c) => `
+          <div class="airchip" title="${esc(c.name)}: ${esc(c.band.label)}">
+            <span class="airdot" style="background:${c.band.color};"></span>
+            <span class="airnm">${esc(c.name)}</span>
+            <span class="airsc">${c.score}</span>
+          </div>`).join('')}
+      </div>
+      ${missing.length
+        ? `<p class="muted small" style="margin-top:8px;">Train ${esc(missing.join(' & '))} to complete this score.</p>`
+        : (anyProvisional ? `<p class="muted small" style="margin-top:8px;">Firms up as you keep training these four.</p>` : '')}
+    </div>`;
+}
+
 // ---------------- progress ----------------
 function renderProgress() {
   const p = state.profile;
@@ -1731,6 +1764,8 @@ function renderProgress() {
         </svg>
         <p class="muted small">${idxPts.length < 2 ? 'Your trend line builds as you complete sessions.' : `${idxPts.length} data points since you began.`}</p>
       </div>
+
+      ${aiReadinessCard(p)}
 
       <h2 style="margin-top:6px;">Your scales</h2>
       <div class="card">
