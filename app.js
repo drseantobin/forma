@@ -244,7 +244,7 @@ function renderOnboarding() {
           <button class="btn amber" id="start">Quick check · ~${Math.max(3, Math.round(BASELINE_ITEMS.length * 7 / 60))} min →</button>
           <button class="btn ghost" id="talk">Talk it through with the coach →</button>
         </div>
-        <p class="muted small center" style="margin-top:12px;">The quick check is ${BASELINE_ITEMS.length} quick ratings across your capacities — a short self-assessment that works offline. The conversation is an adaptive interview that writes your profile — it uses your own Claude key, so it stays yours.</p>
+        <p class="muted small center" style="margin-top:12px;">The quick check is ${BASELINE_ITEMS.length} honest ratings across your capacities — a short self-assessment that works offline. The conversation is an adaptive interview that writes your profile — it uses your own Claude key, so it stays yours.</p>
         <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
           <span style="font-size:1.3rem;">🕊️</span>
           <div style="flex:1;">
