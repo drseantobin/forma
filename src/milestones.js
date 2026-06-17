@@ -23,11 +23,17 @@ export function bandIndex(score) {
 // Returns { band, fromBand, domainId } for the band just reached, or null.
 // Requires a real prior score — a first-ever (baseline-seeded) value isn't an
 // achievement, so it never fires on prev == null.
-export function bandAscension(prevScore, newScore, domainId) {
+// `peakIndex` is the highest band this domain has EVER reached before now (the
+// high-water mark). A band only counts as "newly reached" if it clears both the
+// prior session's band AND that peak — otherwise the gentle EMA oscillating back
+// up over a boundary would re-celebrate a band the person already earned weeks
+// ago (a hollow, recurring confetti the spec's honest-mechanics ethic forbids).
+export function bandAscension(prevScore, newScore, domainId, peakIndex = -1) {
   if (prevScore == null || newScore == null) return null;
   const from = bandIndex(prevScore);
   const to = bandIndex(newScore);
-  if (to > from && to >= 0) return { band: BANDS[to], fromBand: BANDS[from] || null, domainId };
+  const floor = Math.max(from, peakIndex);
+  if (to > floor && to >= 0) return { band: BANDS[to], fromBand: BANDS[from] || null, domainId };
   return null;
 }
 

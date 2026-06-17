@@ -1841,7 +1841,7 @@ async function completeSession() {
   // Only celebrate a band crossing once the domain has enough evidence that it
   // reflects real growth, not one lucky session swinging the EMA over a boundary.
   const ascension = milestoneEligible(profile, session.domain)
-    ? bandAscension(session.prevDomainScore, session.newDomainScore, session.domain)
+    ? bandAscension(session.prevDomainScore, session.newDomainScore, session.domain, session.priorBandPeak)
     : null;
   const streakMark = streakMilestone(profile.streak && profile.streak.current);
   const graced = !!(profile.streak && profile.streak.graced);

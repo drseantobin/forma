@@ -12,6 +12,7 @@
 import { DOMAINS } from './domains.js';
 import { updateEMA, formationIndex, scoreExercise } from './scoring.js';
 import { updateStreak, todayStr } from './progress.js';
+import { bandIndex } from './milestones.js';
 
 export const STORAGE_KEY = 'forma.profile.v1';
 const VERSION = 1;
@@ -98,6 +99,18 @@ export function applySession(profile, exercise, response, opts = {}) {
 
   const fi = formationIndex(p.domainScores);
 
+  // High-water band latch: the highest band this domain has EVER reached, so a
+  // band-ascension milestone fires only on a genuine FIRST crossing — not every
+  // time the gentle EMA wobbles back up over a boundary it already cleared.
+  // `priorBandPeak` (the peak BEFORE this session) is stamped on the session for
+  // the milestone check; the peak itself advances only on a measured session.
+  let priorBandPeak = -1;
+  if (measured) {
+    p.bandPeak = p.bandPeak || {};
+    priorBandPeak = p.bandPeak[domain] != null ? p.bandPeak[domain] : bandIndex(prev);
+    p.bandPeak[domain] = Math.max(priorBandPeak, bandIndex(newDomainScore));
+  }
+
   const session = {
     date,
     hour: now.getHours(),
@@ -108,6 +121,7 @@ export function applySession(profile, exercise, response, opts = {}) {
     rawScore,
     prevDomainScore: prev ?? null,
     newDomainScore,
+    priorBandPeak,
     unscored: !measured,
     response: summarizeResponse(exercise, response),
   };
