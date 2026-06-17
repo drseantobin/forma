@@ -202,6 +202,8 @@ function renderOnboarding() {
 
   const groups = baselineByDomain(activeDomainIds(state.onboard.faithTrack));
   const step = state.onboard.step;
+  // Persist quick-check progress so an interruption resumes here, not at step 0.
+  Profile.saveOnboard({ step, responses: state.onboard.responses });
 
   if (step === 0) {
     const needKey = state.onboard.showKey && !Coach.hasKey(state.profile);
@@ -335,6 +337,7 @@ async function finishBaseline() {
   state.profile.settings.faithTrack = faith;
   state.profile = Profile.applyBaseline(state.profile, scores, state.onboard.responses);
   save();
+  Profile.clearOnboard(); // baseline committed — no resume state to keep
   renderBaselineResult();
 }
 
@@ -2519,6 +2522,7 @@ function renderSettings() {
   document.getElementById('reset').onclick = () => {
     if (confirm('Erase all Forma data on this device and start over? This cannot be undone.')) {
       localStorage.removeItem(Profile.STORAGE_KEY);
+      Profile.clearOnboard();
       state.profile = null;
       state.onboard = { step: 0, responses: {}, mode: null, showKey: false, faithTrack: false };
       go('home');
@@ -2532,6 +2536,19 @@ function greeting() {
 }
 
 // ---------------- boot ----------------
+// Resume an interrupted baseline: if the person hasn't finished onboarding, pull
+// back any saved quick-check progress so they continue where they left off.
+// Once onboarded, drop any stale copy.
+if (state.profile && state.profile.baseline) {
+  Profile.clearOnboard();
+} else {
+  const _saved = Profile.loadOnboard();
+  if (_saved) {
+    if (_saved.responses) state.onboard.responses = _saved.responses;
+    if (typeof _saved.step === 'number') state.onboard.step = _saved.step;
+  }
+}
+
 // Honor a PWA app-shortcut / deep link (?go=session, etc.). render() already
 // redirects a not-yet-onboarded user into setup, so an early route is safe.
 const _deep = startRoute(typeof location !== 'undefined' ? location.search : '');

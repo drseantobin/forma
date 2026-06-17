@@ -218,6 +218,34 @@ export function saveProfile(profile) {
   }
 }
 
+// ---- onboarding resume ----
+// The baseline is the longest, most interruption-prone flow (44 self-report items
+// across 11 screens). Persisting in-progress onboarding means a closed tab, locked
+// phone, or killed PWA doesn't wipe a person's answers and dump them back at the
+// start — they resume exactly where they left off. Cleared once the baseline is
+// committed (a finished profile no longer needs it).
+const ONBOARD_KEY = 'forma.onboard.v1';
+export function saveOnboard(onboard) {
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(ONBOARD_KEY, JSON.stringify(onboard));
+  } catch { /* best-effort */ }
+}
+export function loadOnboard() {
+  try {
+    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(ONBOARD_KEY);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    return (o && typeof o === 'object' && !Array.isArray(o)) ? o : null;
+  } catch {
+    return null;
+  }
+}
+export function clearOnboard() {
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(ONBOARD_KEY);
+  } catch { /* noop */ }
+}
+
 export function exportProfile(profile) {
   // API key is excluded from exports so a shared backup never leaks a secret.
   const copy = clone(profile);
