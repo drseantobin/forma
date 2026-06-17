@@ -892,16 +892,30 @@ function wireCommitments() {
     save();
     render();
   };
+  // These handlers re-render #app directly (not via go()), which destroys the
+  // control the user just activated and drops keyboard/SR focus to <body> with no
+  // feedback — on the daily-loop's busiest screen. So after each render() we announce
+  // the outcome and RESTORE focus to a stable surviving element (the rebuilt control,
+  // or the view heading as a fallback).
+  const refocus = (sel) => { const el = sel && app.querySelector(sel); if (el) el.focus(); else focusViewHeading(); };
   // Track (recurring): toggle today's check-in; the commitment stays.
   app.querySelectorAll('[data-track]').forEach((b) => {
-    b.onclick = () => { state.profile = Profile.trackGoal(state.profile, b.dataset.track, todayStr()); save(); render(); };
+    b.onclick = () => {
+      const id = b.dataset.track;
+      const g = (state.profile.goals || []).find((x) => x.id === id);
+      const wasDone = g && (g.checkins || []).includes(todayStr());
+      state.profile = Profile.trackGoal(state.profile, id, todayStr());
+      save(); render();
+      announce(wasDone ? 'Unmarked for today.' : 'Kept today.');
+      refocus(`[data-track="${id}"]`);
+    };
   });
-  // Edit (pencil): enter inline edit mode for that row.
+  // Edit (pencil): enter inline edit mode for that row, focus straight into the input.
   app.querySelectorAll('[data-edit]').forEach((b) => {
-    b.onclick = () => { state._editGoal = b.dataset.edit; render(); };
+    b.onclick = () => { state._editGoal = b.dataset.edit; render(); refocus('#goaledit-' + b.dataset.edit); };
   });
   app.querySelectorAll('[data-goalcancel]').forEach((b) => {
-    b.onclick = () => { state._editGoal = null; render(); };
+    b.onclick = () => { const id = state._editGoal; state._editGoal = null; render(); refocus(`[data-edit="${id}"]`); };
   });
   app.querySelectorAll('[data-goalsave]').forEach((b) => {
     b.onclick = () => {
@@ -909,8 +923,9 @@ function wireCommitments() {
       const el = document.getElementById('goaledit-' + id);
       state.profile = Profile.editGoal(state.profile, id, el ? el.value : '');
       state._editGoal = null;
-      save();
-      render();
+      save(); render();
+      announce('Commitment saved.');
+      refocus(`[data-edit="${id}"]`);
     };
   });
   // Delete (trash).
@@ -918,8 +933,9 @@ function wireCommitments() {
     b.onclick = () => {
       if (state._editGoal === b.dataset.del) state._editGoal = null;
       state.profile = Profile.removeGoal(state.profile, b.dataset.del);
-      save();
-      render();
+      save(); render();
+      announce('Commitment deleted.');
+      focusViewHeading(); // the row is gone — return to a stable place in context
     };
   });
   // Gentle, on-device "is this what you mean?" nudge — DISPLAY ONLY (never blocks the
@@ -2910,7 +2926,7 @@ function renderSettings() {
         <div class="row" style="gap:8px; flex-wrap:wrap;">
           <button class="btn sm" id="savekey">Save</button>
           <button class="btn ghost sm" id="testkey">Test connection</button>
-          <button class="btn ghost sm" id="howkey" style="width:auto;">How to get a key →</button>
+          <button class="btn ghost sm" id="howkey" aria-expanded="false" aria-controls="howkeybox" style="width:auto;">How to get a key →</button>
           <span id="saved" class="trendpill up" style="display:none;">saved ✓</span>
         </div>
         <div id="howkeybox" hidden style="margin-top:10px; background:var(--accent-soft); border-radius:12px; padding:12px;">
@@ -2997,9 +3013,10 @@ function renderSettings() {
   // Track the model selection immediately so the persisted state never diverges
   // from what's shown.
   document.getElementById('model').onchange = (e) => { p.settings.model = e.target.value; save(); };
-  document.getElementById('howkey').onclick = () => {
+  document.getElementById('howkey').onclick = (e) => {
     const box = document.getElementById('howkeybox');
     if (box) box.hidden = !box.hidden;
+    e.currentTarget.setAttribute('aria-expanded', box && !box.hidden ? 'true' : 'false');
   };
   document.getElementById('savekey').onclick = () => {
     p.settings.apiKey = document.getElementById('key').value.trim();
