@@ -56,8 +56,11 @@ export function generatePlan(profile, opts = {}) {
   const ranked = order.slice().sort((a, b) => (scores[a] ?? 50) - (scores[b] ?? 50));
   const pick = (i) => ranked[i] || ranked[0] || ORDER[0];
 
-  // Emphasize the weakest: it gets 3 of 7 days, next gets 2, then 1 each.
-  const pattern = [pick(0), pick(1), pick(2), pick(0), pick(3), pick(1), pick(0)];
+  // Emphasize the weakest (the theme gets 2 of 7 days) while covering SIX distinct
+  // capacities across the week — so no domain's scale goes stale from never being
+  // the daily focus. Earlier this only ever rotated the 4 weakest, leaving 6+ of
+  // the capacities untouched in a given week.
+  const pattern = [pick(0), pick(1), pick(2), pick(3), pick(0), pick(4), pick(5)];
   const theme = pick(0);
 
   const days = pattern.map((domain, i) => {
