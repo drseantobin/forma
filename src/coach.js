@@ -155,6 +155,26 @@ export function hasKey(profile) {
   return !!(profile?.settings?.apiKey && profile.settings.apiKey.trim());
 }
 
+// A gentle, ON-DEVICE "is this what you mean?" nudge for a commitment a person is
+// writing — helps it land as something concrete and doable WITHOUT a corporate
+// S-M-A-R-T checklist or a nag. Pure + rule-based (no LLM): works for everyone, is
+// instant, never blocks the save, and keeps the commitment text on the device. Returns
+// ONE short director's question, or null when the commitment is already concrete
+// (silence is the reward for a clear one). Formation, not productivity-hustle.
+export function sharpenCommitment(text) {
+  const t = String(text || '').trim();
+  if (t.length < 3) return null;
+  const hasSize = /\b\d+\s?(min|minute|page|rep|time|sec|second|hour|day|word|breath|chapter|verse)/i.test(t);
+  const hasCue = /\b(before|after|when|every|each|morning|night|noon|lunch|wake|woke|bed|first thing|then|on (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|weekdays?))\b/i.test(t);
+  if (hasSize && hasCue) return null; // already concrete — say nothing
+  const words = t.split(/\s+/).length;
+  const vague = /\b(more|less|better|try to|be more|improve|focus|stop|start|work on|be a better)\b/i.test(t);
+  if (vague && words <= 6) return 'What would this look like on an ordinary Tuesday? A small, concrete version is easier to actually keep.';
+  if (!hasCue) return 'When will you do this? Tying it to something you already do — “after I pour my coffee,” “before I open my phone” — makes it stick more than willpower.';
+  if (!hasSize) return 'How much, or for how long? Even “10 minutes” or “one page” gives you a clear way to know you kept it.';
+  return null;
+}
+
 // Compact, model-readable summary of the person's current state.
 export function profileSummary(profile) {
   const lines = [];

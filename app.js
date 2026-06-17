@@ -845,7 +845,8 @@ function commitmentsCard(p) {
         <input class="goaledit-input" id="goaledit-${esc(g.id)}" type="text" maxlength="120" value="${esc(g.text)}" aria-label="Edit commitment" />
         <button class="btn sm" data-goalsave="${esc(g.id)}" style="width:auto;">Save</button>
         <button class="btn ghost sm" data-goalcancel="1" style="width:auto;">Cancel</button>
-      </div>`;
+      </div>
+      <p class="muted small goaledit-hint" id="goaledit-hint-${esc(g.id)}" aria-live="polite" style="margin:2px 0 8px;"></p>`;
     }
     const checkins = Array.isArray(g.checkins) ? g.checkins : [];
     const done = checkins.includes(today);
@@ -869,6 +870,7 @@ function commitmentsCard(p) {
         <summary class="btn ghost sm" style="display:inline-block; width:auto;">+ Add a commitment</summary>
         <div class="goaladd-body" style="margin-top:10px;">
           <input id="goaltext" type="text" maxlength="120" placeholder="e.g. Read 10 minutes before I open my phone" />
+          <p class="muted small" id="commit-hint" aria-live="polite" style="margin:6px 0 0;"></p>
           <div class="row" style="gap:8px; margin-top:8px;">
             <select id="goaldomain" aria-label="Which capacity">
               ${ids.map((id) => `<option value="${id}">${esc(getDomain(id).name)}</option>`).join('')}
@@ -919,6 +921,19 @@ function wireCommitments() {
       save();
       render();
     };
+  });
+  // Gentle, on-device "is this what you mean?" nudge — DISPLAY ONLY (never blocks the
+  // save, never touches state, no network). Debounced so it doesn't flicker per key.
+  const wireHint = (input, hint) => {
+    if (!input || !hint) return;
+    let t;
+    const upd = () => { hint.textContent = Coach.sharpenCommitment(input.value) || ''; };
+    input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(upd, 400); });
+    upd(); // initial (e.g. when editing an existing commitment)
+  };
+  wireHint(document.getElementById('goaltext'), document.getElementById('commit-hint'));
+  app.querySelectorAll('.goaledit-input').forEach((inp) => {
+    wireHint(inp, document.getElementById('goaledit-hint-' + inp.id.replace('goaledit-', '')));
   });
 }
 
