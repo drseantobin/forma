@@ -2314,6 +2314,18 @@ function aiReadinessCard(p) {
 }
 
 // ---------------- progress ----------------
+// A calm, purpose-built empty state for cold-start surfaces (before data accrues) —
+// reinforces the formation ethos (it takes time; nothing to catch up on) instead of a
+// broken-looking empty chart. Inline SVG, no asset, deliberately NOT gamified.
+function emptyState(line) {
+  return `<div class="emptystate">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="var(--ink-faint)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
+      <path d="M3 16c3-4 5.5-4 8 0s5 4 8-2"/><circle cx="18.5" cy="6.5" r="2.3"/>
+    </svg>
+    <p class="muted small" style="margin:0;">${esc(line)}</p>
+  </div>`;
+}
+
 function renderProgress() {
   const p = state.profile;
   const fi = formationIndex(p.domainScores);
@@ -2331,10 +2343,12 @@ function renderProgress() {
           const ic = indexConfidence(p);
           return ic.thin ? `<p class="muted small" style="margin:4px 0 0;">${esc(ic.note)}</p>` : '';
         })()}
-        <svg viewBox="0 0 320 60" width="100%" style="margin-top:8px;">
-          <path d="${sparklinePath(idxPts.length ? idxPts : [fi], 320, 60, 6)}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        ${idxPts.length < 2
+          ? emptyState('Your trajectory appears here after a few sessions. Formation is measured over weeks, not in a day — there’s nothing to catch up on.')
+          : `<svg viewBox="0 0 320 60" width="100%" style="margin-top:8px;">
+          <path d="${sparklinePath(idxPts, 320, 60, 6)}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <p class="muted small">${idxPts.length < 2 ? 'Your trend line builds as you complete sessions.' : `${idxPts.length} data points since you began.`}</p>
+        <p class="muted small">${idxPts.length} data points since you began.</p>`}
       </div>
 
       ${aiReadinessCard(p)}
@@ -2362,7 +2376,13 @@ function renderProgress() {
 
       <h2>What Forma is noticing</h2>
       <div class="card">
-        <ul class="noticing">${weeklyPatterns(p).map((line) => `<li>${esc(line)}</li>`).join('')}</ul>
+        ${(() => {
+          const lines = weeklyPatterns(p);
+          if (lines.length === 1 && /Not enough history yet/.test(lines[0])) {
+            return emptyState('Once you’ve done a few sessions, Forma will start noticing patterns that are genuinely true about you — never sooner, so it’s not making things up.');
+          }
+          return `<ul class="noticing">${lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>`;
+        })()}
       </div>
 
       ${Profile.recentSessions(p).length ? `
