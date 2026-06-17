@@ -149,7 +149,18 @@ function ensurePlan() {
   }
 }
 
+// The dictation recognizer from the most recent attachMicButton, tracked so a
+// re-render (navigating away, or any in-view update) can stop it — otherwise the
+// orphaned recognizer keeps the mic listening after its button is gone (privacy).
+let _activeMic = null;
+function stopActiveMic() {
+  if (_activeMic) { try { _activeMic.stop(); } catch (e) { /* noop */ } _activeMic = null; }
+}
+
 function render() {
+  // Any pending re-render destroys the current DOM (incl. mic buttons) — stop a
+  // live dictation mic first so it can never be left listening.
+  stopActiveMic();
   // A profile always exists in memory so Coach/Settings work before the
   // baseline is done (and so nothing reads a null profile).
   state.profile = state.profile || Profile.createProfile();
@@ -1469,17 +1480,20 @@ function attachMicButton(btn, input) {
     input.value = (committed + (committed && extra ? ' ' : '') + extra).trim();
     input.dispatchEvent(new Event('input')); // let callers persist via their oninput
   };
+  const release = () => { if (_activeMic === rec) _activeMic = null; };
   btn.onclick = () => {
-    if (recording) { try { rec && rec.stop(); } catch (e) { /* noop */ } committed = input.value; setUI(false); return; }
+    if (recording) { try { rec && rec.stop(); } catch (e) { /* noop */ } release(); committed = input.value; setUI(false); return; }
     committed = input.value;
     rec = createRecognizer({
       onInterim: (t) => write(t),
       onFinal: (t) => { committed = (committed + (committed ? ' ' : '') + t).trim(); write(''); },
-      onError: () => { try { rec && rec.stop(); } catch (e) { /* noop */ } committed = input.value; setUI(false); },
-      onEnd: () => { if (recording) { committed = input.value; setUI(false); } },
+      onError: () => { try { rec && rec.stop(); } catch (e) { /* noop */ } release(); committed = input.value; setUI(false); },
+      onEnd: () => { release(); if (recording) { committed = input.value; setUI(false); } },
     });
     if (!rec) { btn.style.display = 'none'; return; }
-    try { rec.start(); setUI(true); } catch (e) { setUI(false); }
+    // Stop any other live mic before claiming the singleton slot.
+    stopActiveMic();
+    try { rec.start(); _activeMic = rec; setUI(true); } catch (e) { setUI(false); }
   };
 }
 
