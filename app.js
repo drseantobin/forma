@@ -1880,7 +1880,7 @@ async function completeSession() {
         ? `<div class="milestone" role="status" style="--mile:var(--amber)">
              <div class="mile-rule">🛟 Grace day</div>
              <div class="mile-head">Your ${profile.streak.current}-day streak held</div>
-             <div class="mile-note">You missed a day and came back — that's the harder rep. The streak doesn't count the gap, but it didn't break either.</div>
+             <div class="mile-note">You missed a day and came back — that's the harder rep. The streak doesn't count the gap, but it didn't break either. Grace is spent now; one clean day back-to-back restores it.</div>
            </div>`
         : ''));
 
