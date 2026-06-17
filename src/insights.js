@@ -20,9 +20,13 @@ export function dailyInsight(session, profile) {
   const { domain, rawScore, type } = session;
   const name = domainName(domain);
 
-  // Prior average for this domain (excluding today's session).
+  // Prior average for this domain (excluding today's session). Use only DIRECT
+  // measurements of this domain: secondary-credit rows (exerciseType ".*-secondary",
+  // written by applySession) carry the PRIMARY exercise's rawScore, not a real
+  // measurement of this domain — including them contaminates the average and can
+  // flag a genuine session as "below your recent average" when it isn't.
   const priorScores = profile.history
-    .filter((h) => h.domain === domain)
+    .filter((h) => h.domain === domain && !String(h.exerciseType || '').endsWith('-secondary'))
     .slice(0, -1)
     .map((h) => h.rawScore != null ? h.rawScore : h.newDomainScore);
   const priorAvg = priorScores.length
