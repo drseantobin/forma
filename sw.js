@@ -1,6 +1,10 @@
 // sw.js — Forma service worker. Makes the app installable and offline-capable.
 // Bump CACHE when shipping changes so clients pick up the new files.
-const CACHE = 'forma-v38';
+//
+// SHELL must list EVERY src/*.js module — otherwise a freshly-installed user who
+// goes offline before that module is fetched at runtime hits a broken dynamic
+// import. Keep in sync with src/; the deploy step diffs SHELL against src/*.js.
+const CACHE = 'forma-v39';
 const SHELL = [
   './',
   './index.html',
@@ -23,10 +27,19 @@ const SHELL = [
   './src/speech.js',
   './src/audio.js',
   './src/team.js',
+  './src/milestones.js',
+  './src/reliability.js',
+  './src/methods.js',
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // Resilient precache: one missing/404 file must not abort the whole install
+  // (addAll is atomic and would). Cache each individually, best-effort.
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => Promise.allSettled(SHELL.map((u) => c.add(u))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
