@@ -26,9 +26,12 @@ export function dailyInsight(session, profile) {
   // written by applySession) carry the PRIMARY exercise's rawScore, not a real
   // measurement of this domain — including them contaminates the average and can
   // flag a genuine session as "below your recent average" when it isn't.
-  const priorScores = profile.history
-    .filter((h) => h.domain === domain && !String(h.exerciseType || '').endsWith('-secondary'))
-    .slice(0, -1)
+  // A MEASURED session appended a history row, so drop the last one (today's) before
+  // averaging. An UNSCORED replay (rawScore null) appended NO row — slicing it would
+  // silently discard a real prior measurement, so keep the full list in that case.
+  const rows = profile.history
+    .filter((h) => h.domain === domain && !String(h.exerciseType || '').endsWith('-secondary'));
+  const priorScores = (rawScore != null ? rows.slice(0, -1) : rows)
     .map((h) => h.rawScore != null ? h.rawScore : h.newDomainScore);
   const priorAvg = priorScores.length
     ? priorScores.reduce((a, b) => a + b, 0) / priorScores.length
@@ -48,7 +51,12 @@ export function dailyInsight(session, profile) {
     lines.push(`That's ${streak} days in a row. The streak isn't the point — but the person who shows up ${streak} days running is already becoming someone different.`);
   }
 
-  if (priorAvg != null) {
+  if (rawScore == null) {
+    // An unscored replay produced NO new measurement — never fabricate a "steady /
+    // above / below" comparison (that would be NaN against priorAvg) or a band from a
+    // null score. Name it honestly: the rep counts, the scale just didn't move.
+    lines.push(`Reflection saved for ${name}. This one didn't add a new measurement — you'd already used the fresh items — but showing up is the rep, and the next new item will move the scale.`);
+  } else if (priorAvg != null) {
     const diff = rawScore - priorAvg;
     if (diff >= 12) {
       lines.push(`Your ${name} result today was noticeably stronger than your recent average — a real step, not noise.`);
