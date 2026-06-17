@@ -68,6 +68,32 @@ export function bandDistribution(members, domainId) {
 
 // A team's clearest strengths and development priorities, from per-domain averages
 // — the actionable takeaway an employer wants. Returns sorted [{id, score}] lists.
+// A plain-text team report — the shareable B2B deliverable (copy into an email
+// or print). Aggregate signals ONLY: no individual scores, no raw data, and the
+// interior track is never in `perDomain` (CORE excludes it), so it can't leak.
+export function teamReportText(agg, highlights) {
+  const nameOf = (id) => { const d = DOMAINS.find((x) => x.id === id); return d ? d.name : id; };
+  const lines = [];
+  lines.push('FORMA — Team Capacity Report (Preview)');
+  lines.push(`${agg.n} members · aggregated development signals only`);
+  lines.push('');
+  lines.push(`Team Formation Index: ${agg.avgIndex}`);
+  lines.push(`AI-Readiness: ${agg.aiReadiness}`);
+  if (highlights) {
+    lines.push('');
+    lines.push(`Strengths: ${highlights.strengths.map((e) => nameOf(e.id)).join(', ')}`);
+    lines.push(`Development priorities: ${highlights.priorities.map((e) => nameOf(e.id)).join(', ')}`);
+  }
+  lines.push('');
+  lines.push('Capacity averages:');
+  DOMAINS.forEach((d) => {
+    if (agg.perDomain[d.id] != null) lines.push(`  - ${d.name}: ${agg.perDomain[d.id]}`);
+  });
+  lines.push('');
+  lines.push('Privacy: aggregate signals only — no individual scores, no raw data, and the optional Interior Life track is never included. A development signal for growth, never a tool to rank or surveil individuals.');
+  return lines.join('\n');
+}
+
 export function teamHighlights(perDomain, n = 3) {
   const entries = Object.keys(perDomain).map((id) => ({ id, score: perDomain[id] }));
   const byScore = entries.slice().sort((a, b) => b.score - a.score);

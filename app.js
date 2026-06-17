@@ -2071,9 +2071,9 @@ function renderTeam() {
   const hi = Team.teamHighlights(agg.perDomain, 3);
   const tag = (e) => `<span class="airchip" style="margin:0;"><span class="airdot" style="background:${bandFor(e.score).color};"></span><span class="airnm">${esc(getDomain(e.id).name)}</span><span class="airsc">${e.score}</span></span>`;
   app.innerHTML = `
-    <div class="fade-in">
+    <div class="fade-in snapshot">
       <div class="row"><h1 style="margin:0;">Team</h1><span class="spacer"></span>
-        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>
+        <button class="btn ghost sm no-print" id="back" style="width:auto;">← Settings</button></div>
       <p class="muted small">Preview · a sample cohort of ${agg.n}. In production, an employer would see only <strong>aggregated development signals</strong> across a team — never an individual's raw data, scores, or reflections, and never the Interior Life track.</p>
 
       <div class="card index-hero">
@@ -2115,8 +2115,22 @@ function renderTeam() {
         <div class="eyebrow">What "AI-readiness" means</div>
         <p class="muted small" style="margin-top:6px;">A blend of Judgment, AI Independence, Deep Reading, and Communication — the capacities that most predict working <em>well</em> alongside AI rather than being replaced by it. A development signal for growth, never a tool to rank or surveil individuals.</p>
       </div>
+
+      <div class="row no-print" style="gap:8px;">
+        <button class="btn sm" id="teamprint" style="width:auto;">Print / Save as PDF</button>
+        <button class="btn ghost sm" id="teamcopy" style="width:auto;">Copy report</button>
+        <span id="teamcopied" class="trendpill up" style="display:none;">copied ✓</span>
+      </div>
     </div>`;
   document.getElementById('back').onclick = () => go('settings');
+  document.getElementById('teamprint').onclick = () => window.print();
+  document.getElementById('teamcopy').onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(Team.teamReportText(agg, hi));
+      const c = document.getElementById('teamcopied'); c.style.display = 'inline-block';
+      setTimeout(() => { c.style.display = 'none'; }, 1500);
+    } catch (e) { /* clipboard blocked — no-op */ }
+  };
 }
 
 // ---------------- 90-day proof ----------------
