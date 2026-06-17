@@ -41,7 +41,7 @@ export const DOMAINS = [
     blurb:
       'Reading slowly enough to understand, to follow an argument, and to hold a long thought without skimming to the end.',
     aiRationale:
-      'Comprehension is a muscle. A culture that reads only summaries loses the ability to sit with a difficult text — and with a difficult idea.',
+      'Comprehension is a muscle. A culture that reads only summaries loses the ability to stay inside a difficult text long enough to follow it — and to think a difficult idea all the way through.',
   },
   {
     id: 'persistence',
