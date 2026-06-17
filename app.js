@@ -249,7 +249,7 @@ function renderOnboarding() {
           <button class="btn amber" id="start">Quick check · ~${Math.max(3, Math.round(BASELINE_ITEMS.length * 7 / 60))} min →</button>
           <button class="btn ghost" id="talk">Talk it through with the coach →</button>
         </div>
-        <p class="muted small center" style="margin-top:12px;">The quick check is ${BASELINE_ITEMS.length} honest ratings across your capacities — a short self-assessment that works offline. The conversation is an adaptive interview that writes your profile — it uses your own Claude key, so it stays yours.</p>
+        <p class="muted small center" style="margin-top:12px;">The quick check is ${BASELINE_ITEMS.length} honest ratings across your capacities — a short self-assessment that works offline. The conversation is an adaptive interview that writes your profile — it uses your own AI key (any provider), so it stays yours.</p>
         <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
           <span style="font-size:1.3rem;">🕊️</span>
           <div style="flex:1;">
@@ -260,8 +260,8 @@ function renderOnboarding() {
         </div>
         ${needKey ? `
           <div class="card" style="margin-top:12px;">
-            <p class="small"><strong>The conversation needs your Claude key.</strong> Paste it to talk it through, or just use the quick check above. Your key stays on this device.</p>
-            <div class="field"><input id="inlinekey" type="password" placeholder="sk-ant-…" /></div>
+            <p class="small"><strong>The conversation needs an AI key.</strong> Bring your own from any provider — Claude, GPT, Gemini, OpenRouter (pick the provider in Settings). Paste it to talk it through, or just use the quick check above. Your key stays on this device.</p>
+            <div class="field"><input id="inlinekey" type="password" placeholder="Paste your API key" /></div>
             <button class="btn sm" id="savekeyinline">Save key & start the conversation</button>
           </div>` : ''}
         <div class="card" style="margin-top:12px; background:var(--green-soft); border-color:transparent;">
@@ -1750,7 +1750,7 @@ function renderSentence() {
     // Never fabricate a score: null = "not measured" (no key / API fail / bad parse).
     s.response.aiScore = (result && result.score != null) ? result.score : null;
     s.response.feedback = (result && result.feedback) ? result.feedback
-      : 'Saved — this reflection needs the live coach to read it. Add a Claude key in Settings and it’ll be scored next time. Either way, finishing it honestly counts.';
+      : 'Saved — this reflection needs the live coach to read it. Add an AI key in Settings and it’ll be scored next time. Either way, finishing it honestly counts.';
     completeSession();
   };
 }
@@ -1941,7 +1941,7 @@ function renderVignette() {
     // Never fabricate a score: null = "not measured" (no key / API fail / bad parse).
     s.response.aiScore = (result && result.score != null) ? result.score : null;
     s.response.feedback = (result && result.feedback) ? result.feedback
-      : 'Saved — this one needs the live coach to read it. Add a Claude key in Settings and it’ll be scored next time. Either way, working through a hard conversation counts.';
+      : 'Saved — this one needs the live coach to read it. Add an AI key in Settings and it’ll be scored next time. Either way, working through a hard conversation counts.';
     s.response.transcript = text;
     completeSession();
   };
@@ -2962,7 +2962,7 @@ function renderSettings() {
       <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
         <p class="muted small">Everything Forma stores about you lives on this device — no server, no account, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
-        <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to Anthropic using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
+        <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to the AI provider you picked, using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
         <div class="stack">
           <button class="btn ghost sm" id="export">Export my data (JSON)</button>
           <p class="muted small" style="margin:2px 0 0;">The export is plain-text JSON that includes your written reflections and coach conversations (but never your API key). Keep the file somewhere private.</p>
