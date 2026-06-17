@@ -1483,12 +1483,18 @@ function attachMicButton(btn, input) {
   let rec = null;
   let recording = false;
   let committed = input.value; // text fixed before/between phrases
+  // Accessible name: the button's content is only an emoji that toggles to '■'
+  // mid-recording, so a screen reader would otherwise announce nothing usable.
+  // Respect any idle label already on the button (e.g. "Dictate your message"
+  // on the coach mic); default for the rest. Keep it stable through the toggle.
+  const idleLabel = btn.getAttribute('aria-label') || 'Dictate by voice';
   // Keep `committed` current when the person types by hand (but not while the
   // recognizer is the one writing — that path manages `committed` itself).
   input.addEventListener('input', () => { if (!recording) committed = input.value; });
   const setUI = (on) => {
     recording = on;
     btn.textContent = on ? '■' : '🎤';
+    btn.setAttribute('aria-label', on ? 'Stop dictation' : idleLabel);
     btn.classList.toggle('green', on);
     btn.classList.toggle('amber', !on);
   };
@@ -1717,7 +1723,7 @@ function renderContemplationReflect() {
       <p class="likert-q" style="font-size:1.05rem; margin-top:14px;">Where did your mind go? What was it like — and did anything pull you out?</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
         <textarea class="reflect-area" id="cnote" placeholder="A few honest words. Voice or type. This stays on your device.">${esc(r.note || '')}</textarea>
-        <button class="btn amber" id="cnotemic" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
+        <button class="btn amber" id="cnotemic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
       </div>
 
       <p class="muted small" style="margin-top:16px;">Your eyes were…</p>
@@ -1758,7 +1764,7 @@ function renderReflection() {
       <p class="likert-q" style="font-size:1.05rem;">${esc(ex.prompt)}</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
         <textarea class="reflect-area" id="ref" placeholder="Write or speak a few honest sentences. This stays on your device.">${esc(s.response.text || '')}</textarea>
-        <button class="btn amber" id="refmic" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
+        <button class="btn amber" id="refmic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
       </div>
       <p class="muted small" style="margin-top:14px;">${esc(ex.selfRatingLabel)}</p>
       <div class="rating">
