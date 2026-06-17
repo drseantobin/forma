@@ -1141,11 +1141,11 @@ function renderVigilance() {
   app.innerHTML = `
     <div class="fade-in">
       <p class="muted small center" id="vcount">Signal 1 of ${ex.trials}</p>
-      <div id="vstage" style="height:300px; border-radius:18px; background:#0e1018; display:grid; place-items:center; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;">
+      <div id="vstage" tabindex="0" role="button" aria-label="Respond the moment the dot appears — tap or press Space" style="height:300px; border-radius:18px; background:#0e1018; display:grid; place-items:center; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;">
         <div id="vmsg" style="color:#9aa0b4; font-size:1.05rem;">watch…</div>
         <div id="vdot" style="display:none; width:48px; height:48px; border-radius:50%; background:#ffffff; opacity:${ex.faint}; box-shadow:0 0 24px rgba(255,255,255,.5);"></div>
       </div>
-      <p class="muted small center" style="margin-top:10px;">Tap the moment the dot appears — not before.</p>
+      <p class="muted small center" style="margin-top:10px;">Tap — or press Space — the moment the dot appears, not before.</p>
     </div>`;
   const stage = document.getElementById('vstage');
   const dot = document.getElementById('vdot');
@@ -1198,6 +1198,13 @@ function renderVigilance() {
       s._timer = setTimeout(() => { if (!aborted()) nextTrial(); }, 450);
     }
   };
+  // Keyboard parity: this is a reaction-time measure, so a keyboard-only user
+  // must be able to respond with a key — without it the whole Vigilance measure
+  // is unperformable (every trial logs a miss). Space/Enter fire the same handler.
+  stage.onkeydown = (e) => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); stage.onclick(); }
+  };
+  stage.focus(); // so a keyboard user is ready without hunting for the target
 
   if (!s._started) { s._started = true; nextTrial(); }
 }
