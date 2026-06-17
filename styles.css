@@ -170,6 +170,26 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- progress ---------- */
 .kbig { font-variant-numeric: tabular-nums; }
+/* Capacity Snapshot (shareable credential) */
+.snapsheet { border:1px solid var(--line, #e6e4dd); }
+.snaphead { display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid var(--line, #e6e4dd); }
+.snaphead .logo { width:38px; height:38px; border-radius:9px; display:grid; place-items:center; background:var(--accent); color:#fff; font-weight:800; }
+.snaptitle { font-weight:700; }
+.snaphero { display:flex; gap:32px; padding:16px 0; }
+.snaptable { width:100%; border-collapse:collapse; }
+.snaptable td { padding:7px 0; border-top:1px solid var(--line, #e6e4dd); vertical-align:middle; }
+.snaptable tr:first-child td { border-top:none; }
+.snapdot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+.snaptable .snapsc { text-align:right; font-weight:800; font-size:1.05rem; }
+.snaptable .snapconf { text-align:right; white-space:nowrap; }
+.snapfoot { margin-top:14px; padding-top:10px; border-top:1px dashed var(--line, #e6e4dd); }
+@media print {
+  .tabbar, .skip-link, .no-print, .brandmark { display:none !important; }
+  body, #app { background:#fff !important; }
+  .snapsheet { border:none; box-shadow:none; }
+  .card { box-shadow:none; }
+}
+
 /* Commitments (solution-focused goals) */
 .goalrow { display:flex; align-items:center; gap:10px; padding:7px 0; }
 .goalcheck {
