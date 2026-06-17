@@ -73,6 +73,10 @@ export function ensureResearch(profile) {
   if (!r.demographics || typeof r.demographics !== 'object' || Array.isArray(r.demographics)) r.demographics = {};
   if (!Array.isArray(r.queue)) r.queue = [];
   if (typeof r.installId !== 'string') r.installId = '';
+  // Monotonic per-install sequence — lets the future server dedup on (installId, seq)
+  // so a re-sent batch (POST landed but response lost) is idempotent. Stays strictly
+  // inside the research tier (shares installId); never appears in contact/release.
+  if (typeof r.nextSeq !== 'number') r.nextSeq = 0;
   return r;
 }
 
@@ -83,9 +87,59 @@ export function recordSession(profile, session, response, today) {
   if (!r.consent) return profile;
   const ev = buildEvent(session, response, today);
   if (!ev) return profile;
+  ev.seq = r.nextSeq++;
   r.queue.push(ev);
   if (r.queue.length > QUEUE_CAP) r.queue = r.queue.slice(-QUEUE_CAP);
   return profile;
+}
+
+// ----- server-ready flush (pipeline #8). INERT until an endpoint is configured. -----
+export const FLUSH_SCHEMA = 1;
+// ALLOW-LIST: the ONLY fields that may leave the device. PII is impossible by
+// construction — buildBatch never references profile.contact/release/settings/coachLog.
+const FLUSH_EVENT_FIELDS = ['t', 'day', 'type', 'domain', 'score', 'measured', 'option', 'seq'];
+function cleanFlushEvent(ev) {
+  if (!ev || typeof ev !== 'object') return null;
+  const out = {};
+  FLUSH_EVENT_FIELDS.forEach((k) => { if (ev[k] !== undefined) out[k] = ev[k]; });
+  return out;
+}
+
+// Build the de-identified payload, or null if nothing should be sent. PURE.
+export function buildBatch(profile) {
+  const r = ensureResearch(profile);
+  if (!r.consent || !r.installId) return null;       // consent gate, baked in
+  const events = (r.queue || []).map(cleanFlushEvent).filter(Boolean);
+  if (!events.length) return null;
+  return {
+    schema: FLUSH_SCHEMA,
+    installId: r.installId,                          // the ONLY identifier
+    consentedAt: r.consentedAt,                      // already day-coarse
+    demographics: cleanDemographics(r.demographics), // re-run the allow-list at the wire
+    events,
+  };
+}
+
+// Send the batch when consent + endpoint are present. Offline-safe + fails-silent: on
+// ANY failure the events are KEPT and nothing throws into the app. On success, remove
+// EXACTLY the sent events (n captured before the await) so a session queued mid-POST
+// survives. Never sends without consent or an endpoint.
+export async function flushResearch(profile, { endpoint, fetchImpl, save } = {}) {
+  const r = ensureResearch(profile);
+  if (!r.consent || !endpoint) return { sent: 0 };
+  const batch = buildBatch(profile);
+  if (!batch) return { sent: 0 };
+  const n = batch.events.length; // capture BEFORE await — race fix
+  const doFetch = fetchImpl || (typeof fetch !== 'undefined' ? fetch : null);
+  if (!doFetch) return { sent: 0 };
+  let res;
+  try {
+    res = await doFetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(batch) });
+  } catch (e) { return { sent: 0 }; }          // network failure → keep events, swallow
+  if (!res || !res.ok) return { sent: 0 };     // non-2xx → keep events, swallow
+  r.queue = (r.queue || []).slice(n);          // remove sent; in-flight (index >= n) survives
+  if (save) { try { save(); } catch (e) { /* noop */ } }
+  return { sent: n };
 }
 
 // Set (or withdraw) consent. On grant: mint a random installId (once), stamp the

@@ -22,7 +22,7 @@ export function createProfile() {
   return {
     version: VERSION,
     createdAt: new Date().toISOString(),
-    settings: { provider: 'anthropic', apiKey: '', model: 'claude-opus-4-8', name: '', faithTrack: false },
+    settings: { provider: 'anthropic', apiKey: '', model: 'claude-opus-4-8', name: '', faithTrack: false, researchEndpoint: '' },
     baseline: null, // { date, domainScores, responses }
     domainScores: {}, // current EMA scale per domain (0..100)
     sessions: [], // raw daily-loop results
@@ -36,7 +36,7 @@ export function createProfile() {
     // Consented, de-identified research/improvement data (see research.js). Off by
     // default — captures nothing until the user explicitly opts in. No name/contact
     // ever lives here; interior content is never collected.
-    research: { consent: false, consentedAt: null, demographics: {}, queue: [], installId: '' },
+    research: { consent: false, consentedAt: null, demographics: {}, queue: [], installId: '', nextSeq: 0 },
     // CONTACT tier (identified, opt-in): an email for future reminders. SEPARATE
     // from research and deliberately NOT linkable to it — no installId here, ever.
     contact: { consent: false, email: '', consentedAt: null },
@@ -403,6 +403,7 @@ function migrate(p) {
   if (p.settings.apiKey == null) p.settings.apiKey = '';
   if (p.settings.provider == null) p.settings.provider = 'anthropic';
   if (p.settings.model == null) p.settings.model = 'claude-opus-4-8';
+  if (p.settings.researchEndpoint == null) p.settings.researchEndpoint = ''; // empty = flush inert
   if (p.settings.name == null) p.settings.name = '';
   if (p.settings.faithTrack == null) p.settings.faithTrack = false;
   p.domainScores = obj(p.domainScores);
@@ -426,6 +427,7 @@ function migrate(p) {
   p.research.demographics = obj(p.research.demographics);
   p.research.queue = arr(p.research.queue);
   if (typeof p.research.installId !== 'string') p.research.installId = '';
+  if (typeof p.research.nextSeq !== 'number') p.research.nextSeq = 0;
   // Contact tier (identified) — coerce by type, default to no-consent/empty. Kept
   // structurally separate from research; never carries an installId.
   p.contact = obj(p.contact);

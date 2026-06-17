@@ -3220,3 +3220,19 @@ render();
     }
   } catch (e) { /* noop */ }
 })();
+
+// Opportunistic, fails-silent flush of the de-identified research queue — strictly
+// post-render (render() already ran), fire-and-forget, never blocks paint. No-op
+// unless an endpoint is configured AND consent is on AND we're online (server-ready;
+// inert today since no endpoint exists). The flush itself sends ONLY the allow-listed
+// de-identified payload (buildBatch) — never contact/release/PII.
+(function flushResearchAtBoot() {
+  try {
+    const p = state.profile;
+    if (!p || !p.settings) return;
+    const endpoint = p.settings.researchEndpoint;
+    if (!endpoint || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+    if (!p.research || !p.research.consent) return;
+    Research.flushResearch(p, { endpoint, save }).catch(() => {});
+  } catch (e) { /* noop */ }
+})();
