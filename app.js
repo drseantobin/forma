@@ -15,7 +15,7 @@ import * as Diagnostic from './src/diagnostic.js';
 import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import { bandAscension, ascensionLine, streakMilestone, nextStreakMark } from './src/milestones.js';
-import { confidenceTag, confidence, milestoneEligible } from './src/reliability.js';
+import { confidenceTag, confidence, milestoneEligible, indexConfidence } from './src/reliability.js';
 import { basisFor } from './src/methods.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
@@ -552,6 +552,13 @@ function renderHome() {
             ? ` <span class="trendpill ${t.direction}">${t.delta > 0 ? '+' : ''}${t.delta} since you began</span>`
             : '';
         })()}</div>
+        ${(() => {
+          // Honest headline: when the composite rests on thin evidence (few
+          // capacities measured, mostly provisional), say so — don't show an
+          // early, noisy number as authoritatively as a settled one.
+          const ic = indexConfidence(p);
+          return ic.thin ? `<div class="muted small" style="margin-top:4px;">${esc(ic.note)}</div>` : '';
+        })()}
         <div class="streakchip ${alive ? '' : 'cold'}">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}-day streak${alive ? (() => {
           // Honest forward-pull: the true number of days to the next real mark.
           // Only when the streak is alive (don't compete with the warmer "relight

@@ -13,6 +13,8 @@
 // so it must NOT count as evidence either.
 // Pure functions, no DOM — fully testable.
 
+import { activeDomainIds } from './domains.js';
+
 // How many direct measurements stand behind a domain's scale.
 export function domainEvidence(profile, domainId) {
   const sessions = (profile.sessions || []).filter((s) => s.domain === domainId && !s.unscored).length;
@@ -48,4 +50,28 @@ export function confidenceTag(profile, domainId) {
 // session swinging the EMA across a boundary. (Tightens the v25 milestone.)
 export function milestoneEligible(profile, domainId) {
   return domainEvidence(profile, domainId).evidence >= 3;
+}
+
+// Confidence in the HEADLINE composite (Formation Index). The per-domain
+// confidence above is never felt by the user at the top-line number — so a
+// brand-new profile shows a bare, authoritative "62" identical to a fully
+// measured, long-tenured one. This aggregates: the index is "thin" (provisional)
+// when fewer than half the active capacities are measured, or most of those are
+// still provisional, or there are fewer than two. Returns a note for callers to
+// show next to the headline, so the composite carries the humility the domains do.
+export function indexConfidence(profile) {
+  const faith = !!(profile && profile.settings && profile.settings.faithTrack);
+  const ids = activeDomainIds(faith);
+  const scores = (profile && profile.domainScores) || {};
+  const scored = ids.filter((id) => scores[id] != null);
+  const covered = scored.length;
+  const total = ids.length;
+  const provisional = scored.filter((id) => confidence(profile, id).level === 'provisional').length;
+  const thin = covered < 2 || covered < total / 2 || provisional > covered / 2;
+  return {
+    covered,
+    total,
+    thin,
+    note: thin ? `Provisional · ${covered} of ${total} capacities measured` : '',
+  };
 }
