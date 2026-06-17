@@ -68,8 +68,17 @@ export function scoreStream(tapped, items) {
 }
 
 // --- Stay (frustration tolerance): behavioral persistence + self-report ---
-export function scoreStay(stayed, selfRating) {
-  const behavioral = stayed ? 100 : 25;
+// "I stuck with it" is a self-claim, so a DWELL time (ms actually spent with the
+// hard puzzle before responding) keeps it honest: a genuine wrestle takes more
+// than a few seconds, so an instant "I stayed" can't earn full behavioral credit.
+// dwellMs is optional — omitted (older/ungated responses) keeps the prior scoring.
+export function scoreStay(stayed, selfRating, dwellMs = null) {
+  let behavioral = stayed ? 100 : 25;
+  if (stayed && dwellMs != null) {
+    if (dwellMs < 5000) behavioral = 55;        // clicked through almost instantly
+    else if (dwellMs < 12000) behavioral = 80;  // brief but real
+    // >= 12s → full credit: they genuinely sat in the not-knowing
+  }
   return clamp(round(behavioral * 0.7 + scoreSelfRating(selfRating || 3) * 0.3));
 }
 
@@ -219,7 +228,7 @@ export function scoreExercise(exercise, response) {
     case 'stream':
       return scoreStream(response.tapped || [], exercise.items);
     case 'stay':
-      return scoreStay(response.stayed, response.selfRating);
+      return scoreStay(response.stayed, response.selfRating, response.dwellMs);
     case 'contemplation':
       return scoreContemplation(response.seconds || 0, exercise.targetSeconds, response.presence != null ? response.presence : null);
     case 'vigilance':

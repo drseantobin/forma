@@ -1550,6 +1550,9 @@ function renderStay() {
   const ex = s.exercise;
   const phase = s.stayPhase || 'puzzle';
   if (phase === 'puzzle') {
+    // Stamp when the puzzle first appears, so we can measure how long they
+    // actually sat with it (dwell) — the behavioral half of frustration tolerance.
+    if (s._stayShownAt == null) s._stayShownAt = Date.now();
     app.innerHTML = `
       <div class="fade-in">
         ${sessionHeader(ex)}
@@ -1560,8 +1563,14 @@ function renderStay() {
           <button class="btn ghost" id="skipped">This is too hard — skip</button>
         </div>
       </div>`;
-    document.getElementById('stayed').onclick = () => { s.response.stayed = true; s.stayPhase = 'rate'; render(); };
-    document.getElementById('skipped').onclick = () => { s.response.stayed = false; s.stayPhase = 'rate'; render(); };
+    document.getElementById('stayed').onclick = () => {
+      s.response.dwellMs = Date.now() - (s._stayShownAt || Date.now());
+      s.response.stayed = true; s.stayPhase = 'rate'; render();
+    };
+    document.getElementById('skipped').onclick = () => {
+      s.response.dwellMs = Date.now() - (s._stayShownAt || Date.now());
+      s.response.stayed = false; s.stayPhase = 'rate'; render();
+    };
     return;
   }
   // rate + reveal
