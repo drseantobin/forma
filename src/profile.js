@@ -78,7 +78,15 @@ export function applySession(profile, exercise, response, opts = {}) {
   // We never fabricate a number onto the longitudinal scale: an unmeasured
   // session is recorded (it counts as showing up, for the streak) but leaves the
   // domain scale, history, Formation Index, and confidence completely untouched.
-  const measured = rawScore != null;
+  // A re-served SINGLE-USE item is likewise unmeasured: CRT (cognitive-reflection)
+  // answers are recalled permanently once seen ("the bat and the ball"), so once
+  // the bank is exhausted (v102 rotates through it first) a repeat measures memory,
+  // not reflection — letting it score would ratchet Judgment toward 100 by recall.
+  // Scope is CRT only; matrices/SJTs are re-reasonable, so a repeat keeps validity.
+  // (profile.sessions does not yet include this session, so .some() tests prior history.)
+  const isSingleUseReplay = exercise.type === 'crt'
+    && (p.sessions || []).some((s) => s.exerciseId === exercise.id);
+  const measured = rawScore != null && !isSingleUseReplay;
 
   const alpha = opts.alpha ?? 0.3;
   const prev = p.domainScores[domain];
