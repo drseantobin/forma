@@ -143,6 +143,10 @@ button { font-family: inherit; cursor: pointer; }
    Warm growth-green, not the grey "cold/relight it" branch a lapse would get. */
 .streakchip.fresh { background: var(--green-soft); color: var(--green-ink); }
 
+/* Opt-in consent row: a real checkbox + label, comfortable tap target. */
+.consent-row { display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-weight:600; padding:4px 0; }
+.consent-row input[type="checkbox"] { width:20px; height:20px; margin-top:1px; flex:none; accent-color: var(--green); cursor:pointer; }
+
 .insight {
   background: linear-gradient(180deg, #fff, #fbfaf7); border:1px solid var(--line);
   border-left: 4px solid var(--amber); border-radius: var(--radius-sm);

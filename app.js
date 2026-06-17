@@ -262,7 +262,7 @@ function renderOnboarding() {
           </div>` : ''}
         <div class="card" style="margin-top:12px; background:var(--green-soft); border-color:transparent;">
           <div class="eyebrow" style="color:var(--green);">🔒 Private by design</div>
-          <p class="muted small" style="margin-top:4px;">Everything Forma learns about you stays on this device. Nothing is uploaded — unless you choose to bring your own Claude key for the coach.</p>
+          <p class="muted small" style="margin-top:4px;">Everything Forma learns about you stays on this device. Nothing is uploaded unless you choose to — by sharing anonymous results to improve Forma, or bringing your own key for the coach.</p>
         </div>
       </div>`;
     document.getElementById('faithtoggle').onclick = () => {
@@ -375,9 +375,28 @@ async function renderBaselineResult() {
         <div class="row"><span class="spinner"></span> <span class="muted">Reading your profile…</span></div>
       </div>
       <button class="btn ghost" id="talkbaseline" style="margin-bottom:10px;">💬 Talk through my profile with the coach →</button>
+      <div class="card" id="researchconsent-card" style="text-align:left;">
+        <div class="eyebrow" style="color:var(--green);">Help improve Forma — optional</div>
+        <p class="muted small" style="margin-top:4px;">You can share <strong>anonymous</strong> results to help us learn what actually builds these capacities. It changes nothing about how Forma works for you.</p>
+        <ul class="muted small" style="margin:8px 0 10px; padding-left:18px;">
+          <li><strong>Shared if you opt in:</strong> your capacity scores and which answer you picked, dated only to the day — never tied to you.</li>
+          <li><strong>Never shared:</strong> your name, any contact info, anything you type, and anything from the Interior Life track.</li>
+        </ul>
+        <label class="consent-row" for="researchconsent">
+          <input type="checkbox" id="researchconsent" />
+          <span>Yes, share my anonymous results to improve Forma</span>
+        </label>
+      </div>
       <button class="btn amber" id="go">Start my first session →</button>
     </div>`;
-  document.getElementById('go').onclick = () => go('session');
+  // Research consent is OPT-IN and optional: it commits ONLY on this explicit tap,
+  // and the app proceeds identically whether it's on or off. Declining leaves
+  // research.consent at its false default (capture stays inert).
+  document.getElementById('go').onclick = () => {
+    const box = document.getElementById('researchconsent');
+    if (box && box.checked) { Research.setConsent(state.profile, true); save(); }
+    go('session');
+  };
   const strongest = Object.keys(p.domainScores).sort((a, b) => p.domainScores[b] - p.domainScores[a])[0];
   document.getElementById('talkbaseline').onclick = () => talkThrough({ kind: 'baseline', strongest });
   wireDomainLinks();
