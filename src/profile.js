@@ -225,6 +225,30 @@ export function exportProfile(profile) {
   return JSON.stringify(copy, null, 2);
 }
 
+// Restore a profile from an exported JSON string. Validates that it actually
+// looks like a Forma profile before accepting it, so a wrong or corrupt file
+// can't silently replace someone's data. Throws an Error with a plain-language
+// message on bad input. Runs through migrate() so older/partial backups are
+// normalized. The export never contains an API key, so the caller decides
+// whether to carry the current key over.
+export function importProfile(jsonString) {
+  let raw;
+  try {
+    raw = JSON.parse(jsonString);
+  } catch {
+    throw new Error('That file isn’t valid JSON — make sure it’s a Forma export.');
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('That doesn’t look like a Forma backup.');
+  }
+  const looksLikeProfile = 'domainScores' in raw
+    && ('sessions' in raw || 'history' in raw || 'baseline' in raw);
+  if (!looksLikeProfile) {
+    throw new Error('That file is missing Forma’s data — it may be from another app.');
+  }
+  return migrate(raw);
+}
+
 function migrate(p) {
   if (!p.version) p.version = VERSION;
   // Defensive defaults for older/partial saves.

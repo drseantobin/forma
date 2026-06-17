@@ -2214,9 +2214,12 @@ function renderSettings() {
 
       <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
-        <p class="muted small">Everything Forma knows about you lives on this device. You own it.</p>
+        <p class="muted small">Everything Forma knows about you lives on this device — no server, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
         <div class="stack">
           <button class="btn ghost sm" id="export">Export my data (JSON)</button>
+          <button class="btn ghost sm" id="import">Import / restore from a backup</button>
+          <input type="file" id="importfile" accept="application/json,.json" style="display:none;">
+          <span class="muted small" id="importmsg" style="display:none;"></span>
           <button class="btn danger sm" id="reset">Erase everything & start over</button>
         </div>
       </div>
@@ -2265,6 +2268,40 @@ function renderSettings() {
     a.href = URL.createObjectURL(blob);
     a.download = `forma-data-${todayStr()}.json`;
     a.click();
+  };
+  document.getElementById('import').onclick = () => document.getElementById('importfile').click();
+  document.getElementById('importfile').onchange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const msg = document.getElementById('importmsg');
+    const reader = new FileReader();
+    reader.onload = () => {
+      let imported;
+      try {
+        imported = Profile.importProfile(String(reader.result));
+      } catch (err) {
+        msg.style.display = 'block'; msg.style.color = 'var(--red)';
+        msg.textContent = `✗ ${err.message}`;
+        e.target.value = '';
+        return;
+      }
+      const n = (imported.sessions || []).length;
+      if (!confirm(`Restore this backup? It replaces the data on this device with ${n} saved session${n === 1 ? '' : 's'}. This can’t be undone.`)) {
+        e.target.value = '';
+        return;
+      }
+      // Keep the key currently entered on this device — exports never include it.
+      imported.settings = imported.settings || {};
+      imported.settings.apiKey = p.settings.apiKey || '';
+      state.profile = imported;
+      save();
+      go('home');
+    };
+    reader.onerror = () => {
+      msg.style.display = 'block'; msg.style.color = 'var(--red)';
+      msg.textContent = '✗ Couldn’t read that file.';
+    };
+    reader.readAsText(file);
   };
   document.getElementById('reset').onclick = () => {
     if (confirm('Erase all Forma data on this device and start over? This cannot be undone.')) {
