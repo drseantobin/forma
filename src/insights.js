@@ -58,19 +58,38 @@ export function dailyInsight(session, profile) {
     lines.push(`First session on ${name}. Today's result sits in the "${band.label}" range — your starting line, nothing more. ${band.note}`);
   }
 
-  // Type-specific nudge.
-  if (type === 'reflection') {
-    lines.push('Naming it honestly is most of the work here. You can’t form what you won’t look at.');
-  } else if (type === 'decision') {
-    lines.push('Reasoning hygiene is a muscle: it’s built one deliberate pause at a time.');
-  } else if (type === 'memory') {
-    lines.push('Every time you hold a sequence yourself instead of offloading it, you’re keeping the workbench in working order.');
-  } else if (type === 'reading') {
-    lines.push('Reading to the end — really to the end — is countercultural now. That’s the rep.');
-  }
+  // Type-specific closing nudge — grounded in the exact capacity just trained,
+  // so every modality lands a specific, on-thesis line (not a generic one).
+  if (TYPE_NUDGE[type]) lines.push(TYPE_NUDGE[type]);
 
   return lines.join(' ');
 }
+
+// One distinct, growth-framed closing line per exercise type. Keyed by the same
+// `type` strings scoreExercise dispatches on, so each session's insight ends with
+// something true about THAT capacity — the part AI can't do for you.
+export const TYPE_NUDGE = {
+  reading: 'Reading to the end — really to the end — is countercultural now. That’s the rep.',
+  maze: 'Filling the right word from context is comprehension working in real time — reading actively, not just passing your eyes over it.',
+  memory: 'Every time you hold a sequence yourself instead of offloading it, you’re keeping the workbench in working order.',
+  digitspan: 'Running the digits backward makes you hold AND rearrange at once — that’s working memory, not just recall.',
+  nback: 'Tracking what matched a few steps back is your mind resisting the pull of only-right-now. Rare, and trainable.',
+  mathfluency: 'Doing the arithmetic yourself keeps a sense of number alive — so you can still tell when an answer is simply wrong.',
+  decision: 'Reasoning hygiene is a muscle: it’s built one deliberate pause at a time.',
+  crt: 'The first answer that feels obvious is exactly the one worth doubting. You practiced the pause.',
+  matrix: 'Finding the pattern with no instructions is fluid reasoning — the part of thinking that doesn’t come pre-packaged.',
+  tradeoff: 'Independence isn’t using AI less — it’s staying awake to which efforts are worth keeping. You just named one.',
+  stem: 'Managing a feeling well isn’t suppressing it — it’s choosing the response that actually helps. A skill, not a temperament.',
+  comm: 'The effective word is clear and kind at once. Most people manage one; you practiced holding both.',
+  vignette: 'How you’d actually respond — not what you know you should say — is where communication lives. You worked the real thing.',
+  sentence: 'What you completed without stopping to think says more than a careful answer would. Self-knowledge starts with noticing it.',
+  reflection: 'Naming it honestly is most of the work here. You can’t form what you won’t look at.',
+  stay: 'Staying with the hard thing a little past the urge to quit — that’s the whole muscle. You just trained it.',
+  contemplation: 'Sitting in silence and coming back when you drift IS the practice. Nothing to achieve, only to return to.',
+  vigilance: 'Holding attention on the dull and unchanging is harder than it sounds — and exactly what distraction erodes. You held.',
+  pursuit: 'Keeping the target under steady attention is sustained focus made visible. Small, real, trainable.',
+  stream: 'Catching yourself before the automatic response is inhibition — the brake behind every good decision.',
+};
 
 // --- Interpretive read of the baseline (onboarding result, offline version) ---
 export function interpretBaseline(domainScores, name = '') {
