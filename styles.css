@@ -184,6 +184,10 @@ button { font-family: inherit; cursor: pointer; }
 /* ---------- session ---------- */
 .exercise-head { display:flex; align-items:center; gap:10px; margin-bottom: 4px; }
 .tagchip { background: var(--accent-soft); color: var(--accent); border-radius:8px; padding:3px 10px; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+/* Measure (a scored test) vs Practice (a formation rep) — clear what each exercise is. */
+.modechip { border-radius:6px; padding:3px 8px; font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+.modechip.measure { background: var(--amber-soft); color: var(--amber-ink); }
+.modechip.practice { background: var(--green-soft); color: var(--green-ink); }
 .passage { font-size:1.05rem; line-height:1.65; color: var(--ink); background:#fcfbf8; border:1px solid var(--line); border-radius: var(--radius-sm); padding:16px 18px; margin-bottom: 16px; }
 .memo-words { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding: 24px 0; }
 .memo-word { background: var(--accent-soft); color: var(--accent); font-weight:700; font-size:1.2rem; padding:10px 16px; border-radius: 12px; }

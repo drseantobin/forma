@@ -1082,6 +1082,15 @@ export const INTERIOR_REFLECTIONS = [
 
 // Contemplative-silence practice — sit without input. Both a formation practice
 // and a behavioral signal that bridges to Attention.
+// MEASURE (a scored test of a capacity) vs PRACTICE (a formation/training rep that
+// isn't graded right or wrong). Sean: be explicit about which a given exercise is —
+// "today's session isn't a practice, they're tests." The contemplative/reflective
+// reps are practices; everything scored against a key or performance is a measure.
+const PRACTICE_TYPES = new Set(['contemplation', 'reflection']);
+export function exerciseMode(type) {
+  return PRACTICE_TYPES.has(type) ? 'practice' : 'measure';
+}
+
 export function makeContemplation(level = 1) {
   // A ladder you climb: start at 90s and extend by increments as stillness gets
   // easier. The intro lets the practitioner pick/extend; level sets the default.

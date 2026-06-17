@@ -3,7 +3,7 @@
 
 import { DOMAINS, getDomain, bandFor, activeDomainIds, BANDS } from './src/domains.js';
 import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
-import { pickExercise, nextMathProblem, shuffledIndices } from './src/exercises.js';
+import { pickExercise, nextMathProblem, shuffledIndices, exerciseMode } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
 import {
   todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween, startRoute, indexTrend, isLapsedReturn,
@@ -969,7 +969,12 @@ function renderSession() {
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
   const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
+  const mode = exerciseMode(ex.type);
+  const modeTitle = mode === 'practice'
+    ? 'A practice — a formation rep, not graded right or wrong.'
+    : 'A measure — it scores this capacity.';
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
+    <span class="modechip ${mode}" title="${esc(modeTitle)}">${mode === 'practice' ? 'Practice' : 'Measure'}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;
 }
