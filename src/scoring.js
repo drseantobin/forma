@@ -215,6 +215,13 @@ export function scoreNBack(flagged, targets, sequenceLength, n) {
   const falseAlarms = flagged.filter((f) => !tset.has(f) && f >= n).length;
   const nonTargets = judgeable - targets.length;
   const correctRejections = Math.max(0, nonTargets - falseAlarms);
+  // Non-participation guard (mirrors the SART/Stream fix in v54): doing NOTHING
+  // would otherwise bank every non-target as a "correct rejection" and post a
+  // Strong Working-Memory score for zero engagement. If there were real targets
+  // to catch and the person made no judgeable response at all (and hit none),
+  // that's a non-attempt, not a perfect rejector → score 0.
+  const responses = flagged.filter((f) => f >= n).length;
+  if (targets.length > 0 && hits === 0 && responses === 0) return 0;
   return clamp(round(((hits + correctRejections) / judgeable) * 100));
 }
 
