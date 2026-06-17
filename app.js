@@ -19,6 +19,7 @@ import { confidenceTag, confidence, milestoneEligible, indexConfidence } from '.
 import { basisFor } from './src/methods.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
+import * as Research from './src/research.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
@@ -1906,6 +1907,10 @@ async function completeSession() {
   const rawScore = scoreExercise(s.exercise, s.response);
   const { profile, session } = Profile.applySession(state.profile, s.exercise, s.response);
   state.profile = profile;
+  // De-identified, consent-gated research capture (no-op until the user opts in).
+  // Passes the RAW response so item analysis can keep the short keyed option id;
+  // research.buildEvent reads only that, never any free text or interior content.
+  Research.recordSession(state.profile, session, s.response);
   save();
 
   // Earned milestones: a domain scale crossing into a higher band is the real

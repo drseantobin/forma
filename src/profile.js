@@ -33,6 +33,10 @@ export function createProfile() {
     goals: [], // [{id, domain, text, createdAt, done}]
     streak: { current: 0, longest: 0, lastDate: null },
     coachLog: [], // [{role, content, ts}]
+    // Consented, de-identified research/improvement data (see research.js). Off by
+    // default — captures nothing until the user explicitly opts in. No name/contact
+    // ever lives here; interior content is never collected.
+    research: { consent: false, consentedAt: null, demographics: {}, queue: [], installId: '' },
   };
 }
 
@@ -372,6 +376,14 @@ function migrate(p) {
   if (p.streak.current == null) p.streak.current = 0;
   if (p.streak.longest == null) p.streak.longest = 0;
   if (p.streak.lastDate === undefined) p.streak.lastDate = null;
+  // Research block (de-identified, opt-in). Coerce by type so a pre-research or
+  // partial save can't crash the capture path; defaults to no-consent (collect nothing).
+  p.research = obj(p.research);
+  if (typeof p.research.consent !== 'boolean') p.research.consent = false;
+  if (p.research.consentedAt === undefined) p.research.consentedAt = null;
+  p.research.demographics = obj(p.research.demographics);
+  p.research.queue = arr(p.research.queue);
+  if (typeof p.research.installId !== 'string') p.research.installId = '';
   if (p.bandPeak != null && (typeof p.bandPeak !== 'object' || Array.isArray(p.bandPeak))) p.bandPeak = null;
   // Backfill the band high-water mark (added v98) for profiles saved BEFORE it
   // existed. Without this, a returning pre-v98 user who already reached a band
