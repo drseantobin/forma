@@ -1780,6 +1780,14 @@ async function completeSession() {
            </div>`
         : ''));
 
+  // A gentle forward-pull: what tomorrow's plan points at, so finishing today
+  // ends with a concrete reason to come back.
+  const _tf = Planner.tomorrowFocus(profile) || recommendFocus(profile);
+  const _td = _tf ? getDomain(_tf) : null;
+  const tomorrowNudge = _td
+    ? `<p class="muted small center" style="margin:2px 0 12px;">Tomorrow: <strong>${_td.icon} ${esc(_td.name)}</strong> — ${esc(_td.short.toLowerCase())}.</p>`
+    : '';
+
   // Reveal score (count-up), then fetch the one insight.
   const band = bandFor(rawScore);
   app.innerHTML = `
@@ -1793,6 +1801,7 @@ async function completeSession() {
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
       </div>
       <button class="btn ghost" id="talkthrough" style="margin-bottom:10px;">💬 Talk this through with the coach →</button>
+      ${tomorrowNudge}
       <button class="btn amber" id="home">Done →</button>
     </div>`;
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };

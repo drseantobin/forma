@@ -31,10 +31,17 @@ const TYPE_LABEL = {
 };
 export function typeLabel(type) { return TYPE_LABEL[type] || type; }
 
-function addDays(dateStr, n) {
+export function addDays(dateStr, n) {
   const d = new Date(dateStr + 'T12:00:00'); // noon avoids DST midnight skips
   d.setDate(d.getDate() + n);
   return todayStr(d);
+}
+
+// The capacity tomorrow's plan points at — used for a gentle "come back for X"
+// forward-pull after today's session. Returns null when the plan doesn't cover
+// tomorrow (the caller supplies a fallback). Pure.
+export function tomorrowFocus(profile, today = todayStr()) {
+  return focusForToday(profile, addDays(today, 1));
 }
 function clampInt(n, lo, hi) { return Math.max(lo, Math.min(hi, Math.round(n))); }
 
