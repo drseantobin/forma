@@ -6,7 +6,7 @@ import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEM
 import { pickExercise, nextMathProblem, shuffledIndices } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
 import {
-  todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween, startRoute,
+  todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween, startRoute, indexTrend,
 } from './src/progress.js';
 import { recommendFocus, weeklyPatterns, dailyInsight as ruleDailyInsight, interpretBaseline as ruleInterpretBaseline } from './src/insights.js';
 import * as Profile from './src/profile.js';
@@ -496,7 +496,12 @@ function renderHome() {
 
       <div class="card index-hero">
         <div class="index-num kbig">${fi}</div>
-        <div class="index-label">Formation Index</div>
+        <div class="index-label">Formation Index${(() => {
+          const t = indexTrend(p.indexHistory);
+          return t.delta !== 0
+            ? ` <span class="trendpill ${t.direction}">${t.delta > 0 ? '+' : ''}${t.delta} since you began</span>`
+            : '';
+        })()}</div>
         <div class="streakchip ${alive ? '' : 'cold'}">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}-day streak${alive ? '' : ' — relight it'}</div>
       </div>
 

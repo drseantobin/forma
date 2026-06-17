@@ -84,6 +84,16 @@ export function streakAlive(streak, today = todayStr()) {
 
 // Trend for one domain from the history log (chronological entries with
 // {domain, newDomainScore}). Returns first, latest, delta, direction.
+// Trend of the headline Formation Index over its history — so the home hero can
+// show momentum at a glance ("+N since you began"), not just a static number.
+export function indexTrend(indexHistory) {
+  const pts = (indexHistory || []).map((x) => x.formationIndex).filter((v) => v != null);
+  if (pts.length < 2) return { delta: 0, direction: 'flat', points: pts };
+  const delta = pts[pts.length - 1] - pts[0];
+  const direction = delta > 2 ? 'up' : delta < -2 ? 'down' : 'flat';
+  return { delta, direction, points: pts };
+}
+
 export function domainTrend(history, domainId) {
   const pts = history.filter((h) => h.domain === domainId).map((h) => h.newDomainScore);
   if (!pts.length) return { first: null, latest: null, delta: 0, direction: 'flat', points: [] };
