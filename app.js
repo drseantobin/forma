@@ -386,15 +386,63 @@ async function renderBaselineResult() {
           <input type="checkbox" id="researchconsent" />
           <span>Yes, share my anonymous results to improve Forma</span>
         </label>
+        <div id="research-demo" hidden style="margin-top:12px;">
+          <p class="muted small" style="margin-bottom:6px;">A few optional, anonymous details help us see what builds these capacities for different people. Leave any blank — every one is optional, and coarse on purpose so it can't identify you.</p>
+          <div class="demo-grid">
+            <label class="demo-field">Age<select id="demo-ageBand">
+              <option value="" selected>Prefer not to say</option>
+              <option value="18-24">18–24</option><option value="25-34">25–34</option>
+              <option value="35-44">35–44</option><option value="45-54">45–54</option>
+              <option value="55-64">55–64</option><option value="65+">65+</option>
+            </select></label>
+            <label class="demo-field">Sex<select id="demo-sex">
+              <option value="" selected>Prefer not to say</option>
+              <option value="female">Female</option><option value="male">Male</option><option value="other">Other</option>
+            </select></label>
+            <label class="demo-field">Region<select id="demo-region">
+              <option value="" selected>Prefer not to say</option>
+              <option value="North America">North America</option><option value="Latin America">Latin America</option>
+              <option value="Europe">Europe</option><option value="Africa">Africa</option>
+              <option value="Middle East">Middle East</option><option value="Asia-Pacific">Asia-Pacific</option>
+            </select></label>
+            <label class="demo-field">Work<select id="demo-role">
+              <option value="" selected>Prefer not to say</option>
+              <option value="knowledge">Knowledge / desk work</option><option value="leadership">Leadership / management</option>
+              <option value="caring">Caring / people-facing</option><option value="skilled">Skilled / manual</option>
+              <option value="student">Student</option><option value="other">Other</option>
+            </select></label>
+            <label class="demo-field">AI use<select id="demo-aiExposure">
+              <option value="" selected>Prefer not to say</option>
+              <option value="daily">Daily</option><option value="weekly">Weekly</option>
+              <option value="rarely">Rarely</option><option value="never">Never</option>
+            </select></label>
+            <label class="demo-field">Education<select id="demo-education">
+              <option value="" selected>Prefer not to say</option>
+              <option value="secondary">Secondary</option><option value="undergraduate">Undergraduate</option>
+              <option value="postgraduate">Postgraduate</option>
+            </select></label>
+          </div>
+        </div>
       </div>
       <button class="btn amber" id="go">Start my first session →</button>
     </div>`;
   // Research consent is OPT-IN and optional: it commits ONLY on this explicit tap,
   // and the app proceeds identically whether it's on or off. Declining leaves
-  // research.consent at its false default (capture stays inert).
+  // research.consent at its false default (capture stays inert). The de-identified
+  // demographics form is revealed ONLY when the box is checked (progressive
+  // disclosure) and every field is blank-first, so a silent Start stores nothing.
+  const consentBox = document.getElementById('researchconsent');
+  const demoBlock = document.getElementById('research-demo');
+  if (consentBox && demoBlock) consentBox.onchange = () => { demoBlock.hidden = !consentBox.checked; };
   document.getElementById('go').onclick = () => {
-    const box = document.getElementById('researchconsent');
-    if (box && box.checked) { Research.setConsent(state.profile, true); save(); }
+    if (consentBox && consentBox.checked) {
+      const pick = (id) => ((document.getElementById(id) || {}).value || '');
+      Research.setConsent(state.profile, true, {
+        ageBand: pick('demo-ageBand'), sex: pick('demo-sex'), region: pick('demo-region'),
+        role: pick('demo-role'), aiExposure: pick('demo-aiExposure'), education: pick('demo-education'),
+      });
+      save();
+    }
     go('session');
   };
   const strongest = Object.keys(p.domainScores).sort((a, b) => p.domainScores[b] - p.domainScores[a])[0];

@@ -146,6 +146,11 @@ button { font-family: inherit; cursor: pointer; }
 /* Opt-in consent row: a real checkbox + label, comfortable tap target. */
 .consent-row { display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-weight:600; padding:4px 0; }
 .consent-row input[type="checkbox"] { width:20px; height:20px; margin-top:1px; flex:none; accent-color: var(--green); cursor:pointer; }
+/* Optional, de-identified demographics — revealed only after research opt-in. */
+.demo-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.demo-field { display:flex; flex-direction:column; gap:3px; font-size:.78rem; font-weight:700; color:var(--ink-faint); }
+.demo-field select { font:inherit; font-weight:500; color:var(--ink); padding:8px 10px; border:1.5px solid var(--line); border-radius:10px; background:var(--card); }
+@media (max-width:380px) { .demo-grid { grid-template-columns:1fr; } }
 
 .insight {
   background: linear-gradient(180deg, #fff, #fbfaf7); border:1px solid var(--line);
