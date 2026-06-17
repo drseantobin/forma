@@ -33,7 +33,7 @@ export const BASELINE_ITEMS = [
   { id: 'mem1', domain: 'memory', reverse: false, text: 'I can hold a phone number or a short list in my head long enough to use it.' },
   { id: 'mem2', domain: 'memory', reverse: true, text: 'I walk into rooms and forget what I came for more than I would like.' },
   { id: 'mem3', domain: 'memory', reverse: false, text: 'I can follow a multi-step explanation without writing every step down.' },
-  { id: 'mem4', domain: 'memory', reverse: true, text: 'I rely on search or AI to recall things I used to simply know.' },
+  { id: 'mem4', domain: 'memory', reverse: true, text: 'I reach for search or AI to recall facts I could bring to mind if I tried.' },
 
   // Deep Reading
   { id: 'read1', domain: 'reading', reverse: false, text: 'I read long-form articles or books to the end, not just the summary.' },
