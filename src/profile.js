@@ -340,17 +340,31 @@ export function importProfile(jsonString) {
 
 function migrate(p) {
   if (!p.version) p.version = VERSION;
-  // Defensive defaults for older/partial saves.
-  p.settings = p.settings || { apiKey: '', model: 'claude-opus-4-8', name: '', faithTrack: false };
+  // Defensive defaults for older / partial / foreign saves. Coerce by TYPE, not
+  // just truthiness: a structurally-valid stored object with a wrong-typed field
+  // (e.g. sessions:{} from a partial or foreign write) is truthy, so a falsy-only
+  // `|| []` guard lets it slip straight to first render and crash boot
+  // (({}).some is not a function → uncaught TypeError → white-screen, no recovery).
+  // loadProfile's try/catch only handles malformed JSON, not valid-JSON-wrong-shape.
+  const arr = (v) => (Array.isArray(v) ? v : []);
+  const obj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+  p.settings = obj(p.settings);
+  if (p.settings.apiKey == null) p.settings.apiKey = '';
+  if (p.settings.model == null) p.settings.model = 'claude-opus-4-8';
+  if (p.settings.name == null) p.settings.name = '';
   if (p.settings.faithTrack == null) p.settings.faithTrack = false;
-  p.domainScores = p.domainScores || {};
-  p.sessions = p.sessions || [];
-  p.history = p.history || [];
-  p.indexHistory = p.indexHistory || [];
-  p.focusChecks = p.focusChecks || [];
-  p.goals = p.goals || [];
-  p.coachLog = p.coachLog || [];
-  p.streak = p.streak || { current: 0, longest: 0, lastDate: null };
+  p.domainScores = obj(p.domainScores);
+  p.sessions = arr(p.sessions);
+  p.history = arr(p.history);
+  p.indexHistory = arr(p.indexHistory);
+  p.focusChecks = arr(p.focusChecks);
+  p.goals = arr(p.goals);
+  p.coachLog = arr(p.coachLog);
+  p.streak = obj(p.streak);
+  if (p.streak.current == null) p.streak.current = 0;
+  if (p.streak.longest == null) p.streak.longest = 0;
+  if (p.streak.lastDate === undefined) p.streak.lastDate = null;
+  if (p.bandPeak != null && (typeof p.bandPeak !== 'object' || Array.isArray(p.bandPeak))) p.bandPeak = null;
   // Backfill the band high-water mark (added v98) for profiles saved BEFORE it
   // existed. Without this, a returning pre-v98 user who already reached a band
   // (then drifted down via the EMA) gets a false "you've reached X" re-celebration
