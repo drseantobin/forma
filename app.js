@@ -320,7 +320,7 @@ function itemHtml(item) {
       <div class="likert-q" style="font-size:1rem;">${esc(item.text)}</div>
       <div class="likert-opts">
         ${LIKERT_SCALE.map((o) => `
-          <button class="opt ${cur === o.value ? 'selected' : ''}" data-item="${item.id}" data-value="${o.value}">
+          <button class="opt ${cur === o.value ? 'selected' : ''}" data-item="${item.id}" data-value="${o.value}" aria-pressed="${cur === o.value}">
             ${esc(o.label)}
           </button>`).join('')}
       </div>
@@ -899,7 +899,7 @@ function renderDecision() {
             else if (o.score >= 80) cls = 'correct reveal';
             else cls = 'reveal';
           } else if (o.id === chosen) cls = 'selected';
-          return `<button class="opt ${cls}" data-id="${o.id}" ${revealed ? 'disabled' : ''}>${esc(o.text)}
+          return `<button class="opt ${cls}" data-id="${o.id}" aria-pressed="${!revealed && o.id === chosen}" ${revealed ? 'disabled' : ''}>${esc(o.text)}
             ${revealed ? `<div class="rationale">${esc(o.rationale)}</div>` : ''}</button>`;
         }).join('')}
       </div>
@@ -936,7 +936,7 @@ function renderCRT() {
             else if (o.id === chosen) cls = 'wrong';
             else cls = 'reveal';
           } else if (o.id === chosen) cls = 'selected';
-          return `<button class="opt ${cls}" data-id="${o.id}" ${revealed ? 'disabled' : ''}>${esc(o.text)}</button>`;
+          return `<button class="opt ${cls}" data-id="${o.id}" aria-pressed="${!revealed && o.id === chosen}" ${revealed ? 'disabled' : ''}>${esc(o.text)}</button>`;
         }).join('')}
       </div>
       ${revealed ? `
@@ -1282,7 +1282,7 @@ function renderMatrix() {
           let cls = 'matopt';
           if (revealed) { if (i === ex.answer) cls += ' correct'; else if (i === chosen) cls += ' wrong'; }
           else if (i === chosen) cls += ' selected';
-          return `<button class="${cls}" data-i="${i}" ${revealed ? 'disabled' : ''}>${matrixCell(o)}</button>`;
+          return `<button class="${cls}" data-i="${i}" aria-pressed="${!revealed && i === chosen}" aria-label="Pattern option ${o.n} ${o.fill ? 'filled' : 'outline'} ${o.shape}${o.n === 1 ? '' : 's'}" ${revealed ? 'disabled' : ''}>${matrixCell(o)}</button>`;
         }).join('')}
       </div>
       ${revealed
@@ -1584,7 +1584,7 @@ function renderStay() {
       <div class="rationale"><strong>The answer:</strong> ${esc(ex.answer)}<br/>${esc(ex.explanation)}</div>
       <p class="muted small" style="margin-top:14px;">Honestly — how well did you tolerate the difficulty just now?</p>
       <div class="rating">
-        ${[1, 2, 3, 4, 5].map((n) => `<button class="${rating === n ? 'on' : ''}" data-n="${n}">${n}</button>`).join('')}
+        ${[1, 2, 3, 4, 5].map((n) => `<button class="${rating === n ? 'on' : ''}" data-n="${n}" aria-pressed="${rating === n}" aria-label="Rate ${n} of 5">${n}</button>`).join('')}
       </div>
       <button class="btn" id="fin" ${rating == null ? 'disabled' : ''}>Complete session</button>
     </div>`;
@@ -1687,17 +1687,17 @@ function renderContemplationReflect() {
 
       <p class="muted small" style="margin-top:16px;">Your eyes were…</p>
       <div class="row" style="gap:8px; flex-wrap:wrap;">
-        ${eyesOpts.map(([v, lbl]) => `<button class="chip${r.eyes === v ? ' sel' : ''}" data-eyes="${v}">${lbl}</button>`).join('')}
+        ${eyesOpts.map(([v, lbl]) => `<button class="chip${r.eyes === v ? ' sel' : ''}" data-eyes="${v}" aria-pressed="${r.eyes === v}">${lbl}</button>`).join('')}
       </div>
 
       <p class="muted small" style="margin-top:16px;">The time felt…</p>
       <div class="row" style="gap:8px; flex-wrap:wrap;">
-        ${timeOpts.map(([v, lbl]) => `<button class="chip${r.timeFelt === v ? ' sel' : ''}" data-time="${v}">${lbl}</button>`).join('')}
+        ${timeOpts.map(([v, lbl]) => `<button class="chip${r.timeFelt === v ? ' sel' : ''}" data-time="${v}" aria-pressed="${r.timeFelt === v}">${lbl}</button>`).join('')}
       </div>
 
       <p class="muted small" style="margin-top:18px;">Honestly — how present were you? <span style="opacity:.7;">(1 scattered · 7 fully here)</span></p>
       <div class="rating">
-        ${[1, 2, 3, 4, 5, 6, 7].map((n) => `<button class="${presence === n ? 'on' : ''}" data-n="${n}">${n}</button>`).join('')}
+        ${[1, 2, 3, 4, 5, 6, 7].map((n) => `<button class="${presence === n ? 'on' : ''}" data-n="${n}" aria-pressed="${presence === n}" aria-label="${n} of 7, ${n === 1 ? 'scattered' : n === 7 ? 'fully present' : ''}">${n}</button>`).join('')}
       </div>
 
       <button class="btn" id="cfin" ${presence == null ? 'disabled' : ''}>Complete session</button>
@@ -1727,7 +1727,7 @@ function renderReflection() {
       </div>
       <p class="muted small" style="margin-top:14px;">${esc(ex.selfRatingLabel)}</p>
       <div class="rating">
-        ${[1, 2, 3, 4, 5].map((n) => `<button class="${rating === n ? 'on' : ''}" data-n="${n}">${n}</button>`).join('')}
+        ${[1, 2, 3, 4, 5].map((n) => `<button class="${rating === n ? 'on' : ''}" data-n="${n}" aria-pressed="${rating === n}" aria-label="Rate ${n} of 5">${n}</button>`).join('')}
       </div>
       <button class="btn" id="fin" ${rating == null ? 'disabled' : ''}>Complete session</button>
     </div>`;
