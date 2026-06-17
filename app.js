@@ -22,6 +22,7 @@ import * as Orchestrator from './src/orchestrator.js';
 import * as Research from './src/research.js';
 import * as Contact from './src/contact.js';
 import { PROVIDERS, providerFor, defaultModelFor } from './src/llm.js';
+import { summarizeResearch } from './src/analytics.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
@@ -2882,6 +2883,8 @@ function renderSettings() {
   const p = state.profile;
   const prov = providerFor(p.settings.provider);
   const keyHint = { anthropic: 'sk-ant-…', openai: 'sk-…', gemini: 'AIza…', openrouter: 'sk-or-…' }[prov.id] || 'your API key';
+  const res = p.research || {};
+  const rsum = summarizeResearch(res.queue || []);
   app.innerHTML = `
     <div class="fade-in">
       <h1>Settings</h1>
@@ -2987,6 +2990,19 @@ function renderSettings() {
         <p id="contacterr" class="small" style="margin-top:8px; color:var(--red); display:none;"></p>
       </div>
 
+      <div class="card">
+        <div class="row"><span style="font-size:1.3rem;">🔬</span>
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Anonymous research</h2>
+            <p class="muted small" style="margin:2px 0 0;">${res.consent ? 'On — you’re sharing anonymous results to help improve Forma and ground its validity.' : 'Off — nothing is collected. You can help improve Forma by sharing de-identified results.'}</p></div>
+          <button class="opt ${res.consent ? 'selected' : ''}" id="researchtoggle" aria-pressed="${!!res.consent}" style="width:auto; padding:8px 16px; font-weight:700;">${res.consent ? 'On' : 'Off'}</button>
+        </div>
+        ${res.consent ? `
+        <p class="muted small" style="margin-top:10px;">You’ve shared <strong>${rsum.measured}</strong> anonymous result${rsum.measured === 1 ? '' : 's'} across ${rsum.days} day${rsum.days === 1 ? '' : 's'}. Each is a score and which option you chose, dated to the day — <strong>never</strong> your name, anything you wrote, or your Interior Life.</p>
+        ${rsum.domains.length ? `<table class="snaptable" style="margin-top:8px;"><tbody>${rsum.domains.map((d) => `<tr><td>${esc(getDomain(d.key) ? getDomain(d.key).name : d.key)}</td><td class="muted small" style="text-align:right;">${d.n} shared</td><td class="snapsc">${d.mean}</td></tr>`).join('')}</tbody></table>` : `<p class="muted small" style="margin-top:6px;">No results shared yet — finish a session and your de-identified scores will appear here.</p>`}
+        <p class="muted small" style="margin-top:8px;">Per-question difficulty and norms come from the pooled, many-person dataset — not your device. Turning this off <strong>deletes everything you’ve shared</strong>.</p>
+        ` : ''}
+      </div>
+
       <p class="muted small center">Forma · the capacities a machine can’t keep for you.</p>
     </div>`;
 
@@ -3059,6 +3075,16 @@ function renderSettings() {
   };
   const withdrawC = document.getElementById('withdrawcontact');
   if (withdrawC) withdrawC.onclick = () => { state.profile = Contact.clearContact(p); save(); render(); };
+  // Anonymous-research management: view what's shared + turn on / withdraw (which
+  // deletes the queue). Re-renders directly, so announce + refocus (v157 pattern).
+  const rt = document.getElementById('researchtoggle');
+  if (rt) rt.onclick = () => {
+    const turningOn = !(p.research && p.research.consent);
+    Research.setConsent(p, turningOn); // off → also deletes the shared queue
+    save(); render();
+    announce(turningOn ? 'Anonymous research sharing on.' : 'Sharing off — your shared data was deleted.');
+    const again = document.getElementById('researchtoggle'); if (again) again.focus(); else focusViewHeading();
+  };
   document.getElementById('export').onclick = () => { downloadBackup(); };
   document.getElementById('import').onclick = () => document.getElementById('importfile').click();
   document.getElementById('importfile').onchange = (e) => {
