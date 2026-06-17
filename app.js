@@ -1881,9 +1881,10 @@ async function completeSession() {
   app.innerHTML = `
     <div class="fade-in">
       <div class="score-reveal">
+        <div id="srscore" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         ${unscored
           ? `<div class="lbl" style="margin-top:6px;">${esc(getDomain(s.exercise.domain).name)} · reflection saved</div>`
-          : `<div class="big score-pop" id="bigscore" style="color:${band.color}">0</div>
+          : `<div class="big score-pop" id="bigscore" aria-hidden="true" style="color:${band.color}">0</div>
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>`}
       </div>
       ${milestoneBanner}
@@ -1907,6 +1908,16 @@ async function completeSession() {
     talkThrough(ctx);
   };
   if (!unscored) countUp(document.getElementById('bigscore'), rawScore);
+  // Announce the result to screen readers: the count-up number is aria-hidden
+  // (its 0→N churn shouldn't be spoken) and a live region rendered EMPTY is only
+  // announced when JS changes it — so set the settled phrase here, post-render,
+  // as one atomic update. Without this an SR user never hears their score.
+  const srScore = document.getElementById('srscore');
+  if (srScore) {
+    srScore.textContent = unscored
+      ? `${getDomain(s.exercise.domain).name} reflection saved.`
+      : `${getDomain(s.exercise.domain).name}: ${rawScore} out of 100, ${band.label}.`;
+  }
 
   // The vignette already produced Claude's rubric feedback — use it as the
   // insight rather than asking for a generic one.
