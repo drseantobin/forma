@@ -14,7 +14,7 @@ import * as Coach from './src/coach.js';
 import * as Diagnostic from './src/diagnostic.js';
 import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
-import { bandAscension, ascensionLine, streakMilestone } from './src/milestones.js';
+import { bandAscension, ascensionLine, streakMilestone, nextStreakMark } from './src/milestones.js';
 import { confidenceTag, confidence, milestoneEligible } from './src/reliability.js';
 import { basisFor } from './src/methods.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
@@ -548,7 +548,15 @@ function renderHome() {
             ? ` <span class="trendpill ${t.direction}">${t.delta > 0 ? '+' : ''}${t.delta} since you began</span>`
             : '';
         })()}</div>
-        <div class="streakchip ${alive ? '' : 'cold'}">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}-day streak${alive ? '' : ' — relight it'}</div>
+        <div class="streakchip ${alive ? '' : 'cold'}">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}-day streak${alive ? (() => {
+          // Honest forward-pull: the true number of days to the next real mark.
+          // Only when the streak is alive (don't compete with the warmer "relight
+          // it" copy) and a mark is still ahead (silent past 365). No fake urgency.
+          const nm = nextStreakMark(p.streak.current || 0);
+          if (!nm) return '';
+          const left = nm - (p.streak.current || 0);
+          return ` · ${left} ${left === 1 ? 'day' : 'days'} to ${nm}`;
+        })() : ' — relight it'}</div>
       </div>
 
       ${welcomeBackCard(p)}

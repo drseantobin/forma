@@ -44,6 +44,13 @@ export function streakMilestone(current) {
   return STREAK_MARKS.includes(current) ? current : null;
 }
 
+// The next streak mark above the current count — for an HONEST forward-pull on
+// the home streak chip ("2 days to a week"). Returns null past the top mark, so
+// the horizon quietly disappears rather than inventing an endless ladder.
+export function nextStreakMark(current) {
+  return STREAK_MARKS.find((m) => m > (current || 0)) || null;
+}
+
 // Human copy for a band ascension. Growth-framed, specific, never hyperbolic.
 export function ascensionLine(asc) {
   if (!asc) return '';
