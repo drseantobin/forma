@@ -2574,6 +2574,7 @@ function renderSettings() {
         <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to Anthropic using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
         <div class="stack">
           <button class="btn ghost sm" id="export">Export my data (JSON)</button>
+          <p class="muted small" style="margin:2px 0 0;">The export is plain-text JSON that includes your written reflections and coach conversations (but never your API key). Keep the file somewhere private.</p>
           <button class="btn ghost sm" id="import">Import / restore from a backup</button>
           <input type="file" id="importfile" accept="application/json,.json" style="display:none;">
           <span class="muted small" id="importmsg" style="display:none;"></span>
