@@ -1747,6 +1747,7 @@ async function completeSession() {
     ? bandAscension(session.prevDomainScore, session.newDomainScore, session.domain)
     : null;
   const streakMark = streakMilestone(profile.streak && profile.streak.current);
+  const graced = !!(profile.streak && profile.streak.graced);
   const milestoneBanner = ascension
     ? `<div class="milestone" role="status" style="--mile:${ascension.band.color}">
          <div class="mile-rule">↑ Milestone</div>
@@ -1759,7 +1760,13 @@ async function completeSession() {
            <div class="mile-head">${streakMark}-day streak</div>
            <div class="mile-note">Showing up is the formation. Keep the chain alive.</div>
          </div>`
-      : '');
+      : (graced
+        ? `<div class="milestone" role="status" style="--mile:var(--amber)">
+             <div class="mile-rule">🛟 Grace day</div>
+             <div class="mile-head">Your ${profile.streak.current}-day streak held</div>
+             <div class="mile-note">You missed a day and came back — that's the harder rep. The streak doesn't count the gap, but it didn't break either.</div>
+           </div>`
+        : ''));
 
   // Reveal score (count-up), then fetch the one insight.
   const band = bandFor(rawScore);

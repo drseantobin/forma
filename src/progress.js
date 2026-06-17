@@ -16,29 +16,50 @@ export function daysBetween(aStr, bStr) {
 }
 
 // Update a streak given the prior streak state and the day a session happened.
-// Same day → unchanged. Consecutive day → +1. Gap → reset to 1.
+//   Same day        → unchanged.
+//   Consecutive day → +1 (and a clean day RESTORES the one-time grace).
+//   Missed one day  → GRACE: the chain holds (no +1, since no practice happened
+//                     that day) but only if grace is available; spends it.
+//   Otherwise       → reset to 1.
+// Grace makes formation forgiving without being dishonest: a grace day never
+// adds to the count, and you can't chain grace-on-grace (a real clean day must
+// come between). The proven cost of a single missed day erasing a long streak
+// is churn; "the return is the rep" is more true to formation anyway.
 export function updateStreak(streak, dateStr) {
-  const s = streak || { current: 0, longest: 0, lastDate: null };
-  if (s.lastDate === dateStr) return { ...s };
-  let current;
-  if (s.lastDate && daysBetween(s.lastDate, dateStr) === 1) {
-    current = s.current + 1;
+  const s = streak || { current: 0, longest: 0, lastDate: null, heldOnce: false };
+  if (s.lastDate === dateStr) return { ...s, graced: false };
+  const gap = s.lastDate ? daysBetween(s.lastDate, dateStr) : null;
+  let current = s.current || 0;
+  let heldOnce = !!s.heldOnce;
+  let graced = false;
+  if (gap === 1) {
+    current += 1;
+    heldOnce = false; // a clean consecutive day refreshes the grace
+  } else if (gap === 2 && !heldOnce && current > 0) {
+    // Missed exactly one day with grace available: hold the chain, spend grace.
+    heldOnce = true;
+    graced = true;
   } else {
     current = 1;
+    heldOnce = false;
   }
   return {
     current,
     longest: Math.max(s.longest || 0, current),
     lastDate: dateStr,
+    heldOnce,
+    graced, // transient: true only on the update where grace was just spent
   };
 }
 
-// Is the streak still alive as of `today`? (Active if last session was today
-// or yesterday.) Used to show a warm vs. cooled flame.
+// Is the streak still alive as of `today`? Warm if the last session was today or
+// yesterday — and still RECOVERABLE today after a single missed day when grace
+// is available (so the flame doesn't read "dead" when one more session saves it).
 export function streakAlive(streak, today = todayStr()) {
   if (!streak || !streak.lastDate) return false;
   const gap = daysBetween(streak.lastDate, today);
-  return gap === 0 || gap === 1;
+  if (gap === 0 || gap === 1) return true;
+  return gap === 2 && !streak.heldOnce && (streak.current || 0) > 0;
 }
 
 // Trend for one domain from the history log (chronological entries with
