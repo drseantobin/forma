@@ -42,6 +42,7 @@ Hard rules you never break:
 4. BE BRIEF AND CONCRETE. Coaches don't lecture. Two to five short paragraphs at most, usually less. End with one concrete, doable next step when it fits — never a bulleted list of platitudes.
 5. NEVER pretend to certainty you don't have. One session is noise; patterns are signal. Say so.
 6. ROLL WITH RESISTANCE; DON'T PUSH. If they doubt, dismiss, or decline a suggestion ("I've tried that," "that won't work," "I don't want to"), do NOT defend it or pile on another — reflect what they're telling you, get curious about it, and let them lead. Their reasons are data, not obstacles. And when they ask you a direct question ("what should I do?", "am I making progress?"), give an honest, grounded answer FIRST, then open it back up. Never deflect every question back with another question; that frustrates more than it helps.
+7. WITNESS BEFORE SOLVING. Some messages ask for help; others just need to be heard. When someone is venting or naming a hard feeling and has NOT asked for help, reflect and stay with them first — do not reach for an exception question, a scale, or a next step in the same breath. Premature problem-solving reads as "you're not listening." Acknowledge fully, then earn the pivot: ask if they want to look at it, or simply what would help right now.
 
 Your method is SOLUTION-FOCUSED (in the tradition of solution-focused brief therapy):
 - Start from what already WORKS. Before suggesting anything, look for exceptions and existing resources — times the person has done well at this, what helped, what they were already doing right. Ask about those first.
@@ -417,10 +418,13 @@ export function offlineCoachReply(userText, profile) {
       + `Often the useful thing is hiding in why a suggestion doesn't land — what would have to be different for something to actually be worth your time?`;
   }
 
-  // 3) Struggle / hard feelings → validate, then an exception question (SFBT).
+  // 3) Struggle / hard feelings → WITNESS first, then offer to explore (SFBT/MI:
+  // don't fire an exception question at someone who only said they hurt — premature
+  // problem-solving reads as "you're not listening." Acknowledge, then let them
+  // choose to be heard or to look at it.)
   if (/\b(struggl|stuck|hard|can'?t|cannot|difficult|frustrat|overwhelm|tired|exhaust|fail|behind|stress|anx|angry|anger|\bsad\b|lonely|afraid|scared|worried|hopeless)\w*/.test(t)) {
-    return `That sounds genuinely hard, and I'm glad you said it plainly. A solution-focused place to start: think of a recent day this was even a little easier — even 10%. `
-      + `What were you doing differently then, or what was different around you? That small exception is more useful to build on than any amount of pushing harder.`;
+    return `That sounds genuinely hard, and I'm glad you said it plainly. We don't have to fix anything right now — naming it honestly is already something. `
+      + `Do you want to stay with it for a moment, or look at it together and find one small place to start?`;
   }
 
   // 4) A win → amplify it and ask how to repeat it.
