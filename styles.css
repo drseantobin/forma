@@ -206,6 +206,18 @@ button { font-family: inherit; cursor: pointer; }
   .card { box-shadow:none; }
 }
 
+/* Welcome "how it works" steps */
+.howitworks { margin: 10px 0 0; padding: 0; list-style: none; counter-reset: hiw; }
+.howitworks li {
+  counter-increment: hiw; position: relative; padding: 4px 0 10px 34px;
+  font-size: .92rem; color: var(--ink-soft); line-height: 1.45;
+}
+.howitworks li::before {
+  content: counter(hiw); position: absolute; left: 0; top: 2px;
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: .78rem;
+}
+
 /* Commitments (solution-focused goals) */
 .goalrow { display:flex; align-items:center; gap:10px; padding:7px 0; }
 .goalcheck {

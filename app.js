@@ -223,24 +223,33 @@ function renderOnboarding() {
         <div class="hero">
           <div class="glyph">✦</div>
           <h1>Forma</h1>
-          <p class="lede">Train the human capacities that grow more valuable as AI does more of the work.</p>
+          <p class="lede">AI keeps getting better at the work. The quieter question is who you become while it does.</p>
+          <p class="muted small" style="max-width:32rem; margin:12px auto 0; line-height:1.5;">Forma measures and trains the human capacities that grow more valuable as the machines take the rest — attention, judgment, deep reading, presence, the patience to stay with what's hard. A few minutes a day.</p>
         </div>
         <div class="pillrow">
-          ${DOMAINS.map((d) => `<span class="pill">${d.icon} ${esc(d.name)}</span>`).join('')}
+          ${DOMAINS.map((d) => `<span class="pill" title="${esc(d.short)}">${d.icon} ${esc(d.name)}</span>`).join('')}
         </div>
         <div class="card">
-          <p><strong>First, a read on where you are today.</strong> Choose how you'd like to begin — both build the same profile across every capacity.</p>
+          <div class="eyebrow">How it works</div>
+          <ol class="howitworks">
+            <li>A short read on where you stand today — your profile across every capacity.</li>
+            <li>One small, targeted practice a day, chosen for where you'll grow most.</li>
+            <li>Watch the scales move over weeks — your own auditable record, never a diagnosis.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <p><strong>First, a read on where you are today.</strong> Either way builds the same profile, then today's practice from it — pick how you'd like to begin.</p>
         </div>
         <div class="stack">
           <button class="btn amber" id="start">Quick check · ~3 min →</button>
           <button class="btn ghost" id="talk">Talk it through with the coach →</button>
         </div>
-        <p class="muted small center" style="margin-top:12px;">The quick check is a short self-assessment and works offline. The conversation is an adaptive interview that writes your profile — it uses your own Claude key.</p>
+        <p class="muted small center" style="margin-top:12px;">The quick check is a short self-assessment and works offline. The conversation is an adaptive interview that writes your profile — it uses your own Claude key, so it stays yours.</p>
         <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
           <span style="font-size:1.3rem;">🕊️</span>
           <div style="flex:1;">
-            <div style="font-weight:600; font-size:.95rem;">Add the Interior Life track</div>
-            <div class="muted small">Optional, faith-based: measure and tend your spiritual life alongside the rest. You can change this anytime.</div>
+            <div style="font-weight:600; font-size:.95rem;">Interior Life track <span class="muted small">· optional</span></div>
+            <div class="muted small">Bring prayer, silence, and the interior life into your formation — tended alongside the rest, kept private, and never shown to anyone but you.</div>
           </div>
           <button class="opt ${state.onboard.faithTrack ? 'selected' : ''}" id="faithtoggle" style="width:auto; padding:8px 14px; font-weight:700;">${state.onboard.faithTrack ? 'On' : 'Off'}</button>
         </div>
@@ -250,7 +259,10 @@ function renderOnboarding() {
             <div class="field"><input id="inlinekey" type="password" placeholder="sk-ant-…" /></div>
             <button class="btn sm" id="savekeyinline">Save key & start the conversation</button>
           </div>` : ''}
-        <p class="muted small center" style="margin-top:14px;">Everything stays on this device. Nothing is uploaded except your own optional Claude calls.</p>
+        <div class="card" style="margin-top:12px; background:var(--green-soft); border-color:transparent;">
+          <div class="eyebrow" style="color:var(--green);">🔒 Private by design</div>
+          <p class="muted small" style="margin-top:4px;">Everything Forma learns about you stays on this device. Nothing is uploaded — unless you choose to bring your own Claude key for the coach.</p>
+        </div>
       </div>`;
     document.getElementById('faithtoggle').onclick = () => {
       state.onboard.faithTrack = !state.onboard.faithTrack;
