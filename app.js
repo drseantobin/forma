@@ -3,7 +3,7 @@
 
 import { DOMAINS, getDomain, bandFor, activeDomainIds } from './src/domains.js';
 import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
-import { pickExercise, nextMathProblem } from './src/exercises.js';
+import { pickExercise, nextMathProblem, shuffledIndices } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
 import {
   todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween,
@@ -1133,13 +1133,18 @@ function renderMaze() {
   const s = state.session;
   const ex = s.exercise;
   let bi = -1;
+  // Shuffle each blank's option order once per session (the correct word is
+  // authored first). The <option> value stays the ORIGINAL index, so scoring
+  // against blank.answer is unaffected — only the visible order changes.
+  s.mazeOrder = s.mazeOrder || {};
   const body = ex.parts.map((p) => {
     if (p.text != null) return esc(p.text);
     bi += 1;
     const idx = bi;
+    if (!s.mazeOrder[idx]) s.mazeOrder[idx] = shuffledIndices(p.blank.options.length);
     return `<select class="mazesel" data-bi="${idx}" aria-label="choose the word that fits">
       <option value="-1" selected disabled>—</option>
-      ${p.blank.options.map((o, i) => `<option value="${i}">${esc(o)}</option>`).join('')}
+      ${s.mazeOrder[idx].map((i) => `<option value="${i}">${esc(p.blank.options[i])}</option>`).join('')}
     </select>`;
   }).join('');
   app.innerHTML = `
@@ -1175,6 +1180,10 @@ function renderMatrix() {
   const chosen = s.response.optionId;
   const revealed = s.revealed;
   const cells = [ex.grid[0], ex.grid[1], ex.grid[2], null];
+  // Shuffle the option ORDER once per session (correct answer is authored first,
+  // so an unshuffled list would be gameable). data-i keeps the ORIGINAL index,
+  // so selection + scoring are unchanged.
+  if (!s.optOrder) s.optOrder = shuffledIndices(ex.options.length);
   app.innerHTML = `
     <div class="fade-in">
       ${sessionHeader(ex)}
@@ -1182,7 +1191,8 @@ function renderMatrix() {
       <div class="matgrid">${cells.map((c) => `<div class="matcell">${matrixCell(c)}</div>`).join('')}</div>
       <p class="muted small" style="margin-top:14px;">Choose:</p>
       <div class="matopts">
-        ${ex.options.map((o, i) => {
+        ${s.optOrder.map((i) => {
+          const o = ex.options[i];
           let cls = 'matopt';
           if (revealed) { if (i === ex.answer) cls += ' correct'; else if (i === chosen) cls += ' wrong'; }
           else if (i === chosen) cls += ' selected';

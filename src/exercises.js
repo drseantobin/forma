@@ -408,6 +408,15 @@ function shuffle(arr, rng = Math.random) {
   return a;
 }
 
+// A shuffled list of the indices [0..n-1]. The UI uses this to randomize the
+// ORDER options are shown in, so a fixed authored position (Matrix/Maze always
+// store the correct choice first) can't be gamed by "always pick the first."
+// Display order is shuffled; the stored value stays the original index, so
+// scoring is unaffected.
+export function shuffledIndices(n, rng = Math.random) {
+  return shuffle(Array.from({ length: n }, (_, i) => i), rng);
+}
+
 // level 1..5 → sequence length 4..8. Returns an exercise object.
 export function makeMemoryExercise(level = 1, rng = Math.random) {
   const len = Math.max(4, Math.min(8, 3 + Math.round(level)));
