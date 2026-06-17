@@ -262,7 +262,7 @@ export async function dailyInsight(session, profile) {
 // error, while a false positive only surfaces a gentle, compassionate pointer to
 // real human help. Still kept precise enough that ordinary frustration ("this is
 // killing me", "I give up on this puzzle") does NOT trip it.
-const CRISIS_PATTERN = /\b(kill(ing)? myself|suicid|end (my|it) (life|all)|tak(e|ing) my (own )?life|want to die|wanna die|don'?t want to (live|be here|exist|wake up|go on)|wish I (was|were|wasn'?t) (dead|here|alive)|wish I (wouldn'?t|didn'?t) wake up|hurt myself|harm myself|self[-\s]?harm|cut(ting)? (myself|my wrists)|slit (my )?wrists?|no reason to live|nothing (left )?to live for|better off (dead|without me)|no point (in )?(living|going on|being here)|give up on life|can'?t go on)\b/i;
+const CRISIS_PATTERN = /\b(kill(ing)? myself|suicid|end (my|it) (life|all)|tak(e|ing) my (own )?life|want to die|wanna die|want (it|this) (all )?to end|don'?t want to (live|be here|exist|wake up|go on)|wish I (was|were|wasn'?t) (dead|here|alive)|wish I (wouldn'?t|didn'?t) wake up|(hurt|harm)(ing)? myself|self[-\s]?harm(ing|ed)?|cutting again|cut(ting)? (myself|my (wrist|arm|thigh|leg|skin)s?)|slit (my )?wrists?|no reason to live|nothing (left )?to live for|better off (dead|without me)|no point (in )?(living|going on|being here)|give up on life|can'?t go on)\b/i;
 
 export function looksLikeDistress(text) {
   return CRISIS_PATTERN.test(text || '');
