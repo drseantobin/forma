@@ -2247,7 +2247,7 @@ function renderTeam() {
     <div class="fade-in snapshot">
       <div class="row"><h1 style="margin:0;">Team</h1><span class="spacer"></span>
         <button class="btn ghost sm no-print" id="back" style="width:auto;">← Settings</button></div>
-      <p class="muted small">Preview · a sample cohort of ${agg.n}. In production, an employer would see only <strong>aggregated development signals</strong> across a team — never an individual's raw data, scores, or reflections, and never the Interior Life track. Signals appear only at <strong>${Team.MIN_COHORT} or more members</strong>, so no one can be identified from an aggregate.</p>
+      <p class="muted small">Preview · a sample cohort of ${agg.n}${agg.generated ? `, generated ${esc(agg.generated)}` : ''}. In production, an employer would see only <strong>aggregated development signals</strong> across a team — never an individual's raw data, scores, or reflections, and never the Interior Life track. Signals appear only at <strong>${Team.MIN_COHORT} or more members</strong>, so no one can be identified from an aggregate.</p>
 
       ${signalCards}
 

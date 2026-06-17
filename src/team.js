@@ -6,6 +6,7 @@
 // deterministic sample cohort, clearly labeled as a preview.
 
 import { DOMAINS, bandFor, BANDS } from './domains.js';
+import { todayStr } from './progress.js';
 
 // The capacities an employer sees — the core ten, never the interior/faith track.
 const CORE = DOMAINS.map((d) => d.id);
@@ -51,9 +52,12 @@ export const MIN_COHORT = 5;
 // Aggregate a cohort into team-level signals. Returns { suppressed:true } when
 // the cohort is too small to anonymize — callers must show the privacy notice,
 // not numbers.
-export function aggregate(members) {
+export function aggregate(members, today = todayStr()) {
   const n = (members && members.length) || 0;
-  if (n < MIN_COHORT) return { n, suppressed: true, avgIndex: null, perDomain: {}, aiReadiness: null };
+  // `generated` stamps WHEN the aggregate was computed — parity with the
+  // individual snapshot (v90); a buyer handed an undated team sheet can't tell
+  // whether it's current.
+  if (n < MIN_COHORT) return { n, suppressed: true, generated: today, avgIndex: null, perDomain: {}, aiReadiness: null };
   const perDomain = {};
   CORE.forEach((id) => {
     const vals = members.map((m) => m.domainScores && m.domainScores[id]).filter((v) => v != null);
@@ -61,7 +65,7 @@ export function aggregate(members) {
   });
   const avgIndex = Math.round(CORE.reduce((a, id) => a + perDomain[id], 0) / CORE.length);
   const aiReadiness = aiReadinessOf(perDomain) || 0;
-  return { n: members.length, avgIndex, perDomain, aiReadiness };
+  return { n: members.length, generated: today, avgIndex, perDomain, aiReadiness };
 }
 
 // How a team is SPREAD across the bands for one capacity — the signal an average
@@ -88,6 +92,7 @@ export function teamReportText(agg, highlights) {
   const lines = [];
   lines.push('FORMA — Team Capacity Report (Preview)');
   lines.push(`${agg.n} member${agg.n === 1 ? '' : 's'} · aggregated development signals only`);
+  if (agg.generated) lines.push(`Generated ${agg.generated}`);
   if (agg.suppressed) {
     lines.push('');
     lines.push(`Not enough members to report. Forma shows team signals only at ${MIN_COHORT} or more, so no individual can be identified from an aggregate.`);
