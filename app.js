@@ -2329,7 +2329,7 @@ function renderCoach() {
         <span class="trendpill ${live ? 'up' : 'flat'}">${live ? 'live · Claude' : 'offline mode'}</span></div>
       ${!live ? `<p class="muted small">Add your Claude API key in <button id="tosettings" class="inlinelink">Settings</button> for live, personalized coaching. Until then, the coach reads from your own data.</p>` : ''}
       <div class="chat" id="chat" role="log" aria-live="polite">
-        ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">Hi${p.settings.name ? ' ' + esc(p.settings.name) : ''}. I've read your scales and your last few sessions. Ask me what to work on, why a capacity matters, or talk through a day that didn't go the way you wanted — I'd rather do that than recite numbers at you.${live ? '' : ' (Offline mode for now — I’ll read your own data back to you.)'}</div>`}
+        ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">${esc(Coach.coachGreeting(p))}</div>`}
       </div>
       <div class="composer">
         <button class="btn amber" id="cmic" aria-label="Dictate your message" style="padding:12px 14px;">🎤</button>

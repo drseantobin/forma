@@ -51,6 +51,38 @@ Your method is SOLUTION-FOCUSED (in the tradition of solution-focused brief ther
 
 Voice: plain, vivid, unhurried. No corporate wellness-speak. No "journey," "lean into," "sit with," "powerful," "transformative." Talk like a real person who has thought hard about this.`;
 
+// The coach's empty-state greeting when the Coach tab is opened directly. Unlike
+// a generic "hi, I've read your scales", it proves it sees THEM by naming a real
+// signal from their own data — a capacity that's climbing, a streak, or their
+// biggest opening — then invites a solution-focused conversation. Pure + tested.
+export function coachGreeting(profile) {
+  const name = profile && profile.settings && profile.settings.name;
+  const hi = name ? `Hi ${name}.` : 'Hi.';
+  const scores = (profile && profile.domainScores) || {};
+  const ids = Object.keys(scores);
+
+  // Strongest upward mover since the start.
+  let best = null;
+  for (const id of ids) {
+    const t = domainTrend((profile && profile.history) || [], id);
+    if (t.first != null && t.delta > (best ? best.delta : 2)) best = { id, delta: t.delta };
+  }
+  const streak = profile && profile.streak && profile.streak.current;
+
+  let signal;
+  if (best) signal = `Your ${domainName(best.id)} is up ${best.delta} since you started — that's real, not noise.`;
+  else if (streak && streak >= 3) signal = `That's ${streak} days in a row now. The showing-up is the formation.`;
+  else if (ids.length) {
+    const low = ids.slice().sort((a, b) => scores[a] - scores[b])[0];
+    signal = `I've read your scales — ${domainName(low)} looks like your biggest opening right now.`;
+  } else signal = `I've read your baseline.`;
+
+  const close = hasKey(profile)
+    ? `What's on your mind — a day that didn't go how you wanted, or where to put your effort next?`
+    : `What's on your mind today? (Offline for now — I'll read your own data back to you; add a Claude key in Settings for the full conversation.)`;
+  return `${hi} ${signal} ${close}`;
+}
+
 // A solution-focused conversation opener, seeded into the coach when the person
 // taps "Talk this through" from an interpretation. Rule-based so it works
 // offline; the live coach then carries the conversation from their reply.
