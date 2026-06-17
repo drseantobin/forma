@@ -22,15 +22,22 @@ export function buildSnapshot(profile, today = todayStr()) {
   const faith = !!(profile.settings && profile.settings.faithTrack);
   // Active domains EXCEPT interior (never shareable), with a real score.
   const ids = activeDomainIds(faith).filter((id) => id !== 'interior' && scores[id] != null);
+  const baseScores = (profile.baseline && profile.baseline.domainScores) || {};
   const domains = ids.map((id) => {
     const t = domainTrend(profile.history || [], id);
+    // Anchor "since start" on the BASELINE score, not the first daily session —
+    // history doesn't include the baseline point (applyBaseline seeds only
+    // indexHistory), so domainTrend.delta would silently drop the baseline→
+    // session-1 movement and show "±0 since start" on an improved score. Mirrors
+    // proof.js's baseline anchor.
+    const base = baseScores[id] != null ? baseScores[id] : (t.first != null ? t.first : null);
     return {
       id,
       name: getDomain(id).name,
       score: scores[id],
       band: bandFor(scores[id]).label,
       confidence: confidence(profile, id).label,
-      delta: t.first != null ? t.delta : 0,
+      delta: base != null ? scores[id] - base : 0,
     };
   }).sort((a, b) => b.score - a.score);
 
