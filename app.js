@@ -2129,12 +2129,14 @@ function renderTeam() {
   const agg = Team.aggregate(cohort);
   const hi = Team.teamHighlights(agg.perDomain, 3);
   const tag = (e) => `<span class="airchip" style="margin:0;"><span class="airdot" style="background:${bandFor(e.score).color};"></span><span class="airnm">${esc(getDomain(e.id).name)}</span><span class="airsc">${e.score}</span></span>`;
-  app.innerHTML = `
-    <div class="fade-in snapshot">
-      <div class="row"><h1 style="margin:0;">Team</h1><span class="spacer"></span>
-        <button class="btn ghost sm no-print" id="back" style="width:auto;">← Settings</button></div>
-      <p class="muted small">Preview · a sample cohort of ${agg.n}. In production, an employer would see only <strong>aggregated development signals</strong> across a team — never an individual's raw data, scores, or reflections, and never the Interior Life track.</p>
-
+  // Small-cohort suppression (team.js MIN_COHORT): below the threshold an
+  // "aggregate" would expose an individual, so we show the protective notice
+  // instead of any numbers, strengths, or band spread.
+  const signalCards = agg.suppressed ? `
+      <div class="card" style="border-left:4px solid var(--accent);">
+        <h2 style="font-size:1.05rem; margin-top:0;">Not enough members to show signals</h2>
+        <p class="muted small" style="margin:0;">Forma shows team signals only at <strong>${Team.MIN_COHORT} or more members</strong>. With fewer, an aggregate would reveal an individual — so nothing is shown. This protects people, and it's exactly the property an employer should expect from a tool that measures development, not performance.</p>
+      </div>` : `
       <div class="card index-hero">
         <div class="index-num kbig">${agg.avgIndex}</div>
         <div class="index-label">Team Formation Index</div>
@@ -2168,7 +2170,14 @@ function renderTeam() {
         <div class="distlegend">
           ${BANDS.map((b) => `<span class="distkey"><span class="airdot" style="background:${b.color};"></span>${esc(b.label)}</span>`).join('')}
         </div>
-      </div>
+      </div>`;
+  app.innerHTML = `
+    <div class="fade-in snapshot">
+      <div class="row"><h1 style="margin:0;">Team</h1><span class="spacer"></span>
+        <button class="btn ghost sm no-print" id="back" style="width:auto;">← Settings</button></div>
+      <p class="muted small">Preview · a sample cohort of ${agg.n}. In production, an employer would see only <strong>aggregated development signals</strong> across a team — never an individual's raw data, scores, or reflections, and never the Interior Life track. Signals appear only at <strong>${Team.MIN_COHORT} or more members</strong>, so no one can be identified from an aggregate.</p>
+
+      ${signalCards}
 
       <div class="card">
         <div class="eyebrow">What "AI-readiness" means</div>

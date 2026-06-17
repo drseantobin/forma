@@ -39,9 +39,21 @@ export function sampleCohort(n = 8) {
   return members;
 }
 
-// Aggregate a cohort into team-level signals.
+// Minimum cohort size before ANY aggregate signal is shown. Below this, a
+// "team" average IS an individual's data (n=1 → perDomain equals one person's
+// exact scores; n=2 → either is trivially recoverable), which would break the
+// core B2B promise — "aggregate signals only, never an individual." 5 is the
+// standard small-cell suppression threshold used by reputable people-analytics
+// tools. Suppression is enforced HERE, in the production-bound function, not
+// just in the rendered preview, so a real backend feeding small teams is safe.
+export const MIN_COHORT = 5;
+
+// Aggregate a cohort into team-level signals. Returns { suppressed:true } when
+// the cohort is too small to anonymize — callers must show the privacy notice,
+// not numbers.
 export function aggregate(members) {
-  if (!members || !members.length) return { n: 0, avgIndex: 0, perDomain: {}, aiReadiness: 0 };
+  const n = (members && members.length) || 0;
+  if (n < MIN_COHORT) return { n, suppressed: true, avgIndex: null, perDomain: {}, aiReadiness: null };
   const perDomain = {};
   CORE.forEach((id) => {
     const vals = members.map((m) => m.domainScores && m.domainScores[id]).filter((v) => v != null);
@@ -75,7 +87,14 @@ export function teamReportText(agg, highlights) {
   const nameOf = (id) => { const d = DOMAINS.find((x) => x.id === id); return d ? d.name : id; };
   const lines = [];
   lines.push('FORMA — Team Capacity Report (Preview)');
-  lines.push(`${agg.n} members · aggregated development signals only`);
+  lines.push(`${agg.n} member${agg.n === 1 ? '' : 's'} · aggregated development signals only`);
+  if (agg.suppressed) {
+    lines.push('');
+    lines.push(`Not enough members to report. Forma shows team signals only at ${MIN_COHORT} or more, so no individual can be identified from an aggregate.`);
+    lines.push('');
+    lines.push('Privacy: aggregate signals only — no individual scores, no raw data, and the optional Interior Life track is never included. A development signal for growth, never a tool to rank or surveil individuals.');
+    return lines.join('\n');
+  }
   lines.push('');
   lines.push(`Team Formation Index: ${agg.avgIndex}`);
   lines.push(`AI-Readiness: ${agg.aiReadiness}`);
