@@ -432,10 +432,14 @@ function renderConversationalOnboarding() {
   const sendTurn = async () => {
     const text = dci.value.trim();
     if (!text || d.busy) return;
-    // Safety first — route genuine distress to a real human, deterministically,
-    // even mid-onboarding and even with no key (the interview is not the place).
+    // Safety + privacy first — route genuine distress to a real human,
+    // deterministically, even mid-onboarding and even with no key. CRITICAL:
+    // d.messages IS the payload that diagnosticReply/scoreDiagnostic later send to
+    // the API, so the raw crisis text must NOT be stored in it — that would break
+    // coach.js's invariant ("a distress disclosure is never routed to the API") on
+    // the very first interaction. Show the escalation as a standalone caring reply
+    // and step out of the interview; don't echo or transmit what they typed.
     if (Coach.looksLikeDistress(text)) {
-      d.messages.push({ role: 'user', content: text });
       d.messages.push({ role: 'assistant', content: Coach.ESCALATION_MESSAGE });
       render();
       dci.value = '';
