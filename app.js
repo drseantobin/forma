@@ -2159,7 +2159,7 @@ function renderSnapshot() {
         </div>
         <div class="snaphero">
           <div><div class="kbig" style="font-size:2rem;">${snap.formationIndex}</div><div class="muted small">Formation Index</div></div>
-          ${snap.aiReadiness != null ? `<div><div class="kbig" style="font-size:2rem; color:var(--accent);">${snap.aiReadiness}</div><div class="muted small">AI-Readiness</div></div>` : ''}
+          ${snap.aiReadiness != null ? `<div><div class="kbig" style="font-size:2rem; color:var(--accent);">${snap.aiReadiness}</div><div class="muted small">AI-Readiness</div>${snap.aiReadinessCoverage && snap.aiReadinessCoverage.thin ? `<div class="muted small">${snap.aiReadinessCoverage.covered} of ${snap.aiReadinessCoverage.total} capacities</div>` : ''}</div>` : ''}
         </div>
         ${snap.coverage && snap.coverage.thin ? `<p class="muted small center" style="margin:2px 0 0;">${esc(snap.coverage.note)} — still early; the composite settles as more capacities are practiced.</p>` : ''}
         <table class="snaptable">

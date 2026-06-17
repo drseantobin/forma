@@ -13,7 +13,7 @@
 
 import { activeDomainIds, getDomain, bandFor } from './domains.js';
 import { formationIndex } from './scoring.js';
-import { aiReadinessOf } from './team.js';
+import { aiReadinessOf, AI_READINESS_DOMAINS } from './team.js';
 import { confidence } from './reliability.js';
 import { domainTrend, daysBetween, todayStr } from './progress.js';
 
@@ -60,6 +60,21 @@ export function buildSnapshot(profile, today = todayStr()) {
     note: thinComposite ? `Provisional · ${ids.length} of ${shareTotal} capacities measured` : '',
   };
 
+  // AI-Readiness has its OWN 4-pillar denominator (judgment/ai_autonomy/reading/
+  // communication) that the Formation-Index `coverage` above never touches — so its
+  // headline number could rest on as little as 1 of 4 pillars yet print identically
+  // to a fully-measured one. Carry the same coverage humility the in-app
+  // aiReadinessCard already shows, so the credential's most consequential number
+  // isn't its least-hedged one. (AI_READINESS_DOMAINS contains no interior id.)
+  const airCovered = AI_READINESS_DOMAINS.filter((id) => scores[id] != null).length;
+  const airProvisional = AI_READINESS_DOMAINS.filter(
+    (id) => scores[id] != null && confidence(profile, id).level === 'provisional').length;
+  const aiReadinessCoverage = {
+    covered: airCovered,
+    total: AI_READINESS_DOMAINS.length,
+    thin: airCovered < AI_READINESS_DOMAINS.length || airProvisional > airCovered / 2,
+  };
+
   return {
     name: (profile.settings && profile.settings.name) || null,
     since,
@@ -69,6 +84,7 @@ export function buildSnapshot(profile, today = todayStr()) {
     formationIndex: formationIndex(shareScores),
     aiReadiness: aiReadinessOf(shareScores),
     coverage,
+    aiReadinessCoverage,
     domains,
     strengths: domains.slice(0, 2).map((d) => d.name),
     growthEdges: domains.slice().reverse().slice(0, 2).map((d) => d.name),
@@ -85,6 +101,9 @@ export function snapshotText(snap) {
   lines.push('');
   lines.push(`Formation Index: ${snap.formationIndex}`);
   if (snap.aiReadiness != null) lines.push(`AI-Readiness: ${snap.aiReadiness}`);
+  if (snap.aiReadiness != null && snap.aiReadinessCoverage && snap.aiReadinessCoverage.thin) {
+    lines.push(`(AI-Readiness reflects ${snap.aiReadinessCoverage.covered} of ${snap.aiReadinessCoverage.total} contributing capacities — still firming up.)`);
+  }
   if (snap.coverage && snap.coverage.thin) lines.push(`(${snap.coverage.note} — still early; these will settle as more capacities are practiced.)`);
   lines.push('');
   lines.push('Capacities (with how much evidence backs each):');
