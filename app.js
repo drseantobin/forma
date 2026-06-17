@@ -2297,7 +2297,7 @@ function aiReadinessCard(p) {
     <div class="card airead" style="border-left:4px solid var(--accent);">
       <div class="row"><strong>AI-Readiness</strong>
         <span class="spacer"></span>
-        <span class="kbig" style="font-size:1.7rem; color:var(--accent);">${air == null ? '—' : air}</span></div>
+        <span class="kbig" style="color:var(--accent);">${air == null ? '—' : air}</span></div>
       <p class="muted small" style="margin-top:2px;">The capacities that keep you irreplaceable as AI does more of the cognitive work — judgment over its output, independence from it, deep reading, and clear communication.</p>
       <div class="airgrid">
         ${contributors.map((c) => `
@@ -2334,7 +2334,7 @@ function renderProgress() {
     <div class="fade-in">
       <h1>Progress</h1>
       <div class="card">
-        <div class="row"><strong>Formation Index</strong><span class="spacer"></span><span class="kbig" style="font-size:1.6rem;">${fi}</span></div>
+        <div class="row"><strong>Formation Index</strong><span class="spacer"></span><span class="kbig">${fi}</span></div>
         ${(() => {
           // Same headline-honesty treatment as Home (v112): on thin evidence the
           // Index is provisional. Progress is where users study the number, so the
@@ -2496,8 +2496,8 @@ function renderSnapshot() {
           </div>
         </div>
         <div class="snaphero">
-          <div><div class="kbig" style="font-size:2rem;">${snap.formationIndex}</div><div class="muted small">Formation Index</div></div>
-          ${snap.aiReadiness != null ? `<div><div class="kbig" style="font-size:2rem; color:var(--accent);">${snap.aiReadiness}</div><div class="muted small">AI-Readiness</div>${snap.aiReadinessCoverage && snap.aiReadinessCoverage.thin ? `<div class="muted small">${snap.aiReadinessCoverage.covered} of ${snap.aiReadinessCoverage.total} capacities</div>` : ''}</div>` : ''}
+          <div><div class="kbig m2">${snap.formationIndex}</div><div class="muted small">Formation Index</div></div>
+          ${snap.aiReadiness != null ? `<div><div class="kbig m2" style="color:var(--accent);">${snap.aiReadiness}</div><div class="muted small">AI-Readiness</div>${snap.aiReadinessCoverage && snap.aiReadinessCoverage.thin ? `<div class="muted small">${snap.aiReadinessCoverage.covered} of ${snap.aiReadinessCoverage.total} capacities</div>` : ''}</div>` : ''}
         </div>
         ${snap.coverage && snap.coverage.thin ? `<p class="muted small center" style="margin:2px 0 0;">${esc(snap.coverage.note)} — still early; the composite settles as more capacities are practiced.</p>` : ''}
         <table class="snaptable">
@@ -2670,7 +2670,7 @@ function proofClaimCard(title, claim, metric, daysElapsed, domainId) {
         <div class="row" style="align-items:baseline;">
           <span class="muted small">Baseline ${metric.baseline}</span>
           <span class="spacer"></span>
-          <span class="kbig" style="font-size:1.8rem; color:${color}">${metric.current}</span>
+          <span class="kbig" style="color:${color}">${metric.current}</span>
           <span class="trendpill ${metric.delta > 0 ? 'up' : metric.delta < 0 ? 'down' : 'flat'}" style="margin-left:8px;">${metric.delta === 0 ? '±0' : sign + metric.delta}</span>
         </div>
         <svg viewBox="0 0 320 44" width="100%" style="margin-top:6px;">
@@ -2694,7 +2694,7 @@ function proofFocusCard(focus, daysElapsed) {
         <div class="row" style="align-items:baseline;">
           <span class="muted small">Start ${focus.baseline}</span>
           <span class="spacer"></span>
-          <span class="kbig" style="font-size:1.8rem; color:${color}">${focus.current}</span>
+          <span class="kbig" style="color:${color}">${focus.current}</span>
           <span class="trendpill ${focus.delta > 0 ? 'up' : focus.delta < 0 ? 'down' : 'flat'}" style="margin-left:8px;">${focus.delta === 0 ? '±0' : sign + focus.delta}</span>
         </div>
         <svg viewBox="0 0 320 44" width="100%" style="margin-top:6px;">
