@@ -641,6 +641,8 @@ function renderHome() {
 
       ${welcomeBackCard(p)}
 
+      ${backupNudgeCard(p)}
+
       ${lastInsight ? `<div class="card"><div class="insight ${lastInsight.live ? 'live' : ''}" style="border:none;padding:0;">
         <div class="k">Today's insight</div>
         <div style="margin-top:6px; white-space:pre-wrap;">${esc(lastInsight.text)}</div></div></div>` : ''}
@@ -669,8 +671,51 @@ function renderHome() {
   document.getElementById('startsession').onclick = () => go('session');
   const wp = document.getElementById('toplan');
   if (wp) wp.onclick = () => go('plan');
+  const nb = document.getElementById('nudgebackup');
+  if (nb) nb.onclick = () => { downloadBackup(); render(); };
+  const nl = document.getElementById('nudgelater');
+  if (nl) nl.onclick = () => {
+    const d = new Date(); d.setDate(d.getDate() + 14);
+    p.settings.backupSnoozeUntil = d.toISOString().slice(0, 10);
+    save(); render();
+  };
   wireDomainLinks();
   wireCommitments();
+}
+
+// A gentle, dismissible reminder to keep a backup — Forma is local-first, so a
+// cleared browser is the real data-loss risk. Shows only once there's meaningful
+// data (>=5 sessions) AND no recent export, and stays quiet for 14 days if snoozed.
+function backupNudgeCard(p) {
+  if ((p.sessions || []).length < 5) return '';
+  const now = todayStr();
+  const snooze = p.settings && p.settings.backupSnoozeUntil;
+  if (snooze && snooze >= now) return '';
+  const last = p.settings && p.settings.lastExportAt;
+  const daysSince = last ? daysBetween(String(last).slice(0, 10), now) : Infinity;
+  if (daysSince < 30) return '';
+  return `<div class="card" id="backupnudge" style="border-left:4px solid var(--amber);">
+    <div class="row"><span style="font-size:1.2rem;">💾</span>
+      <div style="flex:1;"><strong>Keep a backup of your data</strong>
+        <p class="muted small" style="margin:2px 0 0;">${last ? 'It’s been a while since your last backup.' : 'Your formation lives on this device — a quick export means a cleared browser can’t erase it.'}</p></div></div>
+    <div class="row" style="gap:8px; margin-top:10px;">
+      <button class="btn sm" id="nudgebackup">Back up now</button>
+      <button class="btn ghost sm" id="nudgelater">Later</button>
+    </div>
+  </div>`;
+}
+
+// Download the full local profile as a JSON backup, and stamp lastExportAt so the
+// nudge can tell when a backup was last taken. Shared by Home and Settings.
+function downloadBackup() {
+  const p = state.profile;
+  const blob = new Blob([Profile.exportProfile(p)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `forma-data-${todayStr()}.json`;
+  a.click();
+  p.settings.lastExportAt = new Date().toISOString();
+  save();
 }
 
 const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -2940,13 +2985,7 @@ function renderSettings() {
   };
   const withdrawC = document.getElementById('withdrawcontact');
   if (withdrawC) withdrawC.onclick = () => { state.profile = Contact.clearContact(p); save(); render(); };
-  document.getElementById('export').onclick = () => {
-    const blob = new Blob([Profile.exportProfile(p)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `forma-data-${todayStr()}.json`;
-    a.click();
-  };
+  document.getElementById('export').onclick = () => { downloadBackup(); };
   document.getElementById('import').onclick = () => document.getElementById('importfile').click();
   document.getElementById('importfile').onchange = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -3030,3 +3069,15 @@ if (state.profile && state.profile.baseline) {
 const _deep = startRoute(typeof location !== 'undefined' ? location.search : '');
 if (_deep) state.route = _deep;
 render();
+
+// Local data-safety: ask the browser to PERSIST our storage so it won't silently
+// evict the profile under disk pressure. Best-effort, non-blocking, guarded for
+// environments without the API. The cheapest real protection for a local-first app,
+// alongside the export/restore backup. Only requests if not already persisted.
+(function requestPersistentStorage() {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+      navigator.storage.persisted().then((already) => { if (!already) navigator.storage.persist().catch(() => {}); }).catch(() => {});
+    }
+  } catch (e) { /* noop */ }
+})();
