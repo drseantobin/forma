@@ -32,7 +32,23 @@ body {
 }
 
 #app { max-width: var(--maxw); margin: 0 auto; padding: calc(20px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 8px calc(18px + env(safe-area-inset-left)); }
-.boot { text-align: center; color: var(--ink-faint); padding: 80px 0; }
+.boot {
+  min-height: 72vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 8px; color: var(--ink-faint);
+}
+.boot-logo {
+  width: 64px; height: 64px; border-radius: 16px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, #4c5fd5, #6f7fe6);
+  color: #fff; font-weight: 800; font-size: 2rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  box-shadow: 0 6px 22px rgba(76, 95, 213, .28);
+  animation: bootPulse 1.6s ease-in-out infinite;
+}
+.boot-name { font-weight: 800; font-size: 1.3rem; letter-spacing: .02em; color: var(--ink); margin-top: 6px; }
+.boot-tag { font-size: .85rem; color: var(--ink-faint); }
+@keyframes bootPulse { 0%, 100% { opacity: 1; transform: none; } 50% { opacity: .6; transform: scale(.97); } }
 
 h1, h2, h3 { line-height: 1.2; margin: 0 0 .4em; letter-spacing: -.01em; }
 h1 { font-size: 1.7rem; }
