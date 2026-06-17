@@ -46,6 +46,20 @@ export function buildSnapshot(profile, today = todayStr()) {
   const shareScores = {};
   ids.forEach((id) => { shareScores[id] = scores[id]; });
 
+  // Evidence humility for the COMPOSITE headline — parity with Home/Progress
+  // (indexConfidence, v112/v113), but computed over the SHAREABLE (non-interior)
+  // universe, since the credential's Formation Index is over shareScores. (Reusing
+  // indexConfidence here would miscount: it includes interior in its total.)
+  const shareTotal = activeDomainIds(faith).filter((id) => id !== 'interior').length;
+  const provisional = ids.filter((id) => confidence(profile, id).level === 'provisional').length;
+  const thinComposite = ids.length < 2 || ids.length < shareTotal / 2 || provisional > ids.length / 2;
+  const coverage = {
+    covered: ids.length,
+    total: shareTotal,
+    thin: thinComposite,
+    note: thinComposite ? `Provisional · ${ids.length} of ${shareTotal} capacities measured` : '',
+  };
+
   return {
     name: (profile.settings && profile.settings.name) || null,
     since,
@@ -54,6 +68,7 @@ export function buildSnapshot(profile, today = todayStr()) {
     sessionCount: (profile.sessions || []).length,
     formationIndex: formationIndex(shareScores),
     aiReadiness: aiReadinessOf(shareScores),
+    coverage,
     domains,
     strengths: domains.slice(0, 2).map((d) => d.name),
     growthEdges: domains.slice().reverse().slice(0, 2).map((d) => d.name),
@@ -70,6 +85,7 @@ export function snapshotText(snap) {
   lines.push('');
   lines.push(`Formation Index: ${snap.formationIndex}`);
   if (snap.aiReadiness != null) lines.push(`AI-Readiness: ${snap.aiReadiness}`);
+  if (snap.coverage && snap.coverage.thin) lines.push(`(${snap.coverage.note} — still early; these will settle as more capacities are practiced.)`);
   lines.push('');
   lines.push('Capacities (with how much evidence backs each):');
   snap.domains.forEach((d) => {
