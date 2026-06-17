@@ -170,6 +170,11 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- progress ---------- */
 .kbig { font-variant-numeric: tabular-nums; }
+.conftag {
+  font-size:.66rem; font-weight:600; letter-spacing:.02em; color: var(--ink-faint);
+  border:1px solid var(--line, #e6e4dd); border-radius:999px; padding:1px 7px; margin-left:8px;
+  white-space:nowrap; cursor: help;
+}
 .trendpill { font-size:.78rem; font-weight:700; padding:2px 8px; border-radius:999px; }
 .trendpill.up { background: var(--green-soft); color: var(--green); }
 .trendpill.down { background: #f9e7e6; color: var(--red); }

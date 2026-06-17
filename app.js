@@ -15,6 +15,7 @@ import * as Diagnostic from './src/diagnostic.js';
 import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import { bandAscension, ascensionLine, streakMilestone } from './src/milestones.js';
+import { confidenceTag, milestoneEligible } from './src/reliability.js';
 import * as Orchestrator from './src/orchestrator.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
@@ -1646,7 +1647,11 @@ async function completeSession() {
 
   // Earned milestones: a domain scale crossing into a higher band is the real
   // reward (genuine measured growth, not points). A streak mark backs it up.
-  const ascension = bandAscension(session.prevDomainScore, session.newDomainScore, session.domain);
+  // Only celebrate a band crossing once the domain has enough evidence that it
+  // reflects real growth, not one lucky session swinging the EMA over a boundary.
+  const ascension = milestoneEligible(profile, session.domain)
+    ? bandAscension(session.prevDomainScore, session.newDomainScore, session.domain)
+    : null;
   const streakMark = streakMilestone(profile.streak && profile.streak.current);
   const milestoneBanner = ascension
     ? `<div class="milestone" role="status" style="--mile:${ascension.band.color}">
@@ -2001,11 +2006,13 @@ function progressRow(id) {
   const series = t.points.length ? t.points : [score];
   const dir = t.direction;
   const sign = t.delta > 0 ? '+' : '';
+  const conf = confidenceTag(p, id);
   return `
     <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="Train ${esc(d.name)}" style="align-items:center;">
       <span class="ico">${d.icon}</span>
       <div class="meta">
         <div class="row"><span class="dn">${esc(d.name)}</span>
+          ${conf ? `<span class="conftag" title="How much evidence stands behind this score. It firms up as you complete more sessions in this capacity.">${esc(conf)}</span>` : ''}
           <span class="spacer"></span>
           <span class="trendpill ${dir}">${dir === 'flat' ? '±0' : sign + t.delta}</span></div>
         <svg class="spark" viewBox="0 0 80 24" style="width:100%; height:26px; margin-top:4px;">
