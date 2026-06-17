@@ -711,6 +711,51 @@ export const DECISIONS = [
       { id: 'd', text: 'Trust it more because the AI is usually right.', score: 25, rationale: '"Usually right" is how the occasional confident error slips through unexamined. Calibrate to the stakes of THIS decision, not the tool’s batting average.' },
     ],
   },
+  {
+    id: 'dec-sunkcost',
+    type: 'decision',
+    domain: 'judgment',
+    title: 'Counting What’s Already Spent',
+    scenario:
+      'You’ve spent three months and most of the budget on an approach the latest data clearly shows isn’t working. Starting fresh would mean admitting those months are lost.',
+    prompt: 'What’s the sounder call?',
+    options: [
+      { id: 'a', text: 'Decide on what’s likely to work from here — the time and money already spent can’t come back and shouldn’t drive the choice.', score: 100, rationale: 'The spent resources are gone whatever you choose; sound judgment weighs only the future return. Letting unrecoverable losses steer the decision is how good effort gets thrown after bad.' },
+      { id: 'b', text: 'Hedge: keep the failing approach running but quietly start the new one alongside it.', score: 55, rationale: 'Partly right — it does start the better path — but it keeps burning resources on an approach the data already calls dead, often to avoid the hard admission rather than as real strategy.' },
+      { id: 'c', text: 'Push through — you’re too far in to stop now; quitting would waste everything.', score: 40, rationale: '"Too far in" is the sunk-cost trap stated outright: it treats spent resources as a reason to spend more. The months are lost either way; the only question is what happens next.' },
+      { id: 'd', text: 'Stick with it and hope the data turns around.', score: 20, rationale: 'Hope isn’t a plan, and the data is the signal. Waiting for a failing approach to reverse with no reason to expect it is the most passive form of the same trap.' },
+    ],
+  },
+  {
+    id: 'dec-automate',
+    type: 'decision',
+    domain: 'judgment',
+    title: 'When Not to Automate',
+    scenario:
+      'A routine part of your work could now be fully automated by AI. It’s also the task through which you’ve kept a hard-won skill sharp — and often caught problems early.',
+    prompt: 'What’s the wisest approach?',
+    options: [
+      { id: 'a', text: 'Automate the genuinely rote parts, but keep doing by hand the piece that keeps the skill — and the early warning — alive.', score: 100, rationale: 'Discernment, not purity: offload the drudgery, but protect the practice that preserves a real capacity and your feel for when something’s off. Efficiency that quietly erodes judgment isn’t a bargain.' },
+      { id: 'b', text: 'Refuse to automate any of it, to be safe.', score: 50, rationale: 'Over-rigid — keeping rote drudgery by hand on principle wastes the very attention you’d want for the part that matters. The skill is choosing what to keep, not refusing all help. (At least the capacity stays intact.)' },
+      { id: 'c', text: 'Automate all of it — if a machine can do it, doing it by hand is just nostalgia.', score: 35, rationale: '"A machine can do it" isn’t the same as "you should stop being able to." This trades away the skill and the early-warning signal for time saved on a task you may have undervalued.' },
+      { id: 'd', text: 'Automate it now and plan to relearn the skill later if you ever need it.', score: 20, rationale: 'Skills decay quietly and "relearn later" rarely happens under pressure. By the time you need it, the instinct it gave you for catching problems is already gone.' },
+    ],
+  },
+  {
+    id: 'dec-uncertainty',
+    type: 'decision',
+    domain: 'judgment',
+    title: 'Deciding Without Enough to Go On',
+    scenario:
+      'You have to choose a direction now, but the information you’d need to feel confident genuinely isn’t available yet — and may not be for weeks.',
+    prompt: 'What’s the soundest way to act under real uncertainty?',
+    options: [
+      { id: 'a', text: 'Make the smallest reversible move that buys information, and stay ready to change course as you learn.', score: 100, rationale: 'Under genuine uncertainty the win is a cheap, reversible step that turns waiting into learning — neither a confident bet nor paralysis. Decide in a way that keeps your options open.' },
+      { id: 'b', text: 'Wait until you have enough information to be confident.', score: 45, rationale: 'Sometimes right — but here the information may never come, and "wait for certainty" can quietly become indefinite paralysis while the situation decides for you.' },
+      { id: 'c', text: 'Pick the boldest option and commit fully — decisiveness wins.', score: 40, rationale: 'Confidence isn’t the same as being right. Committing hard on irreducibly thin information is how one wrong read becomes expensive and hard to undo.' },
+      { id: 'd', text: 'Pick whatever feels right and stop thinking about it.', score: 20, rationale: 'Closing the question to escape the discomfort of not-knowing is premature closure — it swaps an honest uncertainty for a false certainty you’ll then defend even as the evidence arrives.' },
+    ],
+  },
 ];
 
 // ----- REFLECTION: writing prompt + honest self-rating (reflective domains) -----
