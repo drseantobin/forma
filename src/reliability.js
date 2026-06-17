@@ -23,22 +23,50 @@ export function domainEvidence(profile, domainId) {
   return { sessions, hasBaseline, evidence: sessions + (hasBaseline ? 1 : 0) };
 }
 
+// Practice-type reps (contemplation / reflection) are unscored BY NATURE — they're
+// formation, not failed measurements — so they must NOT count toward "scale frozen."
+// Mirrors exercises.exerciseMode; kept tiny here to avoid a module cycle.
+const PRACTICE_TYPES = new Set(['contemplation', 'reflection']);
+
+// Honest staleness signal (scientific-validity review, v152). The v138 gate correctly
+// leaves a RE-SERVED keyed item unscored — but once a small keyed bank is exhausted,
+// EVERY further session in that domain is unscored, so the scale FREEZES while
+// confidence() keeps reporting "building/established" off past sessions. The number
+// looks MORE trustworthy as it stops being measured. Detect it: if the recent
+// MEASURE-type sessions in a domain were all unscored, the items are used up and the
+// scale is no longer live. (Generated tasks — n-back/vigilance/etc. — make fresh
+// content every time, so they never trip this; it fires for exhausted keyed banks.)
+export function scaleFreshness(profile, domainId) {
+  const measures = (profile.sessions || []).filter((s) => s.domain === domainId && !PRACTICE_TYPES.has(s.type));
+  const recent = measures.slice(-3); // 3 consecutive unscored measures = bank clearly exhausted
+  const frozen = recent.length >= 3 && recent.every((s) => s.unscored);
+  return { frozen, recentMeasures: recent.length };
+}
+
 // Confidence band for a domain scale. Thresholds are deliberately conservative:
 // a single data point is always 'provisional', and 'established' takes a real
-// streak of measurement. { level, label, sessions, evidence }.
+// streak of measurement. { level, label, sessions, evidence, frozen }.
 export function confidence(profile, domainId) {
   const { sessions, hasBaseline, evidence } = domainEvidence(profile, domainId);
   let level = 'provisional';
   if (evidence >= 5) level = 'established';
   else if (evidence >= 2) level = 'building';
-  const label = { provisional: 'Provisional', building: 'Building', established: 'Established' }[level];
-  return { level, label, sessions, hasBaseline, evidence };
+  const { frozen } = scaleFreshness(profile, domainId);
+  // `level` is left intact (indexConfidence/milestoneEligible branch on it); the
+  // honest staleness rides alongside as `frozen` + an overriding label.
+  const label = frozen
+    ? 'Items used up — not re-measured lately'
+    : { provisional: 'Provisional', building: 'Building', established: 'Established' }[level];
+  return { level, label, sessions, hasBaseline, evidence, frozen };
 }
 
 // A short, honest UI tag — only worth showing until the score is established
 // (once established the number can stand on its own). Returns '' when established.
 export function confidenceTag(profile, domainId) {
   const c = confidence(profile, domainId);
+  // Surface staleness even on an otherwise-"established" scale — the one place the
+  // old tag lied by omission (an exhausted bank read as a settled number).
+  if (c.frozen) return 'Items used up — keep practicing; fresh measures coming';
   if (c.level === 'established') return '';
   const n = c.sessions;
   const basis = n === 0 ? 'baseline only' : `${n} session${n === 1 ? '' : 's'}`;
