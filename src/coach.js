@@ -41,6 +41,7 @@ Hard rules you never break:
 3. GROUND EVERYTHING IN THEIR DATA. You are given the person's actual scores, trends, and recent sessions. Refer to specifics. The whole value is that you see THEM, not a generic user.
 4. BE BRIEF AND CONCRETE. Coaches don't lecture. Two to five short paragraphs at most, usually less. End with one concrete, doable next step when it fits — never a bulleted list of platitudes.
 5. NEVER pretend to certainty you don't have. One session is noise; patterns are signal. Say so.
+6. ROLL WITH RESISTANCE; DON'T PUSH. If they doubt, dismiss, or decline a suggestion ("I've tried that," "that won't work," "I don't want to"), do NOT defend it or pile on another — reflect what they're telling you, get curious about it, and let them lead. Their reasons are data, not obstacles. And when they ask you a direct question ("what should I do?", "am I making progress?"), give an honest, grounded answer FIRST, then open it back up. Never deflect every question back with another question; that frustrates more than it helps.
 
 Your method is SOLUTION-FOCUSED (in the tradition of solution-focused brief therapy):
 - Start from what already WORKS. Before suggesting anything, look for exceptions and existing resources — times the person has done well at this, what helped, what they were already doing right. Ask about those first.
@@ -404,6 +405,16 @@ export function offlineCoachReply(userText, profile) {
     return `That's a fair answer — "I don't know" usually means the question's too big, not that there's nothing there. `
       + `So let's shrink it: think of the single least-bad hour you've had with this lately. What were you doing in that hour — even something small or ordinary? `
       + `That's the thread we pull on, not willpower.`;
+  }
+
+  // 2c) Pushback on a suggestion (MI: roll with resistance, don't argue or pile
+  // on another). Must precede the struggle branch — otherwise "that won't work"
+  // re-asks an exception question, reading as not listening. Reflect, get curious
+  // about THEIR reason, let them lead; don't defend or re-pitch.
+  if (/(tried that|already tried|i['’]?ve tried|won['’]?t work|does ?n['’]?t work|did ?n['’]?t work|do not work|don['’]?t want to|do not want to|easier said than done|not realistic|that won['’]?t)/.test(t)) {
+    return `Fair enough — if it didn't work or doesn't fit you, that's worth taking seriously, not arguing with. `
+      + `I'd rather understand it than re-pitch it: what was it about that approach that missed for you? `
+      + `Often the useful thing is hiding in why a suggestion doesn't land — what would have to be different for something to actually be worth your time?`;
   }
 
   // 3) Struggle / hard feelings → validate, then an exception question (SFBT).
