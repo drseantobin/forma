@@ -657,7 +657,7 @@ function domainRow(id, score) {
     <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="Train ${esc(d.name)}">
       <span class="ico">${d.icon}</span>
       <div class="meta">
-        <div class="dn">${esc(d.name)}</div>
+        <div class="dn">${esc(d.name)} <span class="muted" style="font-weight:500; font-size:.82rem;">· ${esc(band.label)}</span></div>
         <div class="bar"><div style="width:${score}%; background:${band.color}"></div></div>
       </div>
       <span class="sc">${score}</span>
