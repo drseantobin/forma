@@ -130,12 +130,20 @@ export function weeklyPatterns(profile) {
     return ['Not enough history yet for patterns — a few more daily sessions and Forma will start noticing things about you that are genuinely true.'];
   }
 
-  // Biggest mover (up).
+  // Biggest mover (up). Anchor "since you started" on the BASELINE, not the first
+  // daily session — applyBaseline seeds only indexHistory, so domainTrend.first is
+  // session-1, not baseline, and the raw delta would silently drop the baseline→
+  // session-1 jump (under-reporting growth, and dropping a single-session domain
+  // whose delta is 0). Mirrors snapshot.js / proof.js. (v94; same class as v74.)
+  const baseScores = (profile.baseline && profile.baseline.domainScores) || {};
   let bestGain = null;
   for (const id of DOMAIN_ORDER) {
     const t = domainTrend(history, id);
-    if (t.first == null) continue;
-    if (!bestGain || t.delta > bestGain.delta) bestGain = { id, ...t };
+    if (t.latest == null) continue;
+    const base = baseScores[id] != null ? baseScores[id] : t.first;
+    if (base == null) continue;
+    const delta = t.latest - base;
+    if (!bestGain || delta > bestGain.delta) bestGain = { id, delta };
   }
   if (bestGain && bestGain.delta > 2) {
     out.push(`Biggest gain: ${domainName(bestGain.id)} is up ${bestGain.delta} points since you started. The work is showing.`);
@@ -146,7 +154,7 @@ export function weeklyPatterns(profile) {
   for (const h of history) counts[h.domain] = (counts[h.domain] || 0) + 1;
   const practiced = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   if (practiced.length) {
-    out.push(`Most-practiced lately: ${domainName(practiced[0][0])} (${practiced[0][1]} sessions).`);
+    out.push(`Most-practiced lately: ${domainName(practiced[0][0])} (${practiced[0][1]} session${practiced[0][1] === 1 ? '' : 's'}).`);
     const neglected = DOMAIN_ORDER.filter((id) => !counts[id]);
     if (neglected.length) {
       out.push(`Untouched so far: ${neglected.map(domainName).join(', ')}. Worth a visit — growth often hides in the domain we avoid.`);
