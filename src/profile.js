@@ -78,13 +78,21 @@ export function applySession(profile, exercise, response, opts = {}) {
   // We never fabricate a number onto the longitudinal scale: an unmeasured
   // session is recorded (it counts as showing up, for the streak) but leaves the
   // domain scale, history, Formation Index, and confidence completely untouched.
-  // A re-served SINGLE-USE item is likewise unmeasured: CRT (cognitive-reflection)
-  // answers are recalled permanently once seen ("the bat and the ball"), so once
-  // the bank is exhausted (v102 rotates through it first) a repeat measures memory,
-  // not reflection — letting it score would ratchet Judgment toward 100 by recall.
-  // Scope is CRT only; matrices/SJTs are re-reasonable, so a repeat keeps validity.
+  // A re-served KEYED-ANSWER item is likewise unmeasured. Once an item has shown
+  // you its keyed "best" answer AND the rationale for it (CRT names the bias; the
+  // SJT family and matrix reveal the correct option + explanation on lock-in),
+  // re-selecting that option measures RECALL, not the capacity — and would ratchet
+  // the domain toward the keyed ceiling (100) by memory. The SJT banks are small
+  // (5–6 items), so focused practice exhausts them in weeks and the picker then
+  // recycles seen items; scoring those replays would inflate exactly the relational/
+  // AI-readiness domains an employer scrutinizes most, while confidence (which counts
+  // sessions) rises — the number looks MORE trustworthy as it degrades into recall.
+  // Scope = every keyed-answer type (scoreDecision family + matrix + crt). Open-ended
+  // types are correctly excluded: reflection/contemplation/stay are unkeyed, and
+  // vignette/sentence are AI-scored on free text, so a repeat is still a real response.
   // (profile.sessions does not yet include this session, so .some() tests prior history.)
-  const isSingleUseReplay = exercise.type === 'crt'
+  const RECALL_PRONE = new Set(['crt', 'decision', 'tradeoff', 'stem', 'comm', 'attend', 'steu', 'matrix']);
+  const isSingleUseReplay = RECALL_PRONE.has(exercise.type)
     && (p.sessions || []).some((s) => s.exerciseId === exercise.id);
   const measured = rawScore != null && !isSingleUseReplay;
 
