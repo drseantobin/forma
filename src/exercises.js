@@ -388,6 +388,38 @@ export const MAZE = [
       { text: '.' },
     ],
   },
+  {
+    id: 'maze-judgment', type: 'maze', domain: 'reading', secondaryDomain: 'judgment', title: 'Read for the Sense',
+    parts: [
+      { text: 'When an AI hands you an answer, the easy move is to ' },
+      { blank: { options: ['accept', 'frame', 'lose'], answer: 0 } },
+      { text: ' it whole. But a model can be ' },
+      { blank: { options: ['confidently', 'rarely', 'quietly'], answer: 0 } },
+      { text: ' wrong — fluent text that sounds ' },
+      { blank: { options: ['plausible', 'boring', 'random'], answer: 0 } },
+      { text: ' yet is false. What protects you is not knowing every fact, but keeping enough ' },
+      { blank: { options: ['judgment', 'silence', 'money'], answer: 0 } },
+      { text: ' to notice when an answer does not ' },
+      { blank: { options: ['add', 'slow', 'speed'], answer: 0 } },
+      { text: ' up.' },
+    ],
+  },
+  {
+    id: 'maze-focus', type: 'maze', domain: 'reading', secondaryDomain: 'attention', title: 'Read for the Sense',
+    parts: [
+      { text: 'Deep work is the ability to focus without ' },
+      { blank: { options: ['distraction', 'effort', 'reward'], answer: 0 } },
+      { text: ' on a demanding task. It is becoming ' },
+      { blank: { options: ['rare', 'common', 'loud'], answer: 0 } },
+      { text: ' precisely as it becomes more ' },
+      { blank: { options: ['valuable', 'cheap', 'simple'], answer: 0 } },
+      { text: ', because the same tools that fragment attention also reward the few who can ' },
+      { blank: { options: ['resist', 'enjoy', 'follow'], answer: 0 } },
+      { text: ' them. Like a muscle, the capacity is built through ' },
+      { blank: { options: ['deliberate', 'random', 'brief'], answer: 0 } },
+      { text: ', repeated practice.' },
+    ],
+  },
 ];
 
 
@@ -1026,6 +1058,34 @@ export const MATRICES = [
     options: [{ shape: 'square', n: 1, fill: 0 }, { shape: 'circle', n: 1, fill: 0 }, { shape: 'square', n: 3, fill: 0 }, { shape: 'square', n: 2, fill: 0 }],
     answer: 0,
     explanation: 'Across each row the shape changes (circle → square); down each column the count drops from three to one. So the missing cell is one square.',
+  },
+  {
+    id: 'mat-fill-row', type: 'matrix', domain: 'judgment', title: 'Complete the Pattern',
+    grid: [{ shape: 'triangle', n: 2, fill: 0 }, { shape: 'triangle', n: 2, fill: 1 }, { shape: 'circle', n: 2, fill: 0 }],
+    options: [{ shape: 'circle', n: 2, fill: 1 }, { shape: 'circle', n: 2, fill: 0 }, { shape: 'triangle', n: 2, fill: 1 }, { shape: 'circle', n: 3, fill: 1 }],
+    answer: 0,
+    explanation: 'Across each row the shapes go from outline to filled; down each column the shape changes and the count stays the same. So the missing cell is two filled circles.',
+  },
+  {
+    id: 'mat-count-up2', type: 'matrix', domain: 'judgment', title: 'Complete the Pattern',
+    grid: [{ shape: 'square', n: 1, fill: 1 }, { shape: 'square', n: 3, fill: 1 }, { shape: 'triangle', n: 1, fill: 1 }],
+    options: [{ shape: 'triangle', n: 3, fill: 1 }, { shape: 'triangle', n: 1, fill: 1 }, { shape: 'square', n: 3, fill: 1 }, { shape: 'triangle', n: 2, fill: 1 }],
+    answer: 0,
+    explanation: 'Across each row the count rises by two; down each column the shape changes (square → triangle). So the missing cell is three filled triangles.',
+  },
+  {
+    id: 'mat-shape-swap', type: 'matrix', domain: 'judgment', title: 'Complete the Pattern',
+    grid: [{ shape: 'circle', n: 1, fill: 0 }, { shape: 'square', n: 1, fill: 0 }, { shape: 'circle', n: 2, fill: 0 }],
+    options: [{ shape: 'square', n: 2, fill: 0 }, { shape: 'square', n: 1, fill: 0 }, { shape: 'circle', n: 2, fill: 0 }, { shape: 'square', n: 3, fill: 0 }],
+    answer: 0,
+    explanation: 'Across each row the shape changes (circle → square); down each column the count goes up by one. So the missing cell is two outlined squares.',
+  },
+  {
+    id: 'mat-fill-down', type: 'matrix', domain: 'judgment', title: 'Complete the Pattern',
+    grid: [{ shape: 'triangle', n: 1, fill: 0 }, { shape: 'triangle', n: 2, fill: 0 }, { shape: 'triangle', n: 1, fill: 1 }],
+    options: [{ shape: 'triangle', n: 2, fill: 1 }, { shape: 'triangle', n: 2, fill: 0 }, { shape: 'triangle', n: 1, fill: 1 }, { shape: 'triangle', n: 3, fill: 1 }],
+    answer: 0,
+    explanation: 'Across each row the count goes up by one; down each column the shapes go from outline to filled. So the missing cell is two filled triangles.',
   },
 ];
 
