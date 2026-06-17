@@ -870,6 +870,48 @@ export const CRT = [
     ],
     explanation: 'Knife 10¢, loaf $9.10 — a $9.00 gap, $9.20 total. The lure (20¢) again forgets the difference must stay $9.00.',
   },
+  {
+    id: 'crt-hole',
+    type: 'crt',
+    domain: 'judgment',
+    title: 'The Lure',
+    prompt: 'How many cubic feet of dirt are in a hole that is 3 feet long, 3 feet wide, and 3 feet deep?',
+    options: [
+      { id: 'a', text: '27', kind: 'intuitive' },
+      { id: 'b', text: 'None — a hole has no dirt in it', kind: 'reflective' },
+      { id: 'c', text: '9', kind: 'other' },
+      { id: 'd', text: '6', kind: 'other' },
+    ],
+    explanation: 'The pull is to multiply 3×3×3 = 27. But a hole is empty by definition — the dirt is what was removed to make it. The reflective move is to question what is actually being asked before computing.',
+  },
+  {
+    id: 'crt-months',
+    type: 'crt',
+    domain: 'judgment',
+    title: 'The Lure',
+    prompt: 'How many months of the year have 28 days?',
+    options: [
+      { id: 'a', text: 'Just one — February', kind: 'intuitive' },
+      { id: 'b', text: 'All twelve', kind: 'reflective' },
+      { id: 'c', text: 'Four', kind: 'other' },
+      { id: 'd', text: 'Seven', kind: 'other' },
+    ],
+    explanation: 'February is the only month with EXACTLY 28 — but every month has a 28th day, so all twelve have (at least) 28. The lure is the word "exactly" your mind quietly inserts.',
+  },
+  {
+    id: 'crt-discount',
+    type: 'crt',
+    domain: 'judgment',
+    title: 'The Lure',
+    prompt: 'A $20 shirt is marked 50% off. At the register you get another 50% off the already-reduced price. What do you pay?',
+    options: [
+      { id: 'a', text: 'Nothing — it’s free', kind: 'intuitive' },
+      { id: 'b', text: '$5', kind: 'reflective' },
+      { id: 'c', text: '$10', kind: 'other' },
+      { id: 'd', text: '$2.50', kind: 'other' },
+    ],
+    explanation: 'The pull is 50% + 50% = 100% off, free. But the second 50% comes off the already-halved $10, not the original: $20 → $10 → $5. Percentages of different bases do not add.',
+  },
 ];
 
 // ----- N-BACK: working-memory updating drill (Working Memory) -----
