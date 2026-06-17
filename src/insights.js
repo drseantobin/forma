@@ -10,6 +10,7 @@
 
 import { DOMAINS, domainName, bandFor, getDomain, activeDomainIds } from './domains.js';
 import { domainTrend } from './progress.js';
+import { scaleFreshness } from './reliability.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
 
@@ -137,16 +138,25 @@ export function weeklyPatterns(profile) {
   // whose delta is 0). Mirrors snapshot.js / proof.js. (v94; same class as v74.)
   const baseScores = (profile.baseline && profile.baseline.domainScores) || {};
   let bestGain = null;
+  let frozenMover = null; // a big apparent rise on a FROZEN (exhausted-bank) scale —
+  // that's recall settling, not new growth, so it must NOT be celebrated as a gain
+  // (the v152/v155 honesty rule, applied to the line that also feeds the coach).
   for (const id of DOMAIN_ORDER) {
     const t = domainTrend(history, id);
     if (t.latest == null) continue;
     const base = baseScores[id] != null ? baseScores[id] : t.first;
     if (base == null) continue;
     const delta = t.latest - base;
+    if (scaleFreshness(profile, id).frozen) {
+      if (delta > 2 && (!frozenMover || delta > frozenMover.delta)) frozenMover = { id, delta };
+      continue;
+    }
     if (!bestGain || delta > bestGain.delta) bestGain = { id, delta };
   }
   if (bestGain && bestGain.delta > 2) {
     out.push(`Biggest gain: ${domainName(bestGain.id)} is up ${bestGain.delta} points since you started. The work is showing.`);
+  } else if (frozenMover) {
+    out.push(`${domainName(frozenMover.id)} reads higher, but its items are used up — treat that as the score settling, not new growth. It’ll re-measure as fresh items arrive.`);
   }
 
   // Most-practiced vs. neglected.
