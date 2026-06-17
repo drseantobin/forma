@@ -96,7 +96,12 @@ export function setConsent(profile, consent, demographics, opts = {}) {
   r.consent = !!consent;
   if (r.consent) {
     if (!r.installId) r.installId = opts.makeId ? opts.makeId() : genId();
-    if (!r.consentedAt) r.consentedAt = opts.now || new Date().toISOString();
+    // DAY-COARSE on purpose (parity with event.day). A full-precision timestamp here
+    // would be stamped at the same instant as the IDENTIFIED contact.consentedAt — a
+    // high-precision join key that could re-link the anonymous research data to the
+    // email once a flush ships. installId is already kept out of contact; this closes
+    // the other cross-tier back-door. The identified contact tier keeps its own stamp.
+    if (!r.consentedAt) r.consentedAt = String(opts.now || new Date().toISOString()).slice(0, 10);
     if (demographics !== undefined) r.demographics = cleanDemographics(demographics);
   } else {
     r.queue = [];
