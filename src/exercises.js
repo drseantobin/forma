@@ -345,6 +345,12 @@ export const READING = [
 // Attention scale (at a gentler weight — see profile.applySession).
 READING.forEach((e) => { e.secondaryDomain = 'attention'; });
 
+// The synthesizing question in each passage (the "what's the real point / danger /
+// skill" one) requires bridging inference, not literal recall — and inference
+// items predict comprehension better, so the scorer weights them 1.5× (scoring.js).
+// Tagging activates that weighting. Index 2 is consistently the inference question.
+READING.forEach((e) => { if (e.questions[2]) e.questions[2].kind = 'inference'; });
+
 // ----- MAZE: cloze reading-comprehension test (Deep Reading) -----
 // CBM-Maze paradigm (validated): every so often a word is replaced by a choice
 // of three; only the meaning-correct word fits. Picking it requires actually
