@@ -1933,6 +1933,24 @@ function renderProgress() {
       <div class="card">
         <ul class="noticing">${weeklyPatterns(p).map((line) => `<li>${esc(line)}</li>`).join('')}</ul>
       </div>
+
+      ${Profile.recentSessions(p).length ? `
+      <h2>Recent sessions</h2>
+      <div class="card">
+        <p class="muted small" style="margin:0 0 8px;">Every score you've earned, newest first — your own auditable record.</p>
+        <div class="domain-list">
+          ${Profile.recentSessions(p).map((sx) => {
+            const d = getDomain(sx.domain); const band = bandFor(sx.rawScore);
+            const dt = new Date(sx.date + 'T00:00:00');
+            return `<div class="domain-row" style="align-items:center;">
+              <span class="ico" aria-hidden="true">${d ? d.icon : '•'}</span>
+              <div class="meta"><div class="dn">${d ? esc(d.name) : esc(sx.domain)}</div>
+                <div class="muted small">${dt.getMonth() + 1}/${dt.getDate()}</div></div>
+              <span class="sc" style="color:${band.color};">${sx.rawScore}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
     </div>`;
   document.getElementById('toproof').onclick = () => go('proof');
   document.getElementById('tosnapshot').onclick = () => go('snapshot');

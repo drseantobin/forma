@@ -203,6 +203,12 @@ export function recentSeenIds(profile, n = 4) {
   return (profile.sessions || []).slice(-n).map((s) => s.exerciseId);
 }
 
+// The most recent sessions, newest first — for the auditable "recent activity"
+// log (every score the person earned, in order). Pure.
+export function recentSessions(profile, n = 8) {
+  return (profile.sessions || []).slice(-n).reverse();
+}
+
 // ---- storage (browser only) ----
 export function loadProfile() {
   try {
