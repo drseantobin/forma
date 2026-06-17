@@ -6,7 +6,7 @@ import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEM
 import { pickExercise, nextMathProblem, shuffledIndices } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
 import {
-  todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween,
+  todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween, startRoute,
 } from './src/progress.js';
 import { recommendFocus, weeklyPatterns, dailyInsight as ruleDailyInsight, interpretBaseline as ruleInterpretBaseline } from './src/insights.js';
 import * as Profile from './src/profile.js';
@@ -2532,4 +2532,8 @@ function greeting() {
 }
 
 // ---------------- boot ----------------
+// Honor a PWA app-shortcut / deep link (?go=session, etc.). render() already
+// redirects a not-yet-onboarded user into setup, so an early route is safe.
+const _deep = startRoute(typeof location !== 'undefined' ? location.search : '');
+if (_deep) state.route = _deep;
 render();

@@ -1,6 +1,26 @@
 // progress.js — longitudinal progress: streaks, trends, bands, sparklines.
 // Pure functions so the "scales that rate progress" are testable and reliable.
 
+// Deep-link / PWA app-shortcut routing: a URL like ?go=session opens that view.
+// Returns a valid route from the query string, or null. Allowlisted so a crafted
+// link can't push the app to an unknown state; pure + tested.
+export const DEEP_LINK_ROUTES = ['home', 'session', 'progress', 'coach', 'settings', 'plan', 'proof', 'team', 'snapshot', 'methods'];
+export function startRoute(search) {
+  if (!search) return null;
+  // Pure string parsing (no URLSearchParams — keeps it testable outside a browser).
+  const q = String(search).replace(/^\?/, '');
+  for (const pair of q.split('&')) {
+    const eq = pair.indexOf('=');
+    const key = eq === -1 ? pair : pair.slice(0, eq);
+    if (key === 'go') {
+      let val = eq === -1 ? '' : pair.slice(eq + 1);
+      try { val = decodeURIComponent(val); } catch (e) { /* keep raw */ }
+      return DEEP_LINK_ROUTES.includes(val) ? val : null;
+    }
+  }
+  return null;
+}
+
 export function todayStr(d = new Date()) {
   // Local YYYY-MM-DD (a "day" is the user's local calendar day).
   const y = d.getFullYear();

@@ -1,7 +1,11 @@
 {
+  "id": "./index.html",
   "name": "Forma — train what AI can't replace",
   "short_name": "Forma",
   "description": "Measure and strengthen the human capacities that matter most in an age of AI.",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "health", "lifestyle"],
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -9,6 +13,12 @@
   "background_color": "#f6f5f1",
   "theme_color": "#4c5fd5",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Today's session", "short_name": "Today", "description": "Go straight to today's formation session", "url": "./index.html?go=session" },
+    { "name": "Talk to the coach", "short_name": "Coach", "description": "Open the solution-focused coach", "url": "./index.html?go=coach" },
+    { "name": "My progress", "short_name": "Progress", "description": "See your scales and trends", "url": "./index.html?go=progress" }
   ]
 }
