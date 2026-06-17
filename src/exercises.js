@@ -1517,7 +1517,7 @@ export const PRESENCE_SCENES = [
     options: [
       { id: 'a', text: 'Make unhurried space — sit near, let them know you’re there, and let them come to it in their own time.', score: 100, rationale: 'Attuned, non-demanding presence: available without pressure. You meet them where they are, not where you wish they were.' },
       { id: 'b', text: 'Press them with questions until they tell you what’s wrong.', score: 40, rationale: 'Interrogation usually serves your need to know and fix; to someone depleted it can feel like one more demand rather than care.' },
-      { id: 'c', text: 'Give them total space and stay on your phone in the other room.', score: 45, rationale: 'Space can be respect — but here it can read as absence. Presence is being available, not merely out of the way.' },
+      { id: 'c', text: 'Give them total space and stay on your phone in the other room.', score: 35, rationale: 'Space can be respect — but here it can read as absence. Presence is being available, not merely out of the way; an engaged-but-clumsy miss is closer to it than withdrawing to a screen.' },
       { id: 'd', text: 'Try to cheer them up with jokes and distraction.', score: 30, rationale: 'Deflecting the mood meets them where you’d prefer them to be. Sometimes the kindest thing is to let the heaviness simply be witnessed.' },
     ],
   },
