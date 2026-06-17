@@ -1497,6 +1497,16 @@ function stopMic(s) {
 
 // Wire a mic button to a textarea/input for on-device dictation. Generic so the
 // coach composer, the contemplation reflection, and the reflection screen all
+// Honest disclosure at the point of egress: the Web Speech API is NOT on-device
+// in every browser (Chrome streams mic audio to Google to transcribe). A privacy-
+// first app must say so where the mic is offered, and point to typing as the
+// fully-on-device path. Shown only when dictation is actually available.
+function micPrivacyNote() {
+  return speechSupported()
+    ? '<p class="muted small" style="margin-top:6px;">Voice uses your browser’s dictation — in some browsers (e.g. Chrome) the audio is sent to its speech service to transcribe. Type instead to keep it fully on your device.</p>'
+    : '';
+}
+
 // share it. Deliberately light: it writes straight into the field and toggles
 // the button without re-rendering, so the surrounding view (e.g. the chat log)
 // never rebuilds mid-dictation. Hides itself where speech isn't supported.
@@ -1562,7 +1572,7 @@ function renderVignette() {
       ${sessionHeader(ex)}
       <div class="passage">${esc(ex.scenario)}</div>
       <p class="likert-q" style="font-size:1.05rem;">${esc(ex.prompt)}</p>
-      <p class="muted small">${supported ? 'Speak your answer or type it — either way your words land in the box, and you can edit before sending.' : 'Type your response below.'}</p>
+      <p class="muted small">${supported ? 'Speak your answer or type it — either way your words land in the box, and you can edit before sending. Voice uses your browser’s dictation, so in some browsers (e.g. Chrome) the audio is sent to its speech service; type to keep it fully on your device.' : 'Type your response below.'}</p>
       ${supported ? `
         <div class="center" style="margin:8px 0 2px;">
           <button class="btn ${s.recording ? 'green' : 'amber'}" id="mic" style="width:auto;">${s.recording ? '■ Stop recording' : '🎤 Speak'}</button>
@@ -1747,9 +1757,10 @@ function renderContemplationReflect() {
 
       <p class="likert-q" style="font-size:1.05rem; margin-top:14px;">Where did your mind go? What was it like — and did anything pull you out?</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
-        <textarea class="reflect-area" id="cnote" placeholder="A few honest words. Voice or type. This stays on your device.">${esc(r.note || '')}</textarea>
+        <textarea class="reflect-area" id="cnote" placeholder="A few honest words. Type or speak. Typing stays on your device.">${esc(r.note || '')}</textarea>
         <button class="btn amber" id="cnotemic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
       </div>
+      ${micPrivacyNote()}
 
       <p class="muted small" style="margin-top:16px;">Your eyes were…</p>
       <div class="row" style="gap:8px; flex-wrap:wrap;">
@@ -1788,9 +1799,10 @@ function renderReflection() {
       ${sessionHeader(ex)}
       <p class="likert-q" style="font-size:1.05rem;">${esc(ex.prompt)}</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
-        <textarea class="reflect-area" id="ref" placeholder="Write or speak a few honest sentences. This stays on your device.">${esc(s.response.text || '')}</textarea>
+        <textarea class="reflect-area" id="ref" placeholder="Write or speak a few honest sentences. Typing stays on your device.">${esc(s.response.text || '')}</textarea>
         <button class="btn amber" id="refmic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
       </div>
+      ${micPrivacyNote()}
       <p class="muted small" style="margin-top:14px;">${esc(ex.selfRatingLabel)}</p>
       <div class="rating">
         ${[1, 2, 3, 4, 5].map((n) => `<button class="${rating === n ? 'on' : ''}" data-n="${n}" aria-pressed="${rating === n}" aria-label="Rate ${n} of 5">${n}</button>`).join('')}
@@ -2434,6 +2446,7 @@ function renderCoach() {
         <input id="ci" placeholder="Ask your coach…" autocomplete="off" aria-label="Message your coach" />
         <button class="btn" id="send">Send</button>
       </div>
+      ${micPrivacyNote()}
     </div>`;
   const tos = document.getElementById('tosettings');
   if (tos) tos.onclick = () => go('settings');
@@ -2550,7 +2563,8 @@ function renderSettings() {
 
       <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
-        <p class="muted small">Everything Forma knows about you lives on this device — no server, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
+        <p class="muted small">Everything Forma stores about you lives on this device — no server, no account, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
+        <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to Anthropic using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
         <div class="stack">
           <button class="btn ghost sm" id="export">Export my data (JSON)</button>
           <button class="btn ghost sm" id="import">Import / restore from a backup</button>

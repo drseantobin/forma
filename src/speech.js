@@ -1,5 +1,9 @@
-// speech.js — a thin wrapper over the browser Web Speech API for on-device
-// speech-to-text. No audio leaves the device; we only ever use the transcript.
+// speech.js — a thin wrapper over the browser Web Speech API for speech-to-text.
+// IMPORTANT: this is NOT guaranteed on-device. Several browsers (notably Chrome,
+// which streams to Google's speech service) send the raw mic audio to a remote
+// vendor to transcribe; only the returned transcript comes back to us. Forma
+// never receives or stores the audio, but it is NOT a private/on-device path —
+// the UI must disclose this at the mic and offer typing as the on-device option.
 // Falls back gracefully: callers check speechSupported() and offer typing when
 // it's false (notably some installed iOS PWAs).
 
