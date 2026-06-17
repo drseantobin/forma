@@ -157,13 +157,19 @@ export function profileSummary(profile) {
   const scores = profile.domainScores || {};
   lines.push('Current domain scales (0-100):');
   for (const d of DOMAINS) {
+    // Privacy invariant: the Interior Life (faith) track NEVER enters any context
+    // assembled for the API. The interior screens promise it "stays on your
+    // device / never shown to anyone but you," and this summary feeds every live
+    // call (coach chat, baseline interpretation, daily insight). Mirrors the same
+    // exclusion snapshot.js enforces for the shareable credential.
+    if (d.id === 'interior') continue;
     const s = scores[d.id];
     if (s == null) continue;
     const t = domainTrend(profile.history || [], d.id);
     const trend = t.first != null && t.delta !== 0 ? ` (${t.delta > 0 ? '+' : ''}${t.delta} since start)` : '';
     lines.push(`  - ${d.name}: ${s} [${bandFor(s).label}]${trend}`);
   }
-  const recent = (profile.sessions || []).slice(-5);
+  const recent = (profile.sessions || []).filter((s) => s.domain !== 'interior').slice(-5);
   if (recent.length) {
     lines.push('Recent sessions:');
     for (const s of recent) {
@@ -233,6 +239,12 @@ export async function interpretBaseline(profile) {
 export async function dailyInsight(session, profile) {
   const offline = ruleDailyInsight(session, profile);
   if (!hasKey(profile)) return { text: offline, live: false };
+  // Privacy invariant: an Interior Life (faith) session is never sent to the API
+  // — not even its name/score. The rule-based insight is generated on-device so
+  // the spiritual track keeps its "stays on your device" promise in fact. (The
+  // shared profileSummary already omits interior; this guards the session line
+  // dailyInsight emits directly.)
+  if (session.domain === 'interior') return { text: offline, live: false };
   try {
     const text = await callClaude({
       apiKey: profile.settings.apiKey,
