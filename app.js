@@ -945,6 +945,38 @@ function renderReading() {
     document.getElementById('toq').onclick = () => { s.phase = 'questions'; s.qi = 0; render(); };
     return;
   }
+  // review phase — before the score, let the reader SEE what they got right/wrong
+  // (this is a TEST with keyed answers; seeing the correct answer is where the
+  // learning is). Read-only marks reuse the same ✓/✕ + sr-only pattern as the
+  // exercise reveals; reading questions carry no rationale, so we just show the key.
+  if (s.phase === 'reading-review') {
+    const ans = s.response.answers || [];
+    const correct = ex.questions.filter((q, i) => ans[i] === q.answer).length;
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <p class="likert-q" style="font-size:1.05rem;">You got <strong>${correct} of ${ex.questions.length}</strong> right. Here's the breakdown:</p>
+        ${ex.questions.map((q, qi) => {
+          const a = ans[qi];
+          return `<div class="card" style="padding:14px;">
+            <div class="likert-q" style="font-size:.98rem;">${esc(q.q)}</div>
+            <div class="likert-opts" style="margin-top:8px;">
+              ${q.options.map((o, i) => {
+                const isKey = i === q.answer;
+                const isYours = i === a;
+                const cls = isKey ? 'correct' : (isYours ? 'wrong' : '');
+                const mark = isKey ? ' <span class="mark correct" aria-hidden="true">✓</span><span class="sr-only"> (correct answer)</span>'
+                  : (isYours ? ' <span class="mark wrong" aria-hidden="true">✕</span><span class="sr-only"> (your answer — not correct)</span>' : '');
+                return `<div class="opt ${cls}" style="cursor:default;">${esc(o)}${mark}</div>`;
+              }).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+        <button class="btn amber" id="rdone" style="margin-top:8px;">Continue →</button>
+      </div>`;
+    document.getElementById('rdone').onclick = completeSession;
+    return;
+  }
   // questions phase, one at a time
   const qi = s.qi || 0;
   const q = ex.questions[qi];
@@ -966,7 +998,7 @@ function renderReading() {
     render();
   });
   document.getElementById('qnext').onclick = () => {
-    if (qi === ex.questions.length - 1) completeSession();
+    if (qi === ex.questions.length - 1) { s.phase = 'reading-review'; render(); }
     else { s.qi = qi + 1; render(); }
   };
 }
