@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -100,6 +100,13 @@ export function chooseExercise(profile, opts = {}) {
     // a live key. With a key, alternate it with reflection; without, reflection.
     if (hasKey(profile) && !recentTypes.includes('vignette')) return pickFrom(VIGNETTES, seen, rng);
     return pickExercise('communication', { seenIds: seen, rng });
+  }
+
+  if (focus === 'emotion_regulation') {
+    // STEM (validated emotion-management SJT) is the performance measure here;
+    // alternate it with a reflection so it isn't the same item every time.
+    if (!recentTypes.includes('stem')) return pickFrom(STEM, seen, rng);
+    return pickExercise('emotion_regulation', { seenIds: seen, rng });
   }
 
   if (focus === 'interior') {

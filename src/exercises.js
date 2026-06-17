@@ -1125,6 +1125,75 @@ export const VIGNETTES = [
   },
 ];
 
+// ----- STEM: Situational Test of Emotion Management -----
+// Lineage: MacCann & Roberts' Situational Test of Emotion Management (2008) — a
+// validated performance measure of emotional intelligence. You read an emotional
+// situation and choose the MOST effective way to manage the feeling. Options are
+// scored by how adaptive the strategy is (reappraisal, problem-solving, acceptance,
+// adaptive support-seeking score high; suppression, rumination, avoidance, hostile
+// reframing score low). This is the emotion_regulation domain's first genuine
+// performance measure — everything before it there was self-report. Growth-framing,
+// never diagnosis: every option's rationale teaches the strategy, so a "wrong"
+// pick is a lesson, not a verdict. Exactly one best option per item scores >=80 so
+// the reveal coloring (shared with decision/tradeoff) marks the adaptive move.
+export const STEM = [
+  {
+    id: 'stem-credit', type: 'stem', domain: 'emotion_regulation', title: 'Managing the Moment',
+    scenario: 'In a meeting, a colleague presents Alex’s idea as their own. Alex feels a hot flash of anger rise.',
+    prompt: 'What’s the most effective way for Alex to manage that anger?',
+    options: [
+      { id: 'a', text: 'Let the heat pass in the moment, then raise it privately afterward — naming what happened and how it landed.', score: 100, rationale: 'This manages the feeling and the situation together: you give the spike room to settle, then address the real problem from a steady place. The most effective regulation rarely means acting at peak intensity.' },
+      { id: 'b', text: 'Call it out sharply right there in the meeting.', score: 45, rationale: 'Honest, but acting on anger at its peak usually costs more than it recovers — the legitimate point gets lost in the heat, and others remember the tone, not the substance.' },
+      { id: 'c', text: 'Push the anger down and act as if nothing happened.', score: 30, rationale: 'Suppression doesn’t lower the feeling — it just hides it, where it tends to leak out later and leaves the real issue unresolved. Managed emotion isn’t silenced emotion.' },
+      { id: 'd', text: 'Replay the slight on a loop for the rest of the day.', score: 15, rationale: 'Rumination keeps the body in alarm and changes nothing about the situation. Of all the options, dwelling is the one most reliably linked to feeling worse.' },
+    ],
+  },
+  {
+    id: 'stem-presentation', type: 'stem', domain: 'emotion_regulation', title: 'Managing the Moment',
+    scenario: 'Sam has a high-stakes presentation tomorrow. Tonight the anxiety is building — tight chest, racing thoughts.',
+    prompt: 'What’s the most effective thing Sam can do with that anxiety?',
+    options: [
+      { id: 'a', text: 'Do one solid prep pass, then deliberately set it down for the night — treating the nerves as readiness, not a warning.', score: 100, rationale: 'This pairs problem-focused action (prepare once, well) with reappraisal (arousal as fuel, not threat). Naming anxiety as readiness measurably improves performance — you manage the feeling by reframing what it means.' },
+      { id: 'b', text: 'Distract completely and refuse to think about it at all.', score: 55, rationale: 'Avoidance buys a quiet evening, but the dread returns — and you arrive less prepared. Short-term relief, long-term cost.' },
+      { id: 'c', text: 'Keep rehearsing late into the night until every line feels perfect.', score: 40, rationale: 'Past a point, more rehearsal feeds the anxiety instead of easing it — and the lost sleep hurts you more tomorrow than one imperfect transition would.' },
+      { id: 'd', text: 'Find a reason to get out of presenting.', score: 15, rationale: 'Escape erases the anxiety and the opportunity at once, and quietly teaches you that the way to handle pressure is to flee it — which makes the next time harder.' },
+    ],
+  },
+  {
+    id: 'stem-disappointment', type: 'stem', domain: 'emotion_regulation', title: 'Managing the Moment',
+    scenario: 'Maria didn’t get a role she’d genuinely hoped for. A heavy disappointment settles in.',
+    prompt: 'What’s the most effective way for her to handle the disappointment?',
+    options: [
+      { id: 'a', text: 'Let herself actually feel it, and talk it through with someone she trusts.', score: 100, rationale: 'Acceptance plus adaptive support: she neither denies the feeling nor drowns in it, and naming it to a trusted person is one of the best-supported ways to metabolize a loss.' },
+      { id: 'b', text: 'Pour herself into constant busyness so she never has to sit with it.', score: 45, rationale: 'Distraction can take the edge off, but an unfelt disappointment waits. Staying busy isn’t the same as moving through it.' },
+      { id: 'c', text: 'Tell herself it didn’t matter and she never really wanted it.', score: 35, rationale: 'Minimizing protects you for an hour but invalidates a real desire — and it blocks the honest reflection that would help her aim at the next one.' },
+      { id: 'd', text: 'Decide this means she isn’t good enough and probably won’t get the next one either.', score: 15, rationale: 'Turning one outcome into a verdict about yourself is overgeneralizing — it amplifies the pain and distorts the odds. One “no” is data about one decision, not about you.' },
+    ],
+  },
+  {
+    id: 'stem-envy', type: 'stem', domain: 'emotion_regulation', title: 'Managing the Moment',
+    scenario: 'A friend posts about landing exactly the thing Jordan has been quietly wanting. Jordan feels a sting of envy.',
+    prompt: 'What’s the most effective response to that envy?',
+    options: [
+      { id: 'a', text: 'Read the envy as a signal of what he values, congratulate his friend honestly, and name one small step toward his own version.', score: 100, rationale: 'This uses the emotion as information rather than letting it run the show — envy points at what matters to you. Acting on it with a value-aligned step turns a corrosive feeling into direction.' },
+      { id: 'b', text: 'Mute or unfollow the friend so the posts stop showing up.', score: 45, rationale: 'Removing the trigger gives relief and is sometimes wise — but here it avoids the longing rather than addressing it, and can quietly shrink a real friendship.' },
+      { id: 'c', text: 'Tell himself his friend probably got lucky or isn’t really that happy.', score: 25, rationale: 'Hostile reframing soothes the ego for a moment while corroding both honesty and the relationship. It manages the sting by distorting reality.' },
+      { id: 'd', text: 'Spend the evening comparing his life to his friend’s, point by point.', score: 15, rationale: 'Comparison rumination is the most reliable way to feel worse — it inflames the envy and produces nothing you can act on.' },
+    ],
+  },
+  {
+    id: 'stem-guilt', type: 'stem', domain: 'emotion_regulation', title: 'Managing the Moment',
+    scenario: 'Priya snapped at her partner over something small and instantly feels a wave of guilt.',
+    prompt: 'What’s the most effective way for her to manage the guilt?',
+    options: [
+      { id: 'a', text: 'Acknowledge it directly, apologize for the tone, and name what was really going on underneath for her.', score: 100, rationale: 'Guilt is a repair signal — the effective move is to act on it: a clean apology plus honest disclosure mends the rupture and addresses the cause. Once repaired, the guilt has done its job.' },
+      { id: 'b', text: 'Wait and quietly hope it blows over without mentioning it.', score: 40, rationale: 'Avoidance leaves the small rupture unrepaired, where it can accumulate. Guilt that isn’t acted on tends to linger rather than resolve.' },
+      { id: 'c', text: 'Over-apologize again and again and berate herself about it all day.', score: 30, rationale: 'One sincere repair helps; looping in self-punishment past that point is guilt rumination — it burdens her partner with reassuring her and fixes nothing further.' },
+      { id: 'd', text: 'Decide her partner was being too sensitive anyway.', score: 20, rationale: 'A defensive reframe dodges the guilt by dodging responsibility — it protects the ego at the cost of the relationship and the chance to repair.' },
+    ],
+  },
+];
+
 // Pick an exercise for a given target domain. Objective domains get their
 // matching family; reflective domains get a reflection prompt. `seen` lets the
 // caller rotate variety (avoid repeating the last exercise).
@@ -1145,11 +1214,13 @@ export function pickExercise(targetDomain, opts = {}) {
       return notSeen(READING);
     case 'judgment':
       return notSeen(DECISIONS);
+    case 'emotion_regulation':
+      // Prefer the validated performance measure (STEM); fall back to reflection.
+      return notSeen(STEM.concat(REFLECTIONS.filter((r) => r.domain === targetDomain)));
     case 'persistence':
     case 'ai_autonomy':
     case 'presence':
     case 'communication':
-    case 'emotion_regulation':
     case 'values':
       return notSeen(REFLECTIONS.filter((r) => r.domain === targetDomain));
     case 'interior':

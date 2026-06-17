@@ -673,6 +673,7 @@ function renderSession() {
     case 'digitspan': return renderDigitSpan();
     case 'decision': return renderDecision();
     case 'tradeoff': return renderDecision();
+    case 'stem': return renderDecision();
     case 'matrix': return renderMatrix();
     case 'crt': return renderCRT();
     case 'nback': return renderNBack();
@@ -691,7 +692,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', stem: 'Emotion Management', reflection: 'Reflection' }[ex.type] || ex.type;
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
     <h2>${esc(ex.title)}</h2>`;

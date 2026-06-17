@@ -202,6 +202,9 @@ export function scoreExercise(exercise, response) {
       return scoreMemory(response.recalled || [], exercise.digits.slice().reverse());
     case 'decision':
     case 'tradeoff':
+    case 'stem':
+      // STEM (emotion-management SJT): the chosen option carries its
+      // expert-rated effectiveness score, same mechanism as a decision item.
       return scoreDecision(response.optionId, exercise.options);
     case 'matrix':
       // Fluid-reasoning item: right or wrong, but a wrong attempt still engaged.
