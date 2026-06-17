@@ -1,6 +1,6 @@
 // sw.js — Forma service worker. Makes the app installable and offline-capable.
 // Bump CACHE when shipping changes so clients pick up the new files.
-const CACHE = 'forma-v24';
+const CACHE = 'forma-v25';
 const SHELL = [
   './',
   './index.html',

@@ -240,6 +240,22 @@ button { font-family: inherit; cursor: pointer; }
 .score-pop { animation: scorePop .5s cubic-bezier(.2,.8,.2,1); }
 @keyframes scorePop { from { opacity:0; transform: scale(.82); } to { opacity:1; transform: scale(1); } }
 
+/* milestone — earned band ascension / streak mark, shown on the score reveal */
+.milestone {
+  margin: 14px auto 4px; max-width: 420px;
+  border: 1px solid color-mix(in srgb, var(--mile) 35%, transparent);
+  background: color-mix(in srgb, var(--mile) 9%, #fff);
+  border-radius: 14px; padding: 12px 16px; text-align: center;
+  animation: mileRise .6s cubic-bezier(.2,.8,.2,1);
+}
+.milestone .mile-rule {
+  font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--mile);
+}
+.milestone .mile-head { font-size: 1.12rem; font-weight: 650; margin-top: 3px; color: var(--ink); }
+.milestone .mile-note { font-size: .86rem; color: var(--ink-soft); margin-top: 4px; }
+@keyframes mileRise { from { opacity:0; transform: translateY(8px) scale(.97); } to { opacity:1; transform:none; } }
+
 /* ---------- accessibility ---------- */
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 :focus:not(:focus-visible) { outline: none; }

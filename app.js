@@ -14,6 +14,7 @@ import * as Coach from './src/coach.js';
 import * as Diagnostic from './src/diagnostic.js';
 import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
+import { bandAscension, ascensionLine, streakMilestone } from './src/milestones.js';
 import * as Orchestrator from './src/orchestrator.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
@@ -1643,6 +1644,24 @@ async function completeSession() {
   state.profile = profile;
   save();
 
+  // Earned milestones: a domain scale crossing into a higher band is the real
+  // reward (genuine measured growth, not points). A streak mark backs it up.
+  const ascension = bandAscension(session.prevDomainScore, session.newDomainScore, session.domain);
+  const streakMark = streakMilestone(profile.streak && profile.streak.current);
+  const milestoneBanner = ascension
+    ? `<div class="milestone" role="status" style="--mile:${ascension.band.color}">
+         <div class="mile-rule">↑ Milestone</div>
+         <div class="mile-head">${esc(ascensionLine(ascension))}</div>
+         <div class="mile-note">${esc(ascension.band.note)}</div>
+       </div>`
+    : (streakMark
+      ? `<div class="milestone" role="status" style="--mile:var(--amber)">
+           <div class="mile-rule">🔥 Streak</div>
+           <div class="mile-head">${streakMark}-day streak</div>
+           <div class="mile-note">Showing up is the formation. Keep the chain alive.</div>
+         </div>`
+      : '');
+
   // Reveal score (count-up), then fetch the one insight.
   const band = bandFor(rawScore);
   app.innerHTML = `
@@ -1651,6 +1670,7 @@ async function completeSession() {
         <div class="big score-pop" id="bigscore" style="color:${band.color}">0</div>
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
       </div>
+      ${milestoneBanner}
       <div class="card" id="insight">
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
       </div>
