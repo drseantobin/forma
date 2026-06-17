@@ -238,8 +238,11 @@ export function scoreExercise(exercise, response) {
       // presence): the chosen option carries its rated score, same mechanism throughout.
       return scoreDecision(response.optionId, exercise.options);
     case 'matrix':
-      // Fluid-reasoning item: right or wrong, but a wrong attempt still engaged.
-      return response.optionId === exercise.answer ? 100 : 35;
+      // Fluid-reasoning item. A wrong answer stays formative (non-zero — you
+      // engaged a hard item) but must sit BELOW the 25% chance level on a 4-option
+      // item, so blind guessing can't manufacture a mid-band Judgment score:
+      // expected blind guess = 0.25·100 + 0.75·15 = ~36 (Emerging), not ~51.
+      return response.optionId === exercise.answer ? 100 : 15;
     case 'crt':
       return scoreCRT(response.optionId, exercise.options);
     case 'nback':
