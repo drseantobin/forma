@@ -1183,6 +1183,50 @@ export const TRADEOFFS = [
       { id: 'd', text: 'Offload everything, but feel uneasy that you’re forgetting how to think.', score: 30, rationale: 'The unease is accurate — and useless until it becomes a decision about what you’ll keep building yourself.' },
     ],
   },
+  {
+    id: 'trade-calculation', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
+    scenario: 'AI can handle every calculation and quantitative judgment you’ll ever face — budgets, estimates, probabilities — faster and more accurately than you.',
+    prompt: 'What’s the wise trade?',
+    options: [
+      { id: 'a', text: 'Hand it all over — never do mental math again.', score: 25, rationale: 'The accuracy is real, but a felt sense of number is how you catch a figure that’s obviously off. Offload it entirely and you can’t even smell an error — you can only ever trust the output.' },
+      { id: 'b', text: 'Let it crunch the heavy problems, but keep doing quick estimates yourself so you stay numerate.', score: 100, rationale: 'The move: take the tool’s power on the hard problems, keep the everyday estimation that keeps your number sense alive. You stay able to sanity-check what the machine hands you.' },
+      { id: 'c', text: 'Refuse it and do all your own arithmetic on principle.', score: 55, rationale: 'Keeps the skill sharp but forfeits real leverage on the genuinely hard problems. Independence is choosing where to delegate, not refusing to.' },
+      { id: 'd', text: 'Let it do everything, while assuming you could still estimate if you had to.', score: 30, rationale: 'Number sense fades without use; believing you’ve kept it isn’t keeping it. The check only protects you if you still actually run it sometimes.' },
+    ],
+  },
+  {
+    id: 'trade-relationships', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
+    scenario: 'AI can draft your hard personal messages, remember everyone’s details, and suggest exactly what to say to the people you love — smoothing every interaction.',
+    prompt: 'Where’s the line worth holding?',
+    options: [
+      { id: 'a', text: 'Let it handle your personal communication — the relationships run smoother.', score: 25, rationale: 'Smoother, but the friction you’re removing is partly the relationship itself — finding your own words is how care gets expressed. Outsource it and people start relating to the model, not to you.' },
+      { id: 'b', text: 'Use it to prepare for genuinely hard conversations, but say the words that matter in your own voice.', score: 100, rationale: 'Right line: let it help you think and steady your nerves, then show up as yourself. The bonding part — being truly present in your own words — stays yours.' },
+      { id: 'c', text: 'Never let it near anything personal.', score: 55, rationale: 'Protects authenticity but turns down real help with the conversations that scare us. The goal isn’t purity; it’s guarding what’s load-bearing.' },
+      { id: 'd', text: 'Let it write your messages but sign them as if they’re yours.', score: 20, rationale: 'The most seductive trade: it feels like connection while quietly hollowing it. The people you love deserve the actual you, even when you’re clumsy.' },
+    ],
+  },
+  {
+    id: 'trade-learning', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
+    scenario: 'Any fact, explanation, or how-to is instantly available from AI. Why hold knowledge in your own head at all when retrieval is free?',
+    prompt: 'What’s worth still learning yourself?',
+    options: [
+      { id: 'a', text: 'Stop learning — just look everything up when you need it.', score: 25, rationale: 'Retrieved knowledge isn’t understanding. With nothing in your head you can’t connect ideas, spot what’s wrong, or think in the moment — you can only ever fetch.' },
+      { id: 'b', text: 'Look up the trivial, but genuinely learn the things you want to think WITH.', score: 100, rationale: 'Exactly: offload reference facts, but build real understanding in the areas you actually reason in. Internalized knowledge is what lets you judge the answers you fetch.' },
+      { id: 'c', text: 'Refuse to look anything up — memorize it all the old way.', score: 55, rationale: 'Honorable, but it wastes a real tool and the attention you’d want for deeper learning. Wisdom is knowing which knowledge to own and which to retrieve.' },
+      { id: 'd', text: 'Look everything up, but feel you basically “know” it because you can find it.', score: 30, rationale: 'Access isn’t understanding. Mistaking the search bar for your own mind is how the capacity quietly disappears.' },
+    ],
+  },
+  {
+    id: 'trade-creativity', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
+    scenario: 'AI can generate ideas, drafts, designs, and solutions on demand — often more polished than your own first attempts.',
+    prompt: 'What’s the wise trade?',
+    options: [
+      { id: 'a', text: 'Let it generate everything — the output is better and faster.', score: 25, rationale: 'For throwaway work, fine. But making things is how you develop taste and a voice; hand over all of it and you become an editor of the machine’s ideas, not a source of your own.' },
+      { id: 'b', text: 'Use it to explore and pressure-test, but originate the ideas that matter to you yourself.', score: 100, rationale: 'The balance: let it widen your options and sharpen drafts while you keep doing the generative work that forms your taste. Heavy use of the tool, ownership of the voice.' },
+      { id: 'c', text: 'Refuse to use it for any creative work.', score: 55, rationale: 'Keeps your voice unmixed but forfeits a genuine collaborator. The point isn’t avoiding the tool; it’s staying the source.' },
+      { id: 'd', text: 'Let it create everything, then tweak the output so it feels like yours.', score: 30, rationale: 'Polishing someone else’s ideas isn’t having your own. The muscle of originating atrophies, dressed up as authorship.' },
+    ],
+  },
 ];
 
 // ----- VIGNETTES: AI-scored communication / emotional-intelligence exercise -----
