@@ -349,7 +349,61 @@ READING.forEach((e) => { e.secondaryDomain = 'attention'; });
 // skill" one) requires bridging inference, not literal recall — and inference
 // items predict comprehension better, so the scorer weights them 1.5× (scoring.js).
 // Tagging activates that weighting. Index 2 is consistently the inference question.
-READING.forEach((e) => { if (e.questions[2]) e.questions[2].kind = 'inference'; });
+// Genuine inference questions — each asks the reader to APPLY or PREDICT an
+// unstated conclusion the passage supports, not to recall a stated phrase. These
+// replace the earlier positional shortcut (tag questions[2]), which mis-weighted
+// verbatim-recall items at 1.5x and corrupted the Reading scale.
+const READING_INFERENCE = {
+  'read-attention-economy': {
+    q: 'A platform that genuinely helped you focus and then leave quickly would, by the passage’s logic, be:',
+    options: ['Its most profitable design', 'Working against its own business model', 'No different from any other platform', 'Impossible to build'],
+    answer: 1,
+  },
+  'read-cognitive-offloading': {
+    q: 'Which use of AI best fits the author’s "use it or lose it" principle?',
+    options: ['Letting it handle every calculation you ever face', 'Using it for a one-off task while still practicing the skills you want to keep', 'Refusing to use it for anything', 'Using it only when you are tired'],
+    answer: 1,
+  },
+  'read-deep-work': {
+    q: 'Someone who ends each day feeling busy yet produces little that matters has most likely:',
+    options: ['Done too much deep work', 'Filled the day with shallow work and lost the deep', 'Simply worked too slowly', 'Not answered enough email'],
+    answer: 1,
+  },
+  'read-silence': {
+    q: 'The passage implies that a person who fills every quiet gap with a screen will most likely:',
+    options: ['Think more clearly', 'Lose the integrative thinking that happens in silence', 'Become more reflective', 'Feel more rested'],
+    answer: 1,
+  },
+  'read-judgment-machines': {
+    q: 'A person who accepts an answer mainly because it "sounds confident and clear" is:',
+    options: ['Practicing careful verification', 'Falling for the very mistake the passage warns about', 'Thinking slowly and well', 'Wisely distrusting the model'],
+    answer: 1,
+  },
+  'read-presence': {
+    q: 'Which response to a grieving friend best reflects "genuine accompaniment" as the author defines it?',
+    options: ['Offering several solutions to try', 'Steering the conversation somewhere lighter', 'Staying with them even when there is nothing useful to say', 'Reminding them it could be worse'],
+    answer: 2,
+  },
+  'read-memory-extended': {
+    q: 'A student who can no longer do basic arithmetic without a calculator has, by the author’s test:',
+    options: ['Wisely extended their mind', 'Let the tool become a replacement rather than an extension', 'Saved time with no cost', 'Done nothing unusual'],
+    answer: 1,
+  },
+  'read-boredom': {
+    q: 'The passage implies that someone who reaches for their phone the instant they feel bored is most likely to:',
+    options: ['Have more original ideas', 'Lose the very conditions under which original thought arrives', 'Become calmer over time', 'Think more deeply'],
+    answer: 1,
+  },
+  'read-effort-paradox': {
+    q: 'By the passage’s logic, which effort is most worth protecting from outsourcing?',
+    options: ['Formatting a document', 'A tedious, repetitive chore', 'The thinking that works out what you actually believe', 'Filing routine paperwork'],
+    answer: 2,
+  },
+};
+READING.forEach((e) => {
+  const inf = READING_INFERENCE[e.id];
+  if (inf) e.questions.push({ ...inf, kind: 'inference' });
+});
 
 // ----- MAZE: cloze reading-comprehension test (Deep Reading) -----
 // CBM-Maze paradigm (validated): every so often a word is replaced by a choice
