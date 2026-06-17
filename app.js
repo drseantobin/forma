@@ -2001,6 +2001,14 @@ function renderProgress() {
       <h1>Progress</h1>
       <div class="card">
         <div class="row"><strong>Formation Index</strong><span class="spacer"></span><span class="kbig" style="font-size:1.6rem;">${fi}</span></div>
+        ${(() => {
+          // Same headline-honesty treatment as Home (v112): on thin evidence the
+          // Index is provisional. Progress is where users study the number, so the
+          // humility must be here too — not a confident integer on one screen and
+          // "provisional" on another for the SAME value.
+          const ic = indexConfidence(p);
+          return ic.thin ? `<p class="muted small" style="margin:4px 0 0;">${esc(ic.note)}</p>` : '';
+        })()}
         <svg viewBox="0 0 320 60" width="100%" style="margin-top:8px;">
           <path d="${sparklinePath(idxPts.length ? idxPts : [fi], 320, 60, 6)}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
