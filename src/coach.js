@@ -385,13 +385,16 @@ export function offlineCoachReply(userText, profile) {
   const t = (userText || '').toLowerCase();
   const scores = (profile && profile.domainScores) || {};
 
-  // 1) They named a capacity → their real standing + a solution-focused opener.
+  // 1) They named a capacity → open solution-focused, NOT with the number. Leading
+  // with "X is sitting at 34 — emerging" hands the score back as a verdict, which
+  // FORMA_SYSTEM's scaling rule (v80) forbids and which coachGreeting/sessionOpener
+  // already avoid; a low band pinned to a low number on first mention reads as a
+  // grade, not a starting line. Start from the exception, where growth is built.
   const named = domainFromText(t);
   if (named && scores[named.id] != null) {
-    const band = bandFor(scores[named.id]);
     const low = named.name.toLowerCase();
-    return `${named.name} is sitting at ${scores[named.id]} right now — ${band.label.toLowerCase()}. `
-      + `Here's the more useful question than the number: when has your ${low} gone *better* than usual, even a little? `
+    return `Let's start with your ${low}. Forget the number for a second — `
+      + `when has it gone *better* than usual, even a little? `
       + `What was different about that day — what were you already doing that helped? We build from that, not from willpower.`;
   }
 
