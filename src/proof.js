@@ -43,7 +43,13 @@ function metricFromDomain(profile, domain) {
     ? profile.domainScores[domain]
     : (t.latest != null ? t.latest : baseline);
   const delta = (baseline != null && current != null) ? current - baseline : 0;
-  return { baseline, current, delta, points: t.points, samples: t.points.length };
+  // The sparkline must span the SAME range as the delta the header reports
+  // (baseline → current). `t.points` holds only post-baseline sessions (the
+  // baseline never enters history), so plotting it alone amputates the
+  // baseline→session-1 growth and visibly understates progress on the very page
+  // built to PROVE it. Prepend the baseline so chart and number agree.
+  const series = baseline != null ? [baseline, ...t.points] : t.points;
+  return { baseline, current, delta, points: t.points, series, samples: t.points.length };
 }
 
 function focusMetric(profile) {

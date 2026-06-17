@@ -2326,7 +2326,7 @@ function proofClaimCard(title, claim, metric, daysElapsed, domainId) {
           <span class="trendpill ${metric.delta > 0 ? 'up' : metric.delta < 0 ? 'down' : 'flat'}" style="margin-left:8px;">${metric.delta === 0 ? '±0' : sign + metric.delta}</span>
         </div>
         <svg viewBox="0 0 320 44" width="100%" style="margin-top:6px;">
-          <path d="${sparklinePath(metric.points.length ? metric.points : [metric.current], 320, 44, 5)}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="${sparklinePath((metric.series && metric.series.length) ? metric.series : [metric.current], 320, 44, 5)}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         ${proj != null ? `<p class="muted small">At this pace, ~${metric.baseline + proj} by day 90 (projected).</p>` : `<p class="muted small">A few more days of data and Forma will project your 90-day trajectory.</p>`}
       ` : `<p class="muted small">No data yet — complete a few ${domainId === 'reading' ? 'reading' : 'sessions'} and this fills in.</p>`}
