@@ -8,11 +8,14 @@
 // Evidence = the baseline estimate (if present) + each session that directly
 // measured the domain (primary domain of the session). Secondary credit nudges
 // the scale but isn't a direct measurement, so it doesn't raise confidence.
+// An UNSCORED session (an AI-scored reflection the model couldn't grade — no key,
+// API failure, bad parse) is recorded for the streak but produced no measurement,
+// so it must NOT count as evidence either.
 // Pure functions, no DOM — fully testable.
 
 // How many direct measurements stand behind a domain's scale.
 export function domainEvidence(profile, domainId) {
-  const sessions = (profile.sessions || []).filter((s) => s.domain === domainId).length;
+  const sessions = (profile.sessions || []).filter((s) => s.domain === domainId && !s.unscored).length;
   const hasBaseline = !!(profile.baseline && profile.baseline.domainScores
     && profile.baseline.domainScores[domainId] != null);
   return { sessions, hasBaseline, evidence: sessions + (hasBaseline ? 1 : 0) };

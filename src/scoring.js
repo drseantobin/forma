@@ -258,7 +258,10 @@ export function scoreExercise(exercise, response) {
     case 'vignette':
     case 'sentence':
       // Scored by Claude in the UI before completion; stored on the response.
-      return clamp(round(response.aiScore != null ? response.aiScore : 60));
+      // A null aiScore means the model couldn't score it (no key / API failure /
+      // unparseable) — return null ("not measured") rather than fabricating a
+      // constant, so applySession holds the prior scale instead of polluting it.
+      return response.aiScore != null ? clamp(round(response.aiScore)) : null;
     case 'mathfluency':
       return scoreMathFluency(response.correct || 0, exercise.target);
     case 'maze':

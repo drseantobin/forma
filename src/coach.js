@@ -449,7 +449,11 @@ function parseVignette(text) {
 
 export async function scoreVignette(vignette, transcript, profile) {
   if (!hasKey(profile)) return null; // this exercise requires the live coach
-  const soft = { score: 60, feedback: "I couldn't fully read that one — but showing up to a hard conversation is the rep. Next time, try naming what the other person might be feeling before you respond to it." };
+  // Validity guard: when the model is unavailable or unparseable we return
+  // feedback but NO score (null) — a fabricated constant would inject fake data
+  // onto the longitudinal scale and wrongly raise confidence. Callers treat a
+  // null score as "not measured" and leave the domain scale untouched.
+  const soft = { score: null, feedback: "I couldn't fully read that one this time — but showing up to a hard conversation is the rep. Next time, try naming what the other person might be feeling before you respond to it." };
   try {
     const text = await complete(profile, {
       system: VIGNETTE_SYSTEM,
@@ -469,7 +473,8 @@ Return ONLY a JSON object: {"score": <0-100>, "feedback": "<2-3 sentences, secon
 
 export async function scoreSentences(stems, completions, profile) {
   if (!hasKey(profile)) return null;
-  const soft = { score: 60, feedback: "Even half-finishing these honestly is worth something — self-knowledge starts with the willingness to look. Next time, try the first true thing that comes, before you tidy it up." };
+  // Validity guard: feedback but NO score (null) on failure — see scoreVignette.
+  const soft = { score: null, feedback: "Even half-finishing these honestly is worth something — self-knowledge starts with the willingness to look. Next time, try the first true thing that comes, before you tidy it up." };
   try {
     const pairs = stems.map((st, i) => `"${st} …" → "${(completions[i] || '').trim()}"`).join('\n');
     const text = await complete(profile, {

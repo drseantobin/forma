@@ -1423,8 +1423,10 @@ function renderSentence() {
     s.phase = 'sentence-scoring';
     render();
     const result = await Coach.scoreSentences(ex.stems, s.response.completions, state.profile);
-    s.response.aiScore = result ? result.score : 60;
-    s.response.feedback = result ? result.feedback : '';
+    // Never fabricate a score: null = "not measured" (no key / API fail / bad parse).
+    s.response.aiScore = (result && result.score != null) ? result.score : null;
+    s.response.feedback = (result && result.feedback) ? result.feedback
+      : 'Saved — this reflection needs the live coach to read it. Add a Claude key in Settings and it’ll be scored next time. Either way, finishing it honestly counts.';
     completeSession();
   };
 }
@@ -1602,8 +1604,10 @@ function renderVignette() {
     s.phase = 'vignette-scoring';
     render();
     const result = await Coach.scoreVignette(ex, text, state.profile);
-    s.response.aiScore = result ? result.score : 60;
-    s.response.feedback = result ? result.feedback : '';
+    // Never fabricate a score: null = "not measured" (no key / API fail / bad parse).
+    s.response.aiScore = (result && result.score != null) ? result.score : null;
+    s.response.feedback = (result && result.feedback) ? result.feedback
+      : 'Saved — this one needs the live coach to read it. Add a Claude key in Settings and it’ll be scored next time. Either way, working through a hard conversation counts.';
     s.response.transcript = text;
     completeSession();
   };
@@ -1850,13 +1854,18 @@ async function completeSession() {
     ? `<p class="muted small center" style="margin:2px 0 12px;">Tomorrow: <strong>${_td.icon} ${esc(_td.name)}</strong> — ${esc(_td.short.toLowerCase())}.</p>`
     : '';
 
-  // Reveal score (count-up), then fetch the one insight.
-  const band = bandFor(rawScore);
+  // Reveal score (count-up), then fetch the one insight. An unscored AI session
+  // (rawScore null) shows no number/band — we never display a fabricated score —
+  // just a "reflection saved" line and the coach's feedback.
+  const unscored = rawScore == null;
+  const band = unscored ? null : bandFor(rawScore);
   app.innerHTML = `
     <div class="fade-in">
       <div class="score-reveal">
-        <div class="big score-pop" id="bigscore" style="color:${band.color}">0</div>
-        <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
+        ${unscored
+          ? `<div class="lbl" style="margin-top:6px;">${esc(getDomain(s.exercise.domain).name)} · reflection saved</div>`
+          : `<div class="big score-pop" id="bigscore" style="color:${band.color}">0</div>
+        <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>`}
       </div>
       ${milestoneBanner}
       <div class="card" id="insight" aria-live="polite">
@@ -1878,7 +1887,7 @@ async function completeSession() {
     state.session = null;
     talkThrough(ctx);
   };
-  countUp(document.getElementById('bigscore'), rawScore);
+  if (!unscored) countUp(document.getElementById('bigscore'), rawScore);
 
   // The vignette already produced Claude's rubric feedback — use it as the
   // insight rather than asking for a generic one.

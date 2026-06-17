@@ -72,17 +72,23 @@ export function applySession(profile, exercise, response, opts = {}) {
   const date = todayStr(now);
   const rawScore = scoreExercise(exercise, response);
   const domain = exercise.domain;
+  // An AI-scored exercise (vignette/sentence) can come back UNMEASURED — null —
+  // when there's no key, the API failed, or the model's output was unparseable.
+  // We never fabricate a number onto the longitudinal scale: an unmeasured
+  // session is recorded (it counts as showing up, for the streak) but leaves the
+  // domain scale, history, Formation Index, and confidence completely untouched.
+  const measured = rawScore != null;
 
   const alpha = opts.alpha ?? 0.3;
   const prev = p.domainScores[domain];
-  const newDomainScore = updateEMA(prev, rawScore, alpha);
-  p.domainScores[domain] = newDomainScore;
+  const newDomainScore = measured ? updateEMA(prev, rawScore, alpha) : (prev ?? null);
+  if (measured) p.domainScores[domain] = newDomainScore;
 
   // Some exercises legitimately train a second capacity. Deep reading, for
   // instance, IS sustained attention — so a reading session also credits
   // Attention, at a gentler weight (you weren't testing it directly).
   let secondaryEntry = null;
-  if (exercise.secondaryDomain && exercise.secondaryDomain !== domain) {
+  if (measured && exercise.secondaryDomain && exercise.secondaryDomain !== domain) {
     const sd = exercise.secondaryDomain;
     const prevSec = p.domainScores[sd];
     const newSec = updateEMA(prevSec, rawScore, alpha * 0.6);
@@ -102,33 +108,38 @@ export function applySession(profile, exercise, response, opts = {}) {
     rawScore,
     prevDomainScore: prev ?? null,
     newDomainScore,
+    unscored: !measured,
     response: summarizeResponse(exercise, response),
   };
   p.sessions.push(session);
-  p.history.push({
-    date,
-    domain,
-    exerciseType: exercise.type,
-    rawScore,
-    newDomainScore,
-    formationIndex: fi,
-  });
-  if (secondaryEntry) {
+  // Only a real measurement enters the longitudinal record (history + index).
+  if (measured) {
     p.history.push({
       date,
-      domain: secondaryEntry.domain,
-      exerciseType: `${exercise.type}-secondary`,
+      domain,
+      exerciseType: exercise.type,
       rawScore,
-      newDomainScore: secondaryEntry.newDomainScore,
+      newDomainScore,
       formationIndex: fi,
     });
+    if (secondaryEntry) {
+      p.history.push({
+        date,
+        domain: secondaryEntry.domain,
+        exerciseType: `${exercise.type}-secondary`,
+        rawScore,
+        newDomainScore: secondaryEntry.newDomainScore,
+        formationIndex: fi,
+      });
+    }
+
+    // One index-history point per day (update if same day already logged).
+    const lastIdx = p.indexHistory[p.indexHistory.length - 1];
+    if (lastIdx && lastIdx.date === date) lastIdx.formationIndex = fi;
+    else p.indexHistory.push({ date, formationIndex: fi });
   }
 
-  // One index-history point per day (update if same day already logged).
-  const lastIdx = p.indexHistory[p.indexHistory.length - 1];
-  if (lastIdx && lastIdx.date === date) lastIdx.formationIndex = fi;
-  else p.indexHistory.push({ date, formationIndex: fi });
-
+  // Showing up counts for the streak even when a reflection couldn't be scored.
   p.streak = updateStreak(p.streak, date);
   return { profile: p, session };
 }
@@ -206,7 +217,10 @@ export function recentSeenIds(profile, n = 4) {
 // The most recent sessions, newest first — for the auditable "recent activity"
 // log (every score the person earned, in order). Pure.
 export function recentSessions(profile, n = 8) {
-  return (profile.sessions || []).slice(-n).reverse();
+  // Only sessions that produced a real score — this is the "scores you've earned"
+  // auditable record. Unscored AI reflections (model couldn't grade them) aren't
+  // measurements and would render as a null band, so they're left out.
+  return (profile.sessions || []).filter((s) => !s.unscored).slice(-n).reverse();
 }
 
 // ---- storage (browser only) ----
