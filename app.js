@@ -1712,7 +1712,7 @@ function renderContemplationReflect() {
   app.innerHTML = `
     <div class="fade-in">
       ${sessionHeader(ex)}
-      <p class="muted small">You stayed for ${sat} second${sat === 1 ? '' : 's'}. Before the score, sit with what it was like — this is the part that forms you.</p>
+      <p class="muted small">You stayed for ${sat} second${sat === 1 ? '' : 's'}. Before the score, stay a moment with what it was like — this is the part that forms you.</p>
 
       <p class="likert-q" style="font-size:1.05rem; margin-top:14px;">Where did your mind go? What was it like — and did anything pull you out?</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
