@@ -833,24 +833,38 @@ function startDomainSession(domain) {
 // was no way for a person to set one. Tiny, concrete, theirs.
 function commitmentsCard(p) {
   const goals = p.goals || [];
-  const open = goals.filter((g) => !g.done);
-  const kept = goals.length - open.length;
   const ids = activeDomainIds(p.settings && p.settings.faithTrack);
+  const today = todayStr();
+  const editing = state._editGoal;
+  const keptToday = goals.filter((g) => (g.checkins || []).includes(today)).length;
   const row = (g) => {
     const d = getDomain(g.domain);
+    // Inline edit mode (the pencil): the row becomes an input + save/cancel.
+    if (editing === g.id) {
+      return `<div class="goalrow editing">
+        <input class="goaledit-input" id="goaledit-${esc(g.id)}" type="text" maxlength="120" value="${esc(g.text)}" aria-label="Edit commitment" />
+        <button class="btn sm" data-goalsave="${esc(g.id)}" style="width:auto;">Save</button>
+        <button class="btn ghost sm" data-goalcancel="1" style="width:auto;">Cancel</button>
+      </div>`;
+    }
+    const checkins = Array.isArray(g.checkins) ? g.checkins : [];
+    const done = checkins.includes(today);
+    const n = checkins.length;
     return `<div class="goalrow">
-      <button class="goalcheck" data-goal="${g.id}" aria-label="Mark “${esc(g.text)}” complete">○</button>
+      <button class="goalcheck ${done ? 'on' : ''}" data-track="${esc(g.id)}" aria-pressed="${done}" aria-label="${done ? 'Kept today — tap to undo' : 'Mark kept today'}: “${esc(g.text)}”">${done ? '✓' : '○'}</button>
       <span class="ico" aria-hidden="true">${d ? d.icon : '•'}</span>
-      <span class="goaltext">${esc(g.text)}</span>
+      <span class="goaltext">${esc(g.text)}${n ? ` <span class="goalkept muted small">· kept ${n}×</span>` : ''}</span>
+      <button class="goalicon" data-edit="${esc(g.id)}" aria-label="Edit “${esc(g.text)}”">✏️</button>
+      <button class="goalicon" data-del="${esc(g.id)}" aria-label="Delete “${esc(g.text)}”">🗑️</button>
     </div>`;
   };
   return `
     <div class="card">
       <div class="row"><strong>Your commitments</strong><span class="spacer"></span>
-        ${kept ? `<span class="muted small">${kept} kept ✓</span>` : ''}</div>
-      <p class="muted small" style="margin-top:2px;">One small step you’re choosing — concrete, doable, yours. The coach can help you find the next one.</p>
-      ${open.length ? `<div class="stack" style="margin-top:10px;">${open.map(row).join('')}</div>`
-        : `<p class="muted small" style="margin-top:10px;">No open commitment yet — name one small thing you’ll do.</p>`}
+        ${goals.length ? `<span class="muted small">${keptToday}/${goals.length} kept today</span>` : ''}</div>
+      <p class="muted small" style="margin-top:2px;">Small steps you’re choosing — keep tracking them day to day. They stay until you remove them; the coach can help you find the next one.</p>
+      ${goals.length ? `<div class="stack" style="margin-top:10px;">${goals.map(row).join('')}</div>`
+        : `<p class="muted small" style="margin-top:10px;">No commitment yet — name one small thing you’ll keep.</p>`}
       <details class="goaladd" style="margin-top:12px;">
         <summary class="btn ghost sm" style="display:inline-block; width:auto;">+ Add a commitment</summary>
         <div class="goaladd-body" style="margin-top:10px;">
@@ -876,9 +890,32 @@ function wireCommitments() {
     save();
     render();
   };
-  app.querySelectorAll('.goalcheck').forEach((b) => {
+  // Track (recurring): toggle today's check-in; the commitment stays.
+  app.querySelectorAll('[data-track]').forEach((b) => {
+    b.onclick = () => { state.profile = Profile.trackGoal(state.profile, b.dataset.track, todayStr()); save(); render(); };
+  });
+  // Edit (pencil): enter inline edit mode for that row.
+  app.querySelectorAll('[data-edit]').forEach((b) => {
+    b.onclick = () => { state._editGoal = b.dataset.edit; render(); };
+  });
+  app.querySelectorAll('[data-goalcancel]').forEach((b) => {
+    b.onclick = () => { state._editGoal = null; render(); };
+  });
+  app.querySelectorAll('[data-goalsave]').forEach((b) => {
     b.onclick = () => {
-      state.profile = Profile.toggleGoal(state.profile, b.dataset.goal);
+      const id = b.dataset.goalsave;
+      const el = document.getElementById('goaledit-' + id);
+      state.profile = Profile.editGoal(state.profile, id, el ? el.value : '');
+      state._editGoal = null;
+      save();
+      render();
+    };
+  });
+  // Delete (trash).
+  app.querySelectorAll('[data-del]').forEach((b) => {
+    b.onclick = () => {
+      if (state._editGoal === b.dataset.del) state._editGoal = null;
+      state.profile = Profile.removeGoal(state.profile, b.dataset.del);
       save();
       render();
     };

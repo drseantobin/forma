@@ -229,7 +229,9 @@ export function disableFaithTrack(profile) {
 
 export function addGoal(profile, domain, text) {
   const p = clone(profile);
-  p.goals.push({ id: `g-${Date.now()}`, domain, text, createdAt: new Date().toISOString(), done: false });
+  // checkins: dates the commitment was kept — so it's TRACKED over time, not a
+  // one-click-and-it's-gone toggle. (done is kept for back-compat / archive.)
+  p.goals.push({ id: `g-${Date.now()}`, domain, text, createdAt: new Date().toISOString(), done: false, checkins: [] });
   return p;
 }
 
@@ -237,6 +239,35 @@ export function toggleGoal(profile, goalId) {
   const p = clone(profile);
   const g = p.goals.find((x) => x.id === goalId);
   if (g) g.done = !g.done;
+  return p;
+}
+
+// Track a commitment over time: toggle today's check-in (kept / un-kept). The
+// commitment STAYS in the list — tracking is recurring, not one-and-done.
+export function trackGoal(profile, goalId, dateStr) {
+  const p = clone(profile);
+  const g = p.goals.find((x) => x.id === goalId);
+  if (g) {
+    g.checkins = Array.isArray(g.checkins) ? g.checkins : [];
+    const i = g.checkins.indexOf(dateStr);
+    if (i >= 0) g.checkins.splice(i, 1); else g.checkins.push(dateStr);
+  }
+  return p;
+}
+
+// Edit a commitment's text (the pencil control).
+export function editGoal(profile, goalId, text) {
+  const p = clone(profile);
+  const g = p.goals.find((x) => x.id === goalId);
+  const t = String(text || '').trim();
+  if (g && t) g.text = t.slice(0, 120);
+  return p;
+}
+
+// Delete a commitment (the trash control).
+export function removeGoal(profile, goalId) {
+  const p = clone(profile);
+  p.goals = p.goals.filter((x) => x.id !== goalId);
   return p;
 }
 
@@ -376,6 +407,8 @@ function migrate(p) {
   p.indexHistory = arr(p.indexHistory);
   p.focusChecks = arr(p.focusChecks);
   p.goals = arr(p.goals);
+  // Backfill the check-in log on commitments saved before tracking existed.
+  p.goals.forEach((g) => { if (g && typeof g === 'object' && !Array.isArray(g.checkins)) g.checkins = []; });
   p.coachLog = arr(p.coachLog);
   p.streak = obj(p.streak);
   if (p.streak.current == null) p.streak.current = 0;
