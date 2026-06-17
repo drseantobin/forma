@@ -2114,7 +2114,7 @@ function renderProof() {
 
 function proofClaimCard(title, claim, metric, daysElapsed, domainId) {
   const has = metric.samples > 0 && metric.baseline != null;
-  const proj = Proof.project90(metric.delta, daysElapsed);
+  const proj = Proof.project90(metric.delta, daysElapsed, metric.baseline);
   const sign = metric.delta > 0 ? '+' : '';
   const color = metric.delta > 0 ? 'var(--green)' : metric.delta < 0 ? 'var(--red)' : 'var(--ink-faint)';
   return `

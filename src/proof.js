@@ -51,12 +51,19 @@ function focusMetric(profile) {
   return { baseline, current, delta, points, samples: points.length, bestMs };
 }
 
-// Naive linear projection of a delta out to 90 days. Deliberately conservative:
-// returns null until there's enough elapsed time to mean anything. Always
-// labelled as a projection in the UI, never as a promise.
-export function project90(delta, daysElapsed) {
-  if (!daysElapsed || daysElapsed < 3 || !delta) return null;
-  return round((delta / daysElapsed) * 90);
+// Naive straight-line projection of a delta out to 90 days. Deliberately
+// conservative: needs a FULL WEEK of data before it will project at all (a
+// 3-day fluke shouldn't drive a 90-day claim), and — when a baseline is given —
+// BOUNDS the projected final to the 0–100 scale. Without this an unbounded line
+// could "project" a lucky first week to +300, nonsense on a 0–100 measure and
+// corrosive to the page's honest framing. Always labelled a projection, never
+// a promise.
+export function project90(delta, daysElapsed, baseline = null) {
+  if (!daysElapsed || daysElapsed < 7 || !delta) return null;
+  const projDelta = round((delta / daysElapsed) * 90);
+  if (baseline == null) return projDelta;
+  // Return the bounded delta so baseline + delta always lands within [0, 100].
+  return clamp(baseline + projDelta, 0, 100) - baseline;
 }
 
 export function daysSinceBaseline(profile, today = todayStr()) {
