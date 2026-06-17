@@ -518,7 +518,7 @@ export function makeMemoryExercise(level = 1, rng = Math.random) {
     domain: 'memory',
     title: 'Hold the Sequence',
     instructions:
-      'A list of words will appear for a few seconds. Read them in order, then they vanish — and you reassemble them from memory.',
+      'A list of words will appear for a few seconds. Hold them in mind — then they vanish, and you put them back in the same order from memory. Order is the test, not just the words.',
     sequence,
     showMs: 1200 + len * 600,
     pool,
