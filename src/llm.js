@@ -12,6 +12,7 @@ export const PROVIDERS = {
   anthropic: {
     id: 'anthropic',
     label: 'Anthropic (Claude)',
+    short: 'Claude',
     host: 'api.anthropic.com',
     defaultModel: 'claude-opus-4-8',
     models: ['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
@@ -35,6 +36,7 @@ export const PROVIDERS = {
   openai: {
     id: 'openai',
     label: 'OpenAI (GPT)',
+    short: 'GPT',
     host: 'api.openai.com',
     defaultModel: 'gpt-4o',
     models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'o4-mini'],
@@ -56,6 +58,7 @@ export const PROVIDERS = {
   gemini: {
     id: 'gemini',
     label: 'Google (Gemini)',
+    short: 'Gemini',
     host: 'generativelanguage.googleapis.com',
     defaultModel: 'gemini-2.5-flash',
     models: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'],
@@ -79,6 +82,7 @@ export const PROVIDERS = {
   openrouter: {
     id: 'openrouter',
     label: 'OpenRouter (many models, one key)',
+    short: 'OpenRouter',
     host: 'openrouter.ai',
     defaultModel: 'anthropic/claude-3.7-sonnet',
     models: ['anthropic/claude-3.7-sonnet', 'openai/gpt-4o', 'google/gemini-2.5-flash', 'meta-llama/llama-3.3-70b-instruct'],

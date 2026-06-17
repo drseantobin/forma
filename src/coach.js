@@ -155,6 +155,13 @@ export function hasKey(profile) {
   return !!(profile?.settings?.apiKey && profile.settings.apiKey.trim());
 }
 
+// Short display name of the coach's active provider (Claude / GPT / Gemini /
+// OpenRouter) — so the UI reflects whatever key the person actually brought,
+// not a hardcoded one. Defaults to the Anthropic adapter when unset.
+export function providerName(profile) {
+  return providerFor(profile?.settings?.provider).short;
+}
+
 // A gentle, ON-DEVICE "is this what you mean?" nudge for a commitment a person is
 // writing — helps it land as something concrete and doable WITHOUT a corporate
 // S-M-A-R-T checklist or a nag. Pure + rule-based (no LLM): works for everyone, is

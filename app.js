@@ -2825,12 +2825,13 @@ function progressRow(id) {
 function renderCoach() {
   const p = state.profile;
   const live = Coach.hasKey(p);
+  const provName = Coach.providerName(p);
   const log = p.coachLog || [];
   app.innerHTML = `
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">Coach</h1><span class="spacer"></span>
-        <span class="trendpill ${live ? 'up' : 'flat'}">${live ? 'live · Claude' : 'offline mode'}</span></div>
-      ${!live ? `<p class="muted small">Add your Claude API key in <button id="tosettings" class="inlinelink">Settings</button> for live, personalized coaching. Until then, the coach reads from your own data.</p>` : ''}
+        <span class="trendpill ${live ? 'up' : 'flat'}">${live ? `live · ${esc(provName)}` : 'offline mode'}</span></div>
+      ${!live ? `<p class="muted small">Add your API key in <button id="tosettings" class="inlinelink">Settings</button> — bring your own from any provider — for live, personalized coaching. Until then, the coach reads from your own data.</p>` : ''}
       <div class="chat" id="chat" role="log" aria-live="polite">
         ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">${esc(Coach.coachGreeting(p))}</div>`}
       </div>
