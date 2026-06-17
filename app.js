@@ -2230,7 +2230,7 @@ function renderTeam() {
 
       <div class="card">
         <div class="eyebrow">What "AI-readiness" means</div>
-        <p class="muted small" style="margin-top:6px;">A blend of Judgment, AI Independence, Deep Reading, and Communication — the capacities that most predict working <em>well</em> alongside AI rather than being replaced by it. A development signal for growth, never a tool to rank or surveil individuals.</p>
+        <p class="muted small" style="margin-top:6px;">A blend of Judgment, AI Independence, Deep Reading, and Communication — the capacities most associated with using AI as a tool of judgment rather than dependence. It's a development signal for growth, <strong>not a predictor of job performance and not a basis for hiring, ranking, or selection</strong> — and it isn't normed against a population.</p>
       </div>
 
       <div class="row no-print" style="gap:8px;">

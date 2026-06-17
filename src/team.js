@@ -110,6 +110,7 @@ export function teamReportText(agg, highlights) {
   });
   lines.push('');
   lines.push('Privacy: aggregate signals only — no individual scores, no raw data, and the optional Interior Life track is never included. A development signal for growth, never a tool to rank or surveil individuals.');
+  lines.push('Limits: these are self-generated from self-selected practice, not normed against a population — a development signal, NOT a predictor of job performance and not a basis for hiring, ranking, or selection.');
   return lines.join('\n');
 }
 
