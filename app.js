@@ -2452,7 +2452,7 @@ function renderSnapshot() {
           ${snap.domains.map((d) => `<tr>
             <td><span class="snapdot" style="background:${band(d.score)};"></span>${esc(d.name)}</td>
             <td class="snapconf muted small">${esc(d.confidence)}</td>
-            <td style="text-align:right;">${deltaTag(d.delta)}</td>
+            <td style="text-align:right;">${d.frozen ? '<span class="muted small">items used up</span>' : deltaTag(d.delta)}</td>
             <td class="snapsc">${d.score}</td>
           </tr>`).join('')}
           </tbody>

@@ -14,7 +14,7 @@
 import { activeDomainIds, getDomain, bandFor } from './domains.js';
 import { formationIndex } from './scoring.js';
 import { aiReadinessOf, AI_READINESS_DOMAINS } from './team.js';
-import { confidence } from './reliability.js';
+import { confidence, scaleFreshness } from './reliability.js';
 import { domainTrend, daysBetween, todayStr } from './progress.js';
 
 export function buildSnapshot(profile, today = todayStr()) {
@@ -38,6 +38,10 @@ export function buildSnapshot(profile, today = todayStr()) {
       band: bandFor(scores[id]).label,
       confidence: confidence(profile, id).label,
       delta: base != null ? scores[id] - base : 0,
+      // v155: a frozen (exhausted-keyed-bank) scale must NOT advertise a "+N since
+      // start" growth delta to an employer — that delta is recall, not recent
+      // re-measurement (the v152 honesty flag, now carried into the credential).
+      frozen: scaleFreshness(profile, id).frozen,
     };
   }).sort((a, b) => b.score - a.score);
 
@@ -108,7 +112,8 @@ export function snapshotText(snap) {
   lines.push('');
   lines.push('Capacities (with how much evidence backs each):');
   snap.domains.forEach((d) => {
-    const dl = d.delta > 0 ? ` (+${d.delta} since start)` : d.delta < 0 ? ` (${d.delta} since start)` : '';
+    const dl = d.frozen ? ' (items used up — reflects recall, not recent re-measurement)'
+      : d.delta > 0 ? ` (+${d.delta} since start)` : d.delta < 0 ? ` (${d.delta} since start)` : '';
     // Carry the per-capacity confidence — the same signal the visual card shows —
     // so the EMAILED artifact distinguishes a score from 1 session vs. 20. Without
     // it the credential's best defensibility cue vanishes in the channel that matters.
