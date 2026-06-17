@@ -107,6 +107,12 @@ export function solutionFocusedOpener(profile, ctx = {}) {
 // insight they were shown — so the conversation starts inside the moment
 // instead of with a template. Falls back to the rule-based opener offline.
 export async function sessionOpener(profile, ctx = {}) {
+  // Privacy invariant (mirrors dailyInsight, v78): an Interior Life (faith) session
+  // is NEVER sent to the API — not its domain name, score, or reflection insight.
+  // ctx carries those straight from the score-reveal screen, bypassing the scrubbed
+  // profileSummary, so this is the sibling path that must be guarded too. Keep the
+  // on-device rule-based opener for interior, regardless of whether a key is set.
+  if (ctx.domain === 'interior') return { text: solutionFocusedOpener(profile, ctx), live: false };
   if (!hasKey(profile)) return { text: solutionFocusedOpener(profile, ctx), live: false };
   const d = ctx.domain ? domainName(ctx.domain) : 'this capacity';
   const parts = [];
