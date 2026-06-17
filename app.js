@@ -15,7 +15,7 @@ import * as Diagnostic from './src/diagnostic.js';
 import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import { bandAscension, ascensionLine, streakMilestone, nextStreakMark } from './src/milestones.js';
-import { confidenceTag, confidence, milestoneEligible, indexConfidence } from './src/reliability.js';
+import { confidenceTag, confidence, milestoneEligible, indexConfidence, scaleFreshness } from './src/reliability.js';
 import { basisFor } from './src/methods.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
@@ -23,7 +23,7 @@ import * as Research from './src/research.js';
 import * as Contact from './src/contact.js';
 import * as Release from './src/release.js';
 import { PROVIDERS, providerFor, defaultModelFor } from './src/llm.js';
-import { summarizeResearch } from './src/analytics.js';
+import { summarizeResearch, domainStability } from './src/analytics.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
@@ -3042,6 +3042,19 @@ function renderSettings() {
         ${res.consent ? `
         <p class="muted small" style="margin-top:10px;">You’ve shared <strong>${rsum.measured}</strong> anonymous result${rsum.measured === 1 ? '' : 's'} across ${rsum.days} day${rsum.days === 1 ? '' : 's'}. Each is a score and which option you chose, dated to the day — <strong>never</strong> your name, anything you wrote, or your Interior Life.</p>
         ${rsum.domains.length ? `<table class="snaptable" style="margin-top:8px;"><tbody>${rsum.domains.map((d) => `<tr><td>${esc(getDomain(d.key) ? getDomain(d.key).name : d.key)}</td><td class="muted small" style="text-align:right;">${d.n} shared</td><td class="snapsc">${d.mean}</td></tr>`).join('')}</tbody></table>` : `<p class="muted small" style="margin-top:6px;">No results shared yet — finish a session and your de-identified scores will appear here.</p>`}
+        ${(() => {
+          // Test-retest CONSISTENCY of the person's own repeated scores — the reliability
+          // primitive (how steady, not how high, not how fast-growing). Only shows a domain
+          // once it has ≥4 measured re-tests; a frozen/exhausted bank is labeled recall, per
+          // the snapshot.js honesty rule. (v168)
+          const stab = rsum.domains
+            .map((d) => ({ d, s: domainStability(res.queue || [], d.key), fr: scaleFreshness(p, d.key) }))
+            .filter((x) => x.s.ready);
+          if (!stab.length) return '';
+          return `<p class="small" style="margin:14px 0 2px;"><strong>How consistent your scores are</strong></p>
+        <table class="snaptable"><tbody>${stab.map((x) => `<tr><td>${esc(getDomain(x.d.key) ? getDomain(x.d.key).name : x.d.key)}</td><td class="muted small" style="text-align:right;">${x.fr && x.fr.frozen ? 'reflects recall — items used up' : 'typical swing'}</td><td class="snapsc">±${x.s.meanAbsStep}</td></tr>`).join('')}</tbody></table>
+        <p class="muted small" style="margin-top:6px;">This shows how steady your repeated scores are — not whether they’re growing, and not that they measure the right thing. A small swing can also mean you’re getting familiar with the task.</p>`;
+        })()}
         <p class="muted small" style="margin-top:8px;">Per-question difficulty and norms come from the pooled, many-person dataset — not your device. Turning this off <strong>deletes everything you’ve shared</strong>.</p>
         ` : ''}
       </div>
