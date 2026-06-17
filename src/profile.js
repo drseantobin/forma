@@ -144,6 +144,14 @@ function summarizeResponse(exercise, response) {
       return { optionId: response.optionId };
     case 'reflection':
       return { selfRating: response.selfRating, text: response.text || '' };
+    case 'contemplation':
+      return {
+        seconds: response.seconds,
+        presence: response.presence,
+        eyes: response.eyes,
+        timeFelt: response.timeFelt,
+        note: response.note || '',
+      };
     default:
       return {};
   }

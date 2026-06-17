@@ -94,10 +94,18 @@ export function scoreMathFluency(correct, target = 14) {
   return clamp(round((correct / target) * 100));
 }
 
-// --- Contemplation (interior-life silence practice): proportion of target sat ---
-export function scoreContemplation(seconds, targetSeconds) {
+// --- Contemplation (interior-life silence practice) ---
+// Staying the whole time is the rep, so completion sets the ceiling. An honest
+// self-rating of presence (1..7, scattered..fully present) then modulates within
+// it — but someone who sat the full time while distracted still floors at half
+// credit, because showing up and coming back IS the practice. When no presence
+// rating is given (older sessions), fall back to pure completion.
+export function scoreContemplation(seconds, targetSeconds, presence = null) {
   if (!targetSeconds) return 0;
-  return clamp(round(Math.min(1, seconds / targetSeconds) * 100));
+  const completion = Math.min(1, (seconds || 0) / targetSeconds);
+  if (presence == null) return clamp(round(completion * 100));
+  const p = Math.max(0, Math.min(1, (presence - 1) / 6));
+  return clamp(round(completion * 100 * (0.5 + 0.5 * p)));
 }
 
 // Shared mapping from a (median) reaction time in ms to a 0–100 attention score,
@@ -207,7 +215,7 @@ export function scoreExercise(exercise, response) {
     case 'stay':
       return scoreStay(response.stayed, response.selfRating);
     case 'contemplation':
-      return scoreContemplation(response.seconds || 0, exercise.targetSeconds);
+      return scoreContemplation(response.seconds || 0, exercise.targetSeconds, response.presence != null ? response.presence : null);
     case 'vigilance':
       return scoreVigilance(response.trials || []);
     case 'vignette':

@@ -146,6 +146,7 @@ button { font-family: inherit; cursor: pointer; }
 .chiprow { display:flex; flex-wrap:wrap; gap:8px; }
 .chip { border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:8px 14px; font-weight:600; }
 .chip.used { opacity:.4; }
+.chip.sel { border-color: var(--amber); background: var(--amber-soft); color:#9a6a16; }
 .slot-row { display:flex; flex-wrap:wrap; gap:8px; min-height:46px; padding:8px; border:1.5px dashed var(--line); border-radius:12px; margin-bottom:12px; }
 .slot { background: var(--green-soft); color: var(--green); border-radius:999px; padding:8px 14px; font-weight:700; }
 .rationale { font-size:.92rem; color: var(--ink-soft); margin-top:10px; padding:12px 14px; background:#fcfbf8; border-radius:12px; border:1px solid var(--line); }

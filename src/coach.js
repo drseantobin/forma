@@ -57,7 +57,37 @@ export function solutionFocusedOpener(profile, ctx = {}) {
     return `${hi}before we talk about anything to grow, let's start where you already do well — ${strong}. When does that show up most in your life? I'd rather build from what's already working for you than hand you a generic plan.`;
   }
   const d = ctx.domain ? domainName(ctx.domain) : 'this';
-  return `${hi}let's talk about your ${d}. First, though — when has this gone *well* for you, even a little? What was different about that time, or what were you already doing that helped? I want to build from there.`;
+  // Connect to the exact session they just left, when we know what it was.
+  const justDid = ctx.exerciseLabel ? `You just did ${ctx.exerciseLabel.toLowerCase()}. ` : '';
+  return `${hi}${justDid}let's stay with that for a second — when has your ${d} gone *well* for you, even a little? What was different about that time, or what were you already doing that helped? I'd rather build from there than hand you a plan.`;
+}
+
+// The live, task-connected opener: when a key is present, Claude writes the
+// coach's FIRST message tied to the session the person just finished and the
+// insight they were shown — so the conversation starts inside the moment
+// instead of with a template. Falls back to the rule-based opener offline.
+export async function sessionOpener(profile, ctx = {}) {
+  if (!hasKey(profile)) return { text: solutionFocusedOpener(profile, ctx), live: false };
+  const d = ctx.domain ? domainName(ctx.domain) : 'this capacity';
+  const parts = [];
+  parts.push('The person just finished a Forma session and tapped "talk this through" to process it with you. They are looking at this screen right now — so connect immediately and specifically to what they just did. Do NOT open with a generic question.');
+  parts.push(`Session: ${d}${ctx.exerciseLabel ? ` — "${ctx.exerciseLabel}"` : ''}${ctx.score != null ? `, they scored ${ctx.score}/100` : ''}.`);
+  if (ctx.kind === 'baseline') parts.push('This is their opening baseline across all eight capacities.');
+  if (ctx.insight) parts.push(`The insight they were just shown:\n"${ctx.insight}"`);
+  parts.push(`Their fuller picture:\n${profileSummary(profile)}`);
+  parts.push('Write your FIRST message to them: 2-4 short sentences. Reflect back something specific and true about what just happened for them, connect it to them as a person, and end with one open, inviting question that helps them process it. Solution-focused in spirit — curious about what worked, where this lives in their real life — but grounded in THIS exact moment, not a formula. No preamble, no "great job," no recap of the numbers.');
+  try {
+    const text = await callClaude({
+      apiKey: profile.settings.apiKey,
+      model: model(profile),
+      system: FORMA_SYSTEM,
+      maxTokens: 350,
+      messages: [{ role: 'user', content: parts.join('\n\n') }],
+    });
+    return { text: text || solutionFocusedOpener(profile, ctx), live: !!text };
+  } catch (e) {
+    return { text: solutionFocusedOpener(profile, ctx), live: false, error: e.message };
+  }
 }
 
 // Turn a raw Anthropic API error into a plain-language explanation.

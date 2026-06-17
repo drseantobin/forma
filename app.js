@@ -16,6 +16,7 @@ import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import * as Orchestrator from './src/orchestrator.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
+import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
@@ -65,12 +66,27 @@ function raceTimeout(promise, ms, fallback) {
 }
 // Seed a solution-focused coach opener tied to an interpretation, then open the
 // Coach — so coaching is embedded right where the person sees their result.
-function talkThrough(ctx) {
+async function talkThrough(ctx) {
   state.profile = state.profile || Profile.createProfile();
-  state.profile.coachLog = state.profile.coachLog || [];
-  state.profile.coachLog.push({ role: 'assistant', content: Coach.solutionFocusedOpener(state.profile, ctx), ts: Date.now() });
+  const p = state.profile;
+  p.coachLog = p.coachLog || [];
+  // Drop the rule-based opener in immediately so the Coach is never blank...
+  const opener = { role: 'assistant', content: Coach.solutionFocusedOpener(p, ctx), ts: Date.now(), opener: true };
+  p.coachLog.push(opener);
   save();
   go('coach');
+  // ...then, with a key, replace it with a live opener tied to this exact
+  // session + insight — but only if the person hasn't already started talking.
+  if (Coach.hasKey(p)) {
+    const live = await raceTimeout(Coach.sessionOpener(p, ctx), 9000, null);
+    const last = p.coachLog[p.coachLog.length - 1];
+    if (live && live.live && live.text && state.route === 'coach' && last === opener) {
+      opener.content = live.text;
+      opener.live = true;
+      save();
+      renderCoach();
+    }
+  }
 }
 
 // ---------------- router ----------------
@@ -80,6 +96,11 @@ function go(route) {
   if (route !== 'session' && state.session && state.session._timer) {
     clearInterval(state.session._timer);
     state.session._timer = null;
+  }
+  // Leaving a contemplation mid-silence: release the audio context too.
+  if (route !== 'session' && state.session && state.session._tones) {
+    state.session._tones.close();
+    state.session._tones = null;
   }
   if (route !== 'session' && state.session && state.session._raf) {
     cancelAnimationFrame(state.session._raf);
@@ -1319,6 +1340,44 @@ function stopMic(s) {
   if (s && s.recognizer) { try { s.recognizer.stop(); } catch (e) { /* noop */ } s.recognizer = null; }
 }
 
+// Wire a mic button to a textarea/input for on-device dictation. Generic so the
+// coach composer, the contemplation reflection, and the reflection screen all
+// share it. Deliberately light: it writes straight into the field and toggles
+// the button without re-rendering, so the surrounding view (e.g. the chat log)
+// never rebuilds mid-dictation. Hides itself where speech isn't supported.
+function attachMicButton(btn, input) {
+  if (!btn || !input) return;
+  if (!speechSupported()) { btn.style.display = 'none'; return; }
+  let rec = null;
+  let recording = false;
+  let committed = input.value; // text fixed before/between phrases
+  // Keep `committed` current when the person types by hand (but not while the
+  // recognizer is the one writing — that path manages `committed` itself).
+  input.addEventListener('input', () => { if (!recording) committed = input.value; });
+  const setUI = (on) => {
+    recording = on;
+    btn.textContent = on ? '■' : '🎤';
+    btn.classList.toggle('green', on);
+    btn.classList.toggle('amber', !on);
+  };
+  const write = (extra) => {
+    input.value = (committed + (committed && extra ? ' ' : '') + extra).trim();
+    input.dispatchEvent(new Event('input')); // let callers persist via their oninput
+  };
+  btn.onclick = () => {
+    if (recording) { try { rec && rec.stop(); } catch (e) { /* noop */ } committed = input.value; setUI(false); return; }
+    committed = input.value;
+    rec = createRecognizer({
+      onInterim: (t) => write(t),
+      onFinal: (t) => { committed = (committed + (committed ? ' ' : '') + t).trim(); write(''); },
+      onError: () => { try { rec && rec.stop(); } catch (e) { /* noop */ } committed = input.value; setUI(false); },
+      onEnd: () => { if (recording) { committed = input.value; setUI(false); } },
+    });
+    if (!rec) { btn.style.display = 'none'; return; }
+    try { rec.start(); setUI(true); } catch (e) { setUI(false); }
+  };
+}
+
 // Vignette — the AI-scored communication exercise. Respond out loud (voice-first,
 // on-device transcription) or type; Claude scores it and gives formative feedback.
 function renderVignette() {
@@ -1429,38 +1488,120 @@ function renderContemplation() {
   const s = state.session;
   const ex = s.exercise;
   if (s.phase === 'contempl-intro') {
+    const soundLine = (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext))
+      ? 'A soft chime marks every 30 seconds and the final 10 — so you can close your eyes and let your ears keep time.'
+      : '';
     app.innerHTML = `
       <div class="fade-in">
         ${sessionHeader(ex)}
         <div class="card"><p>${esc(ex.prompt)}</p>
-        <p class="muted small">${ex.targetSeconds} seconds. If your mind wanders, just come back. Coming back <em>is</em> the practice.</p></div>
+        <p class="muted small">${ex.targetSeconds} seconds. If your mind wanders, just come back. Coming back <em>is</em> the practice.</p>
+        ${soundLine ? `<p class="muted small">${soundLine}</p>` : ''}</div>
         <button class="btn amber" id="begin">Begin the silence</button>
       </div>`;
-    document.getElementById('begin').onclick = () => { s.phase = 'contempl-run'; s.remaining = ex.targetSeconds; s.response.seconds = 0; render(); };
+    document.getElementById('begin').onclick = () => {
+      // Create + unlock audio inside the tap — iOS only allows it here.
+      s._tones = createTones();
+      if (s._tones) { s._tones.unlock(); s._tones.start(); }
+      s.phase = 'contempl-run';
+      s.remaining = ex.targetSeconds;
+      s.response.seconds = 0;
+      render();
+    };
     return;
   }
+
+  // ----- reflection after the silence -----
+  if (s.phase === 'contempl-reflect') return renderContemplationReflect();
+
+  // ----- the silence itself -----
   app.innerHTML = `
     <div class="fade-in center">
       <p class="muted small" style="margin-top:20px;">${esc(getDomain('interior').icon)} Be still.</p>
       <div class="memo-countdown" id="cd" style="font-size:3.4rem; margin-top:30px;">${s.remaining}</div>
-      <p class="muted small" style="margin-top:30px;">Put the phone down. Look up. Breathe.</p>
+      <p class="muted small" style="margin-top:30px;">Put the phone down. Close your eyes if you like. Breathe.</p>
       <button class="btn ghost sm" id="endearly" style="width:auto; margin-top:24px;">End early</button>
     </div>`;
-  const finish = () => {
+  const toReflect = () => {
     if (s._timer) { clearInterval(s._timer); s._timer = null; }
-    s.response.seconds = ex.targetSeconds - s.remaining;
-    completeSession();
+    // Detach now, but let any closing chime finish ringing before we tear the
+    // audio context down.
+    if (s._tones) { const t = s._tones; s._tones = null; setTimeout(() => t.close(), 2500); }
+    s.phase = 'contempl-reflect';
+    render();
   };
-  document.getElementById('endearly').onclick = finish;
+  document.getElementById('endearly').onclick = () => {
+    s.response.seconds = ex.targetSeconds - s.remaining;
+    toReflect();
+  };
   if (!s._timer) {
     s._timer = setInterval(() => {
       if (state.session !== s || state.route !== 'session') { clearInterval(s._timer); s._timer = null; return; }
       s.remaining--;
       const cd = document.getElementById('cd');
-      if (cd) cd.textContent = s.remaining;
-      if (s.remaining <= 0) { s.response.seconds = ex.targetSeconds; clearInterval(s._timer); s._timer = null; completeSession(); }
+      if (cd) cd.textContent = Math.max(0, s.remaining);
+      const elapsed = ex.targetSeconds - s.remaining;
+      if (s.remaining <= 0) {
+        s.response.seconds = ex.targetSeconds;
+        if (s._tones) s._tones.done();
+        toReflect();
+      } else if (s.remaining <= 10) {
+        if (s._tones) s._tones.tick();
+      } else if (elapsed > 0 && elapsed % 30 === 0) {
+        if (s._tones) s._tones.interval();
+      }
     }, 1000);
   }
+}
+
+// After the silence: a short, optional reflection so the rep isn't just "time
+// elapsed." Captures where the mind went (voice or type), eyes, how the time
+// FELT, and an honest 1–7 presence rating that feeds the score.
+function renderContemplationReflect() {
+  const s = state.session;
+  const ex = s.exercise;
+  const r = s.response;
+  const eyesOpts = [['closed', 'Closed'], ['open', 'Open'], ['both', 'Some of each']];
+  const timeOpts = [['short', 'Shorter than it was'], ['right', 'About right'], ['long', 'Longer than it was']];
+  const presence = r.presence;
+  const sat = r.seconds || ex.targetSeconds;
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <p class="muted small">You stayed for ${sat} second${sat === 1 ? '' : 's'}. Before the score, sit with what it was like — this is the part that forms you.</p>
+
+      <p class="likert-q" style="font-size:1.05rem; margin-top:14px;">Where did your mind go? What was it like — and did anything pull you out?</p>
+      <div class="row" style="gap:8px; align-items:flex-start;">
+        <textarea class="reflect-area" id="cnote" placeholder="A few honest words. Voice or type. This stays on your device.">${esc(r.note || '')}</textarea>
+        <button class="btn amber" id="cnotemic" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
+      </div>
+
+      <p class="muted small" style="margin-top:16px;">Your eyes were…</p>
+      <div class="row" style="gap:8px; flex-wrap:wrap;">
+        ${eyesOpts.map(([v, lbl]) => `<button class="chip${r.eyes === v ? ' sel' : ''}" data-eyes="${v}">${lbl}</button>`).join('')}
+      </div>
+
+      <p class="muted small" style="margin-top:16px;">The time felt…</p>
+      <div class="row" style="gap:8px; flex-wrap:wrap;">
+        ${timeOpts.map(([v, lbl]) => `<button class="chip${r.timeFelt === v ? ' sel' : ''}" data-time="${v}">${lbl}</button>`).join('')}
+      </div>
+
+      <p class="muted small" style="margin-top:18px;">Honestly — how present were you? <span style="opacity:.7;">(1 scattered · 7 fully here)</span></p>
+      <div class="rating">
+        ${[1, 2, 3, 4, 5, 6, 7].map((n) => `<button class="${presence === n ? 'on' : ''}" data-n="${n}">${n}</button>`).join('')}
+      </div>
+
+      <button class="btn" id="cfin" ${presence == null ? 'disabled' : ''}>Complete session</button>
+    </div>`;
+
+  const note = document.getElementById('cnote');
+  note.oninput = () => { r.note = note.value; };
+  attachMicButton(document.getElementById('cnotemic'), note);
+
+  app.querySelectorAll('[data-eyes]').forEach((b) => b.onclick = () => { r.eyes = b.dataset.eyes; render(); });
+  app.querySelectorAll('[data-time]').forEach((b) => b.onclick = () => { r.timeFelt = b.dataset.time; render(); });
+  app.querySelectorAll('.rating button').forEach((b) => b.onclick = () => { r.presence = Number(b.dataset.n); render(); });
+  document.getElementById('cfin').onclick = completeSession;
 }
 
 function renderReflection() {
@@ -1471,14 +1612,19 @@ function renderReflection() {
     <div class="fade-in">
       ${sessionHeader(ex)}
       <p class="likert-q" style="font-size:1.05rem;">${esc(ex.prompt)}</p>
-      <textarea class="reflect-area" id="ref" placeholder="Write a few honest sentences. This stays on your device.">${esc(s.response.text || '')}</textarea>
+      <div class="row" style="gap:8px; align-items:flex-start;">
+        <textarea class="reflect-area" id="ref" placeholder="Write or speak a few honest sentences. This stays on your device.">${esc(s.response.text || '')}</textarea>
+        <button class="btn amber" id="refmic" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
+      </div>
       <p class="muted small" style="margin-top:14px;">${esc(ex.selfRatingLabel)}</p>
       <div class="rating">
         ${[1, 2, 3, 4, 5].map((n) => `<button class="${rating === n ? 'on' : ''}" data-n="${n}">${n}</button>`).join('')}
       </div>
       <button class="btn" id="fin" ${rating == null ? 'disabled' : ''}>Complete session</button>
     </div>`;
-  document.getElementById('ref').oninput = (e) => { s.response.text = e.target.value; };
+  const ref = document.getElementById('ref');
+  ref.oninput = (e) => { s.response.text = e.target.value; };
+  attachMicButton(document.getElementById('refmic'), ref);
   app.querySelectorAll('.rating button').forEach((b) => b.onclick = () => {
     s.response.selfRating = Number(b.dataset.n);
     render();
@@ -1511,7 +1657,17 @@ async function completeSession() {
       <button class="btn amber" id="home">Done →</button>
     </div>`;
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };
-  document.getElementById('talkthrough').onclick = () => { const dom = s.exercise.domain; state.session = null; talkThrough({ kind: 'session', domain: dom }); };
+  document.getElementById('talkthrough').onclick = () => {
+    const ctx = {
+      kind: 'session',
+      domain: s.exercise.domain,
+      exerciseLabel: s.exercise.title || s.exercise.type,
+      score: rawScore,
+      insight: state.profile._lastInsight && state.profile._lastInsight.text,
+    };
+    state.session = null;
+    talkThrough(ctx);
+  };
   countUp(document.getElementById('bigscore'), rawScore);
 
   // The vignette already produced Claude's rubric feedback — use it as the
@@ -1854,6 +2010,7 @@ function renderCoach() {
         ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">Hi${p.settings.name ? ' ' + esc(p.settings.name) : ''}. I've read your scales and your last few sessions. Ask me what to work on, why a capacity matters, or talk through a day that didn't go the way you wanted — I'd rather do that than recite numbers at you.${live ? '' : ' (Offline mode for now — I’ll read your own data back to you.)'}</div>`}
       </div>
       <div class="composer">
+        <button class="btn amber" id="cmic" aria-label="Dictate your message" style="padding:12px 14px;">🎤</button>
         <input id="ci" placeholder="Ask your coach…" autocomplete="off" aria-label="Message your coach" />
         <button class="btn" id="send">Send</button>
       </div>
@@ -1862,6 +2019,7 @@ function renderCoach() {
   if (tos) tos.onclick = () => go('settings');
   const ci = document.getElementById('ci');
   const sendBtn = document.getElementById('send');
+  attachMicButton(document.getElementById('cmic'), ci);
   let busy = false;
   const send = async () => {
     const text = ci.value.trim();
