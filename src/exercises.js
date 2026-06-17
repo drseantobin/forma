@@ -1668,8 +1668,8 @@ export const PRESENCE_SCENES = [
     options: [
       { id: 'a', text: 'Make unhurried space — sit near, let them know you’re there, and let them come to it in their own time.', score: 100, rationale: 'Attuned, non-demanding presence: available without pressure. You meet them where they are, not where you wish they were.' },
       { id: 'b', text: 'Press them with questions until they tell you what’s wrong.', score: 40, rationale: 'Interrogation usually serves your need to know and fix; to someone depleted it can feel like one more demand rather than care.' },
-      { id: 'c', text: 'Give them total space and stay on your phone in the other room.', score: 35, rationale: 'Space can be respect — but here it can read as absence. Presence is being available, not merely out of the way; an engaged-but-clumsy miss is closer to it than withdrawing to a screen.' },
-      { id: 'd', text: 'Try to cheer them up with jokes and distraction.', score: 30, rationale: 'Deflecting the mood meets them where you’d prefer them to be. Sometimes the kindest thing is to let the heaviness simply be witnessed.' },
+      { id: 'c', text: 'Give them total space and stay on your phone in the other room.', score: 25, rationale: 'Space can be respect — but here it reads as absence. Presence is being available, not merely out of the way; withdrawing to a screen is further from it than an engaged-but-clumsy miss.' },
+      { id: 'd', text: 'Try to cheer them up with jokes and distraction.', score: 35, rationale: 'Deflecting the mood meets them where you’d prefer them to be — a clumsy miss, but still engaged and turned toward them. Sometimes the kindest thing is to let the heaviness simply be witnessed.' },
     ],
   },
   {
@@ -1703,6 +1703,33 @@ export const PRESENCE_SCENES = [
       { id: 'b', text: 'Give a distracted “mhm, nice” and keep doing what you were doing.', score: 30, rationale: 'The half-attention children feel acutely. It’s not unkind, but it teaches them their world is an interruption.' },
       { id: 'c', text: 'Redirect them to something you find more worthwhile.', score: 35, rationale: 'Overriding their world with yours. Presence starts by entering what matters to them, not correcting it.' },
       { id: 'd', text: 'Praise it quickly so they’ll move along.', score: 45, rationale: 'Warm, but transactional — it moves them off rather than being with them. A few real seconds of joining is worth more than fast praise.' },
+    ],
+  },
+  {
+    // Adds a RESTRAINT register the bank lacked: here unhurried, undemanding space
+    // IS the keyed-best presence, not a distractor — so being-present can't be gamed
+    // as "always draw the feeling out."
+    id: 'presence-grief-silence', type: 'attend', domain: 'presence', title: 'Fully Here',
+    scenario: 'At a wake, you sit beside someone whose parent has just died. They say almost nothing and don’t seem to want to talk.',
+    prompt: 'What’s the most present response?',
+    options: [
+      { id: 'a', text: 'Stay beside them in the quiet, matching their pace, present without needing them to speak.', score: 100, rationale: 'Presence isn’t conversation — it’s company. Sitting with someone in silence, asking nothing of them, is often the fullest form of being-with; the steady, undemanding company is the gift.' },
+      { id: 'b', text: 'Gently invite them to talk about their parent so they don’t hold it in.', score: 45, rationale: 'Kindly meant, and sometimes right — but here it sets your agenda for the grief. Drawing them out can serve your wish to help more than their need to simply be accompanied.' },
+      { id: 'c', text: 'Fill the silence with warm memories and stories so it doesn’t feel heavy.', score: 30, rationale: 'Talking to ease the quiet manages your own discomfort with it. The heaviness doesn’t need to be covered — it needs to be shared, and silence shared is not empty.' },
+      { id: 'd', text: 'Quietly excuse yourself so as not to intrude on a private moment.', score: 25, rationale: 'Framed as respect, but it leaves them alone at the hardest point. Presence means tolerating the awkwardness of staying rather than relieving it by leaving.' },
+    ],
+  },
+  {
+    // Adds a GROUP / divided-attention context absent from the bank (all others are
+    // dyadic): presence as choosing one person over the ambient buzz.
+    id: 'presence-group-aside', type: 'attend', domain: 'presence', title: 'Fully Here',
+    scenario: 'At a lively gathering, one guest quietly mentions to you that they’ve been struggling lately — while the conversation around you keeps going.',
+    prompt: 'What’s the most present response?',
+    options: [
+      { id: 'a', text: 'Turn fully toward them, lower your voice, and let the room carry on without you for a moment.', score: 100, rationale: 'Presence is choosing one person over the buzz. Visibly giving them your whole attention — even briefly — tells them what they said landed and mattered, more than any words.' },
+      { id: 'b', text: 'Say you really want to hear it and suggest you find a better time to talk properly.', score: 50, rationale: 'Not wrong — protecting the conversation for later can be caring. But deferring in the moment they reached out can read as a postponement of them; a brief real turn now usually matters more than a perfect setting later.' },
+      { id: 'c', text: 'Acknowledge it warmly but keep one ear on the group so no one feels left out.', score: 45, rationale: 'Considerate of the room, but divided attention is felt. In the moment someone risks opening up, half-presence quietly signals they’re not quite worth the full turn.' },
+      { id: 'd', text: 'Lighten it with a quick reassurance and fold them back into the group fun.', score: 25, rationale: 'Steering them back to the party erases what they just trusted you with. It meets them where you’d prefer them to be, not where they are.' },
     ],
   },
 ];
