@@ -1,7 +1,7 @@
 // exercises.js — the daily formation exercise library.
 //
 // The daily loop draws one exercise, calibrated to the user's current growth
-// focus. Four exercise families map to the eight domains:
+// focus. Several exercise families map across the capacities; the originals:
 //
 //   reading   → Deep Reading (objective: comprehension questions)
 //   memory    → Working Memory (objective: sequence recall)

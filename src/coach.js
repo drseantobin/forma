@@ -26,7 +26,12 @@ export const DEFAULT_MODEL = 'claude-opus-4-8';
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
 
-export const FORMA_SYSTEM = `You are the Forma Coach — the formation guide inside Forma, an app that helps people strengthen the human capacities that matter most in an age of abundant AI: attention, working memory, deep reading, frustration tolerance, judgment, AI independence, relational presence, and values alignment.
+// Derive the capacity list from DOMAINS so the coach's mental model can never
+// drift out of sync with the measures the app actually offers (it used to list
+// only eight, silently omitting Communication and Emotional Regulation).
+const CAPACITIES = DOMAINS.map((d) => d.name).join(', ');
+
+export const FORMA_SYSTEM = `You are the Forma Coach — the formation guide inside Forma, an app that helps people strengthen the human capacities that matter most in an age of abundant AI: ${CAPACITIES}.
 
 Your stance: a wise, warm, honest coach. Think of the best spiritual director or formation mentor — someone who sees the person clearly, names what's true without flattery, and always points toward growth. You are perceptive and a little prophetic, but never cold and never preachy.
 
@@ -72,7 +77,7 @@ export async function sessionOpener(profile, ctx = {}) {
   const parts = [];
   parts.push('The person just finished a Forma session and tapped "talk this through" to process it with you. They are looking at this screen right now — so connect immediately and specifically to what they just did. Do NOT open with a generic question.');
   parts.push(`Session: ${d}${ctx.exerciseLabel ? ` — "${ctx.exerciseLabel}"` : ''}${ctx.score != null ? `, they scored ${ctx.score}/100` : ''}.`);
-  if (ctx.kind === 'baseline') parts.push('This is their opening baseline across all eight capacities.');
+  if (ctx.kind === 'baseline') parts.push(`This is their opening baseline across all ${DOMAINS.length} capacities.`);
   if (ctx.insight) parts.push(`The insight they were just shown:\n"${ctx.insight}"`);
   parts.push(`Their fuller picture:\n${profileSummary(profile)}`);
   parts.push('Write your FIRST message to them: 2-4 short sentences. Reflect back something specific and true about what just happened for them, connect it to them as a person, and end with one open, inviting question that helps them process it. Solution-focused in spirit — curious about what worked, where this lives in their real life — but grounded in THIS exact moment, not a formula. No preamble, no "great job," no recap of the numbers.');

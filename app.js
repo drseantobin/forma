@@ -216,7 +216,7 @@ function renderOnboarding() {
           ${DOMAINS.map((d) => `<span class="pill">${d.icon} ${esc(d.name)}</span>`).join('')}
         </div>
         <div class="card">
-          <p><strong>First, a read on where you are today.</strong> Choose how you'd like to begin — both build the same eight-capacity profile.</p>
+          <p><strong>First, a read on where you are today.</strong> Choose how you'd like to begin — both build the same profile across every capacity.</p>
         </div>
         <div class="stack">
           <button class="btn amber" id="start">Quick check · ~3 min →</button>
