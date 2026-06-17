@@ -1276,6 +1276,26 @@ export const VIGNETTES = [
     scenario: 'Over coffee, someone you care about admits quietly that they’ve stopped believing — stopped praying — and they’re watching your face to see how you react.',
     prompt: 'What do you say? Say it the way you would if it were real.',
   },
+  {
+    id: 'vig-apology', type: 'vignette', domain: 'communication', title: 'The Repair',
+    scenario: 'You said something careless that clearly wounded someone you love — you can see it in how they’ve gone distant. You finally sit down across from them.',
+    prompt: 'What do you say to begin to make it right? Say it out loud.',
+  },
+  {
+    id: 'vig-grief', type: 'vignette', domain: 'communication', title: 'No Right Words',
+    scenario: 'A coworker just lost a parent and is back at their desk, hollow-eyed. You stop by. There are no right words, and you both know it.',
+    prompt: 'What do you say to them? Speak it as you actually would.',
+  },
+  {
+    id: 'vig-boundary', type: 'vignette', domain: 'communication', title: 'Letting It Slide',
+    scenario: 'A friend keeps showing up late, cancelling last-minute, leaning on you — and you’ve let it slide for months. Today it happened again, and they’re acting like it’s nothing.',
+    prompt: 'What do you say to them about it? Say it the way you really would.',
+  },
+  {
+    id: 'vig-elder', type: 'vignette', domain: 'communication', title: 'The Keys',
+    scenario: 'Your aging father insists he’s still fine to drive, though everyone can see he isn’t. He’s proud, and the keys are his last bit of independence. He looks at you, daring you to argue.',
+    prompt: 'What do you say to him? Speak it out loud.',
+  },
 ];
 
 // ----- STEM: Situational Test of Emotion Management -----
