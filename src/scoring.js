@@ -63,7 +63,12 @@ export function scoreStream(tapped, items) {
     else { go++; if (tset.has(i)) goCorrect++; }
   });
   const goAcc = go ? goCorrect / go : 1;
-  const nogoAcc = nogo ? nogoCorrect / nogo : 1;
+  let nogoAcc = nogo ? nogoCorrect / nogo : 1;
+  // SART inhibition is only meaningful once the prepotent "tap" response is
+  // established. If they barely responded to the frequent go trials, withholding
+  // on the rare no-go isn't inhibition — it's non-participation — so it earns no
+  // inhibition credit. (Otherwise tapping nothing would score a mid-band 60.)
+  if (goAcc < 0.5) nogoAcc = 0;
   return clamp(round((goAcc * 0.4 + nogoAcc * 0.6) * 100));
 }
 
