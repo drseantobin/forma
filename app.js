@@ -2549,7 +2549,11 @@ function appendBubble({ role, content, typing, assertive }) {
   if (assertive) { div.setAttribute('role', 'alert'); div.setAttribute('aria-live', 'assertive'); }
   div.textContent = content;
   chat.appendChild(div);
-  div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  // An explicit behavior:'smooth' overrides the CSS reduced-motion block (which
+  // only governs the scroll-behavior property), so honor the preference in JS.
+  // This fires on every chat message — including the crisis escalation directly
+  // above — exactly where a vestibular-sensitive user can least tolerate motion.
+  div.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'end' });
   return div;
 }
 
