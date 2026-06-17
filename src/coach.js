@@ -362,7 +362,17 @@ export function offlineCoachReply(userText, profile) {
       + `If you wanted one more day like that this week, what's the smallest thing you'd repeat on purpose?`;
   }
 
-  // 5) Default → reflect, ask one solution-focused question, ground in real data.
+  // 5) Open commitment? Follow up on it — solution-focused work is built on the
+  // small next steps a person chose for themselves, so a check-in beats a generic
+  // prompt. (Ties the commitments a person sets on Home back into the coaching.)
+  const openGoals = (profile.goals || []).filter((g) => !g.done);
+  if (openGoals.length) {
+    const g = openGoals[0];
+    return `Before we go wider — you set a commitment for yourself: “${g.text}”. How has that been going? `
+      + `Think of a moment this week it went even a little the way you wanted — what was different then? We build from that, not from pressure.`;
+  }
+
+  // 6) Default → reflect, ask one solution-focused question, ground in real data.
   const patterns = weeklyPatterns(profile);
   const one = patterns && patterns.length ? patterns[0] : null;
   return `I'm here — tell me a bit more about what's on your mind. `
