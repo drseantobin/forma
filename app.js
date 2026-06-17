@@ -6,7 +6,7 @@ import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEM
 import { pickExercise, nextMathProblem, shuffledIndices } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
 import {
-  todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween, startRoute, indexTrend,
+  todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween, startRoute, indexTrend, isLapsedReturn,
 } from './src/progress.js';
 import { recommendFocus, weeklyPatterns, dailyInsight as ruleDailyInsight, interpretBaseline as ruleInterpretBaseline } from './src/insights.js';
 import * as Profile from './src/profile.js';
@@ -506,6 +506,25 @@ async function finishConversation() {
   renderBaselineResult();
 }
 
+// A warm re-entry for someone returning after a lapse: re-anchors on progress
+// already banked (days in, any positive index gain) instead of letting the cold
+// "relight it" candle lead with guilt. Honest — shows a number only when the
+// gain is genuinely positive; otherwise just the warm return line. Returns ''
+// for everyone else (active users, first-timers).
+function welcomeBackCard(p) {
+  if (!isLapsedReturn(p)) return '';
+  const days = Proof.daysSinceBaseline(p);
+  const t = indexTrend(p.indexHistory);
+  const banked = t.delta > 0
+    ? `Since you began${days ? ` ${days} day${days === 1 ? '' : 's'} ago` : ''}, your Formation Index is up ${t.delta} — and that's banked. A gap doesn't undo it.`
+    : `What you've built so far is still yours — a gap doesn't undo it.`;
+  return `
+      <div class="card welcomeback" style="border-left:4px solid var(--accent);">
+        <div class="k">Welcome back</div>
+        <p class="muted small" style="margin:6px 0 0;">${banked} The return is the rep — more than any streak. Pick up where you are.</p>
+      </div>`;
+}
+
 // ---------------- home ----------------
 function renderHome() {
   const p = state.profile;
@@ -531,6 +550,8 @@ function renderHome() {
         })()}</div>
         <div class="streakchip ${alive ? '' : 'cold'}">${alive ? '🔥' : '🕯️'} ${p.streak.current || 0}-day streak${alive ? '' : ' — relight it'}</div>
       </div>
+
+      ${welcomeBackCard(p)}
 
       ${lastInsight ? `<div class="card"><div class="insight ${lastInsight.live ? 'live' : ''}" style="border:none;padding:0;">
         <div class="k">Today's insight</div>

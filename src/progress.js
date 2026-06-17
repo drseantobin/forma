@@ -82,6 +82,18 @@ export function streakAlive(streak, today = todayStr()) {
   return gap === 2 && !streak.heldOnce && (streak.current || 0) > 0;
 }
 
+// True when someone is returning after a lapse: the streak is no longer alive
+// but there's real history behind them (>1 session). This is the home front-door
+// signal for a WARM re-entry — re-anchor on progress already banked rather than
+// leading with a broken-streak guilt cue (a documented churn driver). It keys off
+// streak-not-alive (evaluated BEFORE today's session) rather than insights.js's
+// post-session `streak === 1`, which only resets after the comeback rep is done.
+export function isLapsedReturn(profile, today = todayStr()) {
+  if (!profile) return false;
+  const sessions = (profile.sessions || []).length;
+  return sessions > 1 && !streakAlive(profile.streak, today);
+}
+
 // Trend for one domain from the history log (chronological entries with
 // {domain, newDomainScore}). Returns first, latest, delta, direction.
 // Trend of the headline Formation Index over its history — so the home hero can
