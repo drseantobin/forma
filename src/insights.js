@@ -80,6 +80,7 @@ export const TYPE_NUDGE = {
   matrix: 'Finding the pattern with no instructions is fluid reasoning — the part of thinking that doesn’t come pre-packaged.',
   tradeoff: 'Independence isn’t using AI less — it’s staying awake to which efforts are worth keeping. You just named one.',
   stem: 'Managing a feeling well isn’t suppressing it — it’s choosing the response that actually helps. A skill, not a temperament.',
+  steu: 'Naming which feeling a moment actually evokes is the quiet root of emotional skill — you can’t work with what you can’t name.',
   comm: 'The effective word is clear and kind at once. Most people manage one; you practiced holding both.',
   attend: 'Being with someone without fixing them is harder than it sounds — the urge to help pulls you out of presence. You practiced staying.',
   vignette: 'How you’d actually respond — not what you know you should say — is where communication lives. You worked the real thing.',

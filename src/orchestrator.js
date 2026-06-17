@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -106,9 +106,11 @@ export function chooseExercise(profile, opts = {}) {
   }
 
   if (focus === 'emotion_regulation') {
-    // STEM (validated emotion-management SJT) is the performance measure here;
-    // alternate it with a reflection so it isn't the same item every time.
+    // Two structured measures: STEM (managing a feeling) and STEU (reading which
+    // feeling a situation evokes). Alternate them, then reflection — so it isn't
+    // the same item or even the same facet every time.
     if (!recentTypes.includes('stem')) return pickFrom(STEM, seen, rng);
+    if (!recentTypes.includes('steu')) return pickFrom(STEU_ITEMS, seen, rng);
     return pickExercise('emotion_regulation', { seenIds: seen, rng });
   }
 

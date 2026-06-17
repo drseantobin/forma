@@ -1398,6 +1398,84 @@ export const PRESENCE_SCENES = [
   },
 ];
 
+// ----- STEU: Situational Test of Emotional Understanding -----
+// Lineage: MacCann & Roberts' STEU (2008), the companion to STEM. Where STEM
+// measures how you MANAGE a feeling, STEU measures whether you can correctly
+// READ which emotion a situation evokes — emotional understanding, grounded in
+// appraisal theory (each emotion follows a characteristic appraisal of events).
+// Gives emotion_regulation a second, distinct structured measure. Unlike the
+// effectiveness-rated SJTs, here there is a consensus-correct emotion (scored
+// 100) with graded near-misses, so the reveal still marks exactly one best and
+// the rationale teaches the appraisal that distinguishes the emotions.
+export const STEU_ITEMS = [
+  {
+    id: 'steu-gift', type: 'steu', domain: 'emotion_regulation', title: 'Name the Feeling',
+    scenario: 'Clara receives a gift she had wanted for a long time, from someone she loves.',
+    prompt: 'What is she most likely to feel?',
+    options: [
+      { id: 'a', text: 'Gratitude', score: 100, rationale: 'Receiving something desired from someone who cares is the defining appraisal for gratitude (and joy). The emotion points at the giver, not just the gift.' },
+      { id: 'b', text: 'Pride', score: 50, rationale: 'Pride usually follows your OWN achievement. A gift received isn’t something she accomplished, so pride fits less cleanly.' },
+      { id: 'c', text: 'Relief', score: 30, rationale: 'Relief follows a threat that didn’t materialise. Nothing feared was avoided here — this is a wished-for good arriving.' },
+      { id: 'd', text: 'Hope', score: 20, rationale: 'Hope is oriented toward an uncertain future good. The good has already arrived, so hope has passed.' },
+    ],
+  },
+  {
+    id: 'steu-obstacle', type: 'steu', domain: 'emotion_regulation', title: 'Name the Feeling',
+    scenario: 'Sam has been working steadily toward a goal when an unexpected obstacle makes it much harder to reach — though not impossible.',
+    prompt: 'What is Sam most likely to feel?',
+    options: [
+      { id: 'a', text: 'Frustration', score: 100, rationale: 'A goal that is blocked or obstructed — but still alive — is the textbook appraisal for frustration.' },
+      { id: 'b', text: 'Sadness', score: 50, rationale: 'Sadness follows genuine loss. The goal isn’t lost, only harder, so sadness overshoots — though it can creep in if hope fades.' },
+      { id: 'c', text: 'Guilt', score: 20, rationale: 'Guilt requires a sense of having done something wrong. An external obstacle isn’t Sam’s fault, so guilt doesn’t fit.' },
+      { id: 'd', text: 'Boredom', score: 15, rationale: 'Boredom is under-stimulation. A thwarted goal is the opposite of disengagement.' },
+    ],
+  },
+  {
+    id: 'steu-award', type: 'steu', domain: 'emotion_regulation', title: 'Name the Feeling',
+    scenario: 'A colleague Maria quietly competes with receives a major award that Maria had wanted for herself.',
+    prompt: 'What is Maria most likely to feel?',
+    options: [
+      { id: 'a', text: 'Envy', score: 100, rationale: 'Wanting what a similar other has obtained is the precise appraisal for envy — sharpened when the person is a rival of comparable standing.' },
+      { id: 'b', text: 'Anger', score: 50, rationale: 'Anger can come too, but it needs a sense of unfairness or blame. Absent wrongdoing, the cleaner read is envy.' },
+      { id: 'c', text: 'Pride', score: 15, rationale: 'Pride follows one’s own success or that of one’s group — not a rival’s win.' },
+      { id: 'd', text: 'Gratitude', score: 15, rationale: 'Gratitude needs a benefit received. Nothing was given to Maria here.' },
+    ],
+  },
+  {
+    id: 'steu-dreaded', type: 'steu', domain: 'emotion_regulation', title: 'Name the Feeling',
+    scenario: 'After weeks of dreading a difficult conversation, Tom finally has it — and it goes fine.',
+    prompt: 'As he walks away, what is he most likely to feel?',
+    options: [
+      { id: 'a', text: 'Relief', score: 100, rationale: 'A feared outcome that fails to materialise is the defining appraisal for relief — the dread lifts.' },
+      { id: 'b', text: 'Pride', score: 45, rationale: 'Pride may follow if he values having faced it, but it’s secondary to the dread simply lifting.' },
+      { id: 'c', text: 'Joy', score: 50, rationale: 'Joy is close, but relief is more precise: the feeling is defined by a threat removed, not a good gained.' },
+      { id: 'd', text: 'Surprise', score: 25, rationale: 'Surprise needs an unexpected event; a conversation going fine isn’t startling enough to be the main feeling.' },
+    ],
+  },
+  {
+    id: 'steu-harm', type: 'steu', domain: 'emotion_regulation', title: 'Name the Feeling',
+    scenario: 'Priya did something that hurt a friend, and she knows it was her own doing — and against the kind of person she wants to be.',
+    prompt: 'What is she most likely to feel?',
+    options: [
+      { id: 'a', text: 'Guilt', score: 100, rationale: 'Harm one caused, judged against one’s own standards, is the appraisal for guilt — focused on the act ("I did a bad thing").' },
+      { id: 'b', text: 'Shame', score: 60, rationale: 'Very close — but shame is about the SELF being bad ("I am bad"), while guilt is about the deed. For a specific act she regrets, guilt is the sharper fit.' },
+      { id: 'c', text: 'Anger', score: 20, rationale: 'Anger points outward at someone else’s wrongdoing; here the wrongdoing is her own.' },
+      { id: 'd', text: 'Fear', score: 15, rationale: 'Fear needs an anticipated threat. The harm has already happened; the feeling is about responsibility, not danger.' },
+    ],
+  },
+  {
+    id: 'steu-loss', type: 'steu', domain: 'emotion_regulation', title: 'Name the Feeling',
+    scenario: 'An outcome Jordan was genuinely counting on is now lost, with no way left to recover it.',
+    prompt: 'What is Jordan most likely to feel?',
+    options: [
+      { id: 'a', text: 'Sadness', score: 100, rationale: 'Irrevocable loss is the defining appraisal for sadness and grief — the goal is gone, not merely delayed.' },
+      { id: 'b', text: 'Frustration', score: 50, rationale: 'Frustration fits a goal that’s blocked but still reachable. Once it’s truly lost, the feeling shifts toward sadness.' },
+      { id: 'c', text: 'Hope', score: 15, rationale: 'Hope requires a possible future good. "No way left to recover it" closes that door.' },
+      { id: 'd', text: 'Relief', score: 15, rationale: 'Relief follows an avoided threat — the opposite of losing something wanted.' },
+    ],
+  },
+];
+
 // Pick an exercise for a given target domain. Objective domains get their
 // matching family; reflective domains get a reflection prompt. `seen` lets the
 // caller rotate variety (avoid repeating the last exercise).
@@ -1419,8 +1497,9 @@ export function pickExercise(targetDomain, opts = {}) {
     case 'judgment':
       return notSeen(DECISIONS);
     case 'emotion_regulation':
-      // Prefer the validated performance measure (STEM); fall back to reflection.
-      return notSeen(STEM.concat(REFLECTIONS.filter((r) => r.domain === targetDomain)));
+      // Two structured measures — STEM (managing a feeling) and STEU (reading
+      // which feeling a situation evokes) — then reflection.
+      return notSeen(STEM.concat(STEU_ITEMS, REFLECTIONS.filter((r) => r.domain === targetDomain)));
     case 'communication':
       // Keyless communication SJT first (so the AI-Readiness communication pillar
       // isn't self-report only), then reflection.

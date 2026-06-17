@@ -205,8 +205,9 @@ export function scoreExercise(exercise, response) {
     case 'stem':
     case 'comm':
     case 'attend':
-      // SJT family (judgment / emotion-management / communication / presence): the
-      // chosen option carries its rated effectiveness score, same mechanism throughout.
+    case 'steu':
+      // SJT family (judgment / emotion-management & understanding / communication /
+      // presence): the chosen option carries its rated score, same mechanism throughout.
       return scoreDecision(response.optionId, exercise.options);
     case 'matrix':
       // Fluid-reasoning item: right or wrong, but a wrong attempt still engaged.

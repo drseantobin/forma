@@ -39,8 +39,8 @@ export const MEASURE_BASIS = {
     detail: 'Effective interpersonal response is measured two ways: a situational-judgment test (the most effective reply among realistic options) and, when enabled, an open written response scored by a rubric — closer to how communication actually works than a self-report scale.',
   },
   emotion_regulation: {
-    paradigm: 'Situational Test of Emotion Management (STEM lineage)',
-    detail: 'A performance measure of emotional intelligence: given an emotional situation, choose the most effective way to manage the feeling. Options are scored by how adaptive the strategy is (reappraisal and problem-solving over suppression and rumination).',
+    paradigm: 'Situational Tests of Emotion Management & Understanding (STEM / STEU)',
+    detail: 'Two performance measures of emotional intelligence: STEM — given an emotional situation, the most effective way to MANAGE the feeling (adaptive strategy over suppression or rumination); and STEU — reading which emotion a situation evokes, scored against appraisal theory. Understanding and managing, not self-report.',
   },
   values: {
     paradigm: 'Sentence completion (Rotter RISB lineage)',
