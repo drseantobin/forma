@@ -259,6 +259,17 @@ export function loadProfile() {
 
 export function saveProfile(profile) {
   if (!profile) return; // never persist the string "null"
+  // Cap the chat log at the persistence boundary so a multi-year daily user can't
+  // silently overflow the ~5MB localStorage quota (where setItem throws and the
+  // catch below would swallow it → silent data loss for exactly the long-term
+  // users the app courts). The live coach only reads the last several turns
+  // (coach.js buildCoachMessages slices to 8), so nothing functional is lost.
+  // The longitudinal measures (sessions/history/indexHistory) grow slowly and are
+  // the actual value, so they are NOT pruned. Mutates in place to keep the
+  // in-memory log consistent with what's stored.
+  if (profile.coachLog && profile.coachLog.length > 200) {
+    profile.coachLog = profile.coachLog.slice(-200);
+  }
   try {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
