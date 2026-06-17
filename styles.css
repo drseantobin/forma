@@ -172,7 +172,7 @@ button { font-family: inherit; cursor: pointer; }
 .chip.used { opacity:.4; }
 .chip.sel { border-color: var(--amber); background: var(--amber-soft); color:var(--amber-ink); }
 .slot-row { display:flex; flex-wrap:wrap; gap:8px; min-height:46px; padding:8px; border:1.5px dashed var(--line); border-radius:12px; margin-bottom:12px; }
-.slot { background: var(--green-soft); color: var(--green-ink); border-radius:999px; padding:8px 14px; font-weight:700; }
+.slot { background: var(--green-soft); color: var(--green-ink); border:0; font:inherit; cursor:pointer; border-radius:999px; padding:8px 14px; font-weight:700; }
 .rationale { font-size:.92rem; color: var(--ink-soft); margin-top:10px; padding:12px 14px; background:#fcfbf8; border-radius:12px; border:1px solid var(--line); }
 .reflect-area { width:100%; min-height:120px; border:1.5px solid var(--line); border-radius: var(--radius-sm); padding:14px; font-family:inherit; font-size:1rem; resize:vertical; }
 .rating { display:flex; gap:8px; margin:14px 0; }

@@ -933,7 +933,7 @@ function renderMemory() {
       ${sessionHeader(ex)}
       <p class="muted small">Rebuild the list <strong>in order</strong>. Tap to add; tap a slot to remove.</p>
       <div class="slot-row" id="slots">
-        ${recalled.length ? recalled.map((w, i) => `<span class="slot" data-rm="${i}">${esc(w)} ✕</span>`).join('') : '<span class="muted small">your sequence…</span>'}
+        ${recalled.length ? recalled.map((w, i) => `<button type="button" class="slot" data-rm="${i}" aria-label="Remove ${esc(w)}">${esc(w)} ✕</button>`).join('') : '<span class="muted small">your sequence…</span>'}
       </div>
       <div class="chiprow">
         ${pool.map((w) => `<button class="chip ${recalled.includes(w) ? 'used' : ''}" data-w="${esc(w)}" ${recalled.includes(w) ? 'disabled' : ''}>${esc(w)}</button>`).join('')}
@@ -1404,7 +1404,7 @@ function renderDigitSpan() {
     <div class="fade-in">
       ${sessionHeader(ex)}
       <p class="muted small">Enter the digits <strong>in reverse order</strong> — the last one first.</p>
-      <div class="slot-row" id="slots">${recalled.length ? recalled.map((d, i) => `<span class="slot" data-rm="${i}">${esc(d)} ✕</span>`).join('') : '<span class="muted small">backward…</span>'}</div>
+      <div class="slot-row" id="slots">${recalled.length ? recalled.map((d, i) => `<button type="button" class="slot" data-rm="${i}" aria-label="Remove ${esc(d)}">${esc(d)} ✕</button>`).join('') : '<span class="muted small">backward…</span>'}</div>
       <div class="chiprow" style="justify-content:center; gap:8px;">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((n) => `<button class="chip" data-d="${n}" style="min-width:54px; font-size:1.25rem; font-weight:700;">${n}</button>`).join('')}</div>
       <button class="btn" id="done" ${recalled.length === 0 ? 'disabled' : ''} style="margin-top:16px;">Check</button>
     </div>`;
