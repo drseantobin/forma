@@ -37,6 +37,9 @@ export function createProfile() {
     // default — captures nothing until the user explicitly opts in. No name/contact
     // ever lives here; interior content is never collected.
     research: { consent: false, consentedAt: null, demographics: {}, queue: [], installId: '' },
+    // CONTACT tier (identified, opt-in): an email for future reminders. SEPARATE
+    // from research and deliberately NOT linkable to it — no installId here, ever.
+    contact: { consent: false, email: '', consentedAt: null },
   };
 }
 
@@ -384,6 +387,12 @@ function migrate(p) {
   p.research.demographics = obj(p.research.demographics);
   p.research.queue = arr(p.research.queue);
   if (typeof p.research.installId !== 'string') p.research.installId = '';
+  // Contact tier (identified) — coerce by type, default to no-consent/empty. Kept
+  // structurally separate from research; never carries an installId.
+  p.contact = obj(p.contact);
+  if (typeof p.contact.consent !== 'boolean') p.contact.consent = false;
+  if (typeof p.contact.email !== 'string') p.contact.email = '';
+  if (p.contact.consentedAt === undefined) p.contact.consentedAt = null;
   if (p.bandPeak != null && (typeof p.bandPeak !== 'object' || Array.isArray(p.bandPeak))) p.bandPeak = null;
   // Backfill the band high-water mark (added v98) for profiles saved BEFORE it
   // existed. Without this, a returning pre-v98 user who already reached a band

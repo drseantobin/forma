@@ -20,6 +20,7 @@ import { basisFor } from './src/methods.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
 import * as Research from './src/research.js';
+import * as Contact from './src/contact.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
@@ -2761,6 +2762,24 @@ function renderSettings() {
         </div>
       </div>
 
+      <div class="card">
+        <div class="row"><span style="font-size:1.3rem;">✉️</span>
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Reminders &amp; encouragement</h2>
+            <p class="muted small" style="margin:2px 0 0;">Optional. Reminders aren’t built yet — opt in now and your email is stored <strong>only on this device</strong> (it’s never sent anywhere), so Forma can reach you once they ship, and only for that. This is separate from the anonymous research data and is never linked to it. Remove it anytime.</p>
+          </div>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>Email</label>
+          <input id="contactemail" type="email" value="${esc((p.contact && p.contact.email) || '')}" placeholder="you@example.com" />
+        </div>
+        <div class="row" style="gap:8px;">
+          <button class="btn sm" id="savecontact">${p.contact && p.contact.consent ? 'Update' : 'Opt in'}</button>
+          ${p.contact && p.contact.consent ? `<button class="btn ghost sm" id="withdrawcontact">Remove my email</button>` : ''}
+          <span id="contactsaved" class="trendpill up" style="display:none;">saved ✓</span>
+        </div>
+        <p id="contacterr" class="small" style="margin-top:8px; color:var(--red); display:none;"></p>
+      </div>
+
       <p class="muted small center">Forma · the capacities a machine can’t keep for you.</p>
     </div>`;
 
@@ -2800,6 +2819,21 @@ function renderSettings() {
       r.textContent = `✗ ${Coach.friendlyApiError(e.message)}`;
     }
   };
+  document.getElementById('savecontact').onclick = () => {
+    const err = document.getElementById('contacterr');
+    err.style.display = 'none';
+    try {
+      // Contact.setContact touches ONLY profile.contact — never research / installId.
+      state.profile = Contact.setContact(p, document.getElementById('contactemail').value);
+      save();
+      const s = document.getElementById('contactsaved'); s.style.display = 'inline-block';
+      setTimeout(() => { if (state.route === 'settings') render(); }, 1100);
+    } catch (e) {
+      err.textContent = e.message; err.style.display = 'block';
+    }
+  };
+  const withdrawC = document.getElementById('withdrawcontact');
+  if (withdrawC) withdrawC.onclick = () => { state.profile = Contact.clearContact(p); save(); render(); };
   document.getElementById('export').onclick = () => {
     const blob = new Blob([Profile.exportProfile(p)], { type: 'application/json' });
     const a = document.createElement('a');
