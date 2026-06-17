@@ -81,6 +81,7 @@ export const TYPE_NUDGE = {
   tradeoff: 'Independence isn’t using AI less — it’s staying awake to which efforts are worth keeping. You just named one.',
   stem: 'Managing a feeling well isn’t suppressing it — it’s choosing the response that actually helps. A skill, not a temperament.',
   comm: 'The effective word is clear and kind at once. Most people manage one; you practiced holding both.',
+  attend: 'Being with someone without fixing them is harder than it sounds — the urge to help pulls you out of presence. You practiced staying.',
   vignette: 'How you’d actually respond — not what you know you should say — is where communication lives. You worked the real thing.',
   sentence: 'What you completed without stopping to think says more than a careful answer would. Self-knowledge starts with noticing it.',
   reflection: 'Naming it honestly is most of the work here. You can’t form what you won’t look at.',

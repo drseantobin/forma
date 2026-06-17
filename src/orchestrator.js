@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -110,6 +110,12 @@ export function chooseExercise(profile, opts = {}) {
     // alternate it with a reflection so it isn't the same item every time.
     if (!recentTypes.includes('stem')) return pickFrom(STEM, seen, rng);
     return pickExercise('emotion_regulation', { seenIds: seen, rng });
+  }
+
+  if (focus === 'presence') {
+    // Relational-presence situational measure, rotated with a presence reflection.
+    if (!recentTypes.includes('attend')) return pickFrom(PRESENCE_SCENES, seen, rng);
+    return pickExercise('presence', { seenIds: seen, rng });
   }
 
   if (focus === 'interior') {

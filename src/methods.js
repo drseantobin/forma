@@ -31,8 +31,8 @@ export const MEASURE_BASIS = {
     detail: 'Rather than measuring how much you use AI, these scenarios probe how deliberately you choose WHICH efforts to keep — the documented risk being skill atrophy when cognitive work is handed over by default rather than by decision.',
   },
   presence: {
-    paradigm: 'Relational-attention reflection',
-    detail: 'The capacity to attend to a person without managing or fixing. Measured through guided reflection on real relational moments — a formation practice, framed for growth, not a personality test.',
+    paradigm: 'Situational judgment of relational attention + reflection',
+    detail: 'The capacity to attend to a person without managing or fixing. Measured by situational items — the most present response to someone’s grief, withdrawal, or excitement — drawing on person-centred listening and the "righting reflex" from Motivational Interviewing, alongside guided reflection. Formation, not a personality test.',
   },
   communication: {
     paradigm: 'Situational judgment + AI-scored open response',

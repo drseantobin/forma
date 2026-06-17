@@ -1331,6 +1331,73 @@ export const COMM = [
   },
 ];
 
+// ----- PRESENCE: relational-presence situational measure -----
+// The presence domain ("being fully with another person — listening without
+// managing, staying without fixing") had only self-report reflection. This gives
+// it a structured measure, completing coverage so every capacity is measured by
+// more than a Likert. Distinct from COMM (communication EFFECTIVENESS) and STEM
+// (managing YOUR OWN emotion): this is pure relational ATTENTION — the inner move
+// of staying with a person rather than managing the moment. Grounded in
+// person-centred listening and the "righting reflex" of Motivational Interviewing
+// (the urge to fix that pulls us out of presence). Exactly one best option (>=80).
+export const PRESENCE_SCENES = [
+  {
+    id: 'presence-diagnosis', type: 'attend', domain: 'presence', title: 'Fully Here',
+    scenario: 'A friend tells you they’ve just been diagnosed with something serious. They’re scared, and they’re looking at you.',
+    prompt: 'What does being truly present look like here?',
+    options: [
+      { id: 'a', text: 'Put down what you’re doing, turn toward them, and let them say as much or as little as they want — “I’m here.”', score: 100, rationale: 'Presence is attention without agenda. They need to be met, not managed — and your steady staying is the actual gift, more than any plan.' },
+      { id: 'b', text: 'Immediately start researching treatments and specialists for them.', score: 45, rationale: 'Well-meant, but jumping to fixing can leave the person alone with the feeling while you go manage the problem. The research can wait an hour; this moment can’t.' },
+      { id: 'c', text: 'Reassure them quickly that it’ll be fine and they’re strong.', score: 35, rationale: 'Reassurance often soothes the comforter’s discomfort more than the person’s fear — and it can quietly close down what they most need to say.' },
+      { id: 'd', text: 'Feel so uncomfortable that you steer toward something lighter.', score: 15, rationale: 'Understandable, but it leaves them alone in the hardest moment. Presence means tolerating your own discomfort so they don’t have to carry theirs alone.' },
+    ],
+  },
+  {
+    id: 'presence-withdrawn', type: 'attend', domain: 'presence', title: 'Fully Here',
+    scenario: 'Your partner comes home quiet and withdrawn after what was clearly a hard day.',
+    prompt: 'What’s the most present response?',
+    options: [
+      { id: 'a', text: 'Make unhurried space — sit near, let them know you’re there, and let them come to it in their own time.', score: 100, rationale: 'Attuned, non-demanding presence: available without pressure. You meet them where they are, not where you wish they were.' },
+      { id: 'b', text: 'Press them with questions until they tell you what’s wrong.', score: 40, rationale: 'Interrogation usually serves your need to know and fix; to someone depleted it can feel like one more demand rather than care.' },
+      { id: 'c', text: 'Give them total space and stay on your phone in the other room.', score: 45, rationale: 'Space can be respect — but here it can read as absence. Presence is being available, not merely out of the way.' },
+      { id: 'd', text: 'Try to cheer them up with jokes and distraction.', score: 30, rationale: 'Deflecting the mood meets them where you’d prefer them to be. Sometimes the kindest thing is to let the heaviness simply be witnessed.' },
+    ],
+  },
+  {
+    id: 'presence-crying', type: 'attend', domain: 'presence', title: 'Fully Here',
+    scenario: 'Mid-conversation, a friend starts to cry.',
+    prompt: 'What’s the most present thing to do?',
+    options: [
+      { id: 'a', text: 'Stay near, let them cry, and offer quiet steadiness — no rush to stop it.', score: 100, rationale: 'Allowing the feeling is presence. Tears that are received rather than hurried tend to move through; your calm staying says “you’re not too much.”' },
+      { id: 'b', text: 'Hurry to make it stop — tissues, “don’t cry, it’s okay.”', score: 40, rationale: 'Stopping the tears often soothes the witness more than the weeper. Letting it move through, with you there, is the deeper comfort.' },
+      { id: 'c', text: 'Fill the silence with a time you went through something similar.', score: 30, rationale: 'Turning toward your own story, even to relate, quietly takes the moment away from them. Presence keeps the floor theirs.' },
+      { id: 'd', text: 'Get visibly awkward and find a reason to step away.', score: 15, rationale: 'It leaves them alone in the exposed moment. Staying — even without words — is the whole thing.' },
+    ],
+  },
+  {
+    id: 'presence-repeat', type: 'attend', domain: 'presence', title: 'Fully Here',
+    scenario: 'An older relative starts telling you a long story you’ve heard several times before.',
+    prompt: 'What’s the most present response?',
+    options: [
+      { id: 'a', text: 'Listen as if it’s the first time — what they need is to be received, not informed.', score: 100, rationale: 'Presence as generosity of attention. They’re telling it to connect, not to convey news; meeting that is a small, real act of love.' },
+      { id: 'b', text: 'Gently remind them they’ve already told you this one.', score: 45, rationale: 'Accurate, but it misses why they’re telling it. The facts aren’t the point — the contact is.' },
+      { id: 'c', text: 'Nod along while scrolling your phone.', score: 25, rationale: 'Split attention is the body language of absence, and people feel it even when the words keep coming.' },
+      { id: 'd', text: 'Cut in to move them along to the point.', score: 30, rationale: 'Efficiency over connection. For this kind of story, hurrying to the point misses that there isn’t one beyond being together.' },
+    ],
+  },
+  {
+    id: 'presence-child', type: 'attend', domain: 'presence', title: 'Fully Here',
+    scenario: 'A child runs up, bursting to show you something that seems trivial to you.',
+    prompt: 'What’s the most present response?',
+    options: [
+      { id: 'a', text: 'Get down to their level and meet their delight on its own terms.', score: 100, rationale: 'Attuning to their world — joining, not condescending. To be genuinely met in their excitement is how a child learns they matter.' },
+      { id: 'b', text: 'Give a distracted “mhm, nice” and keep doing what you were doing.', score: 30, rationale: 'The half-attention children feel acutely. It’s not unkind, but it teaches them their world is an interruption.' },
+      { id: 'c', text: 'Redirect them to something you find more worthwhile.', score: 35, rationale: 'Overriding their world with yours. Presence starts by entering what matters to them, not correcting it.' },
+      { id: 'd', text: 'Praise it quickly so they’ll move along.', score: 45, rationale: 'Warm, but transactional — it moves them off rather than being with them. A few real seconds of joining is worth more than fast praise.' },
+    ],
+  },
+];
+
 // Pick an exercise for a given target domain. Objective domains get their
 // matching family; reflective domains get a reflection prompt. `seen` lets the
 // caller rotate variety (avoid repeating the last exercise).
@@ -1358,9 +1425,11 @@ export function pickExercise(targetDomain, opts = {}) {
       // Keyless communication SJT first (so the AI-Readiness communication pillar
       // isn't self-report only), then reflection.
       return notSeen(COMM.concat(REFLECTIONS.filter((r) => r.domain === targetDomain)));
+    case 'presence':
+      // Relational-presence situational measure first, then reflection.
+      return notSeen(PRESENCE_SCENES.concat(REFLECTIONS.filter((r) => r.domain === targetDomain)));
     case 'persistence':
     case 'ai_autonomy':
-    case 'presence':
     case 'values':
       return notSeen(REFLECTIONS.filter((r) => r.domain === targetDomain));
     case 'interior':
