@@ -21,6 +21,15 @@ export function scoreFocusCheck(medianMs) {
   return rtToAttentionScore(medianMs);
 }
 
+// A reaction time below this is an anticipation, not a genuine response to the
+// stimulus — the person was already moving. Per the Psychomotor Vigilance Task
+// convention, these are excluded so they can't inflate the focus score (a 30ms
+// "reaction" is physiologically impossible; true reaction floors around 150ms).
+export const ANTICIPATION_MS = 100;
+export function isValidReaction(rtMs) {
+  return typeof rtMs === 'number' && Number.isFinite(rtMs) && rtMs >= ANTICIPATION_MS;
+}
+
 export function median(nums) {
   if (!nums || !nums.length) return null;
   const a = [...nums].sort((x, y) => x - y);

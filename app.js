@@ -2232,6 +2232,13 @@ function renderFocusCheck() {
         return;
       }
       const rt = performance.now() - greenAt;
+      if (!Proof.isValidReaction(rt)) {
+        // Anticipation (tapped impossibly fast) — not a genuine reaction. Discard
+        // and redo this round so it can't inflate the score.
+        fcState.tooSoon = true;
+        render();
+        return;
+      }
       fcState.rts.push(rt);
       if (fcState.rts.length >= TRIALS) { fcState.phase = 'done'; }
       render();
