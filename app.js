@@ -2184,8 +2184,8 @@ function renderSnapshot() {
 }
 
 // "The science behind your measures" — makes the rigor legible. Lists each
-// active capacity with the validated paradigm its exercises draw on, framed
-// honestly as adaptation-for-formation, not clinical diagnosis.
+// active capacity with the research-backed paradigm its exercises adapt, framed
+// honestly as adaptation-for-formation, not a validated/clinical instrument.
 function renderMethods() {
   const ids = activeDomainIds(state.profile && state.profile.settings && state.profile.settings.faithTrack);
   const rows = ids.map((id) => {
@@ -2598,7 +2598,7 @@ function renderSettings() {
       <div class="card">
         <div class="row"><span style="font-size:1.3rem;">🔬</span>
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">The science behind your measures</h2>
-            <p class="muted small" style="margin:2px 0 0;">The validated paradigm each capacity draws on — measurement you can see the basis of.</p></div>
+            <p class="muted small" style="margin:2px 0 0;">The research-backed paradigm each capacity’s exercises adapt — measurement you can see the basis of.</p></div>
           <button class="btn ghost sm" id="tomethods" style="width:auto;">View →</button>
         </div>
       </div>
