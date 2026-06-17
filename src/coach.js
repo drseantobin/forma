@@ -395,6 +395,17 @@ export function offlineCoachReply(userText, profile) {
     }
   }
 
+  // 2b) "I don't know" / can't-think — the #1 stall in solution-focused work.
+  // Must be caught BEFORE the struggle branch (which would re-ask an exception
+  // question — the very thing they just couldn't answer — reading as not
+  // listening) and before open-goals/default. Shrink the scale to something they
+  // CAN answer rather than re-asking the unanswerable.
+  if (/\b(i (do ?n['’]?t|do not) know|dunno|not sure|no idea|idk|can['’]?t think|hard to say|beats me)\b/.test(t)) {
+    return `That's a fair answer — "I don't know" usually means the question's too big, not that there's nothing there. `
+      + `So let's shrink it: think of the single least-bad hour you've had with this lately. What were you doing in that hour — even something small or ordinary? `
+      + `That's the thread we pull on, not willpower.`;
+  }
+
   // 3) Struggle / hard feelings → validate, then an exception question (SFBT).
   if (/\b(struggl|stuck|hard|can'?t|cannot|difficult|frustrat|overwhelm|tired|exhaust|fail|behind|stress|anx|angry|anger|\bsad\b|lonely|afraid|scared|worried|hopeless)\w*/.test(t)) {
     return `That sounds genuinely hard, and I'm glad you said it plainly. A solution-focused place to start: think of a recent day this was even a little easier — even 10%. `
