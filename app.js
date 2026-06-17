@@ -16,6 +16,7 @@ import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import { bandAscension, ascensionLine, streakMilestone } from './src/milestones.js';
 import { confidenceTag, confidence, milestoneEligible } from './src/reliability.js';
+import { basisFor } from './src/methods.js';
 import * as Orchestrator from './src/orchestrator.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
@@ -176,6 +177,7 @@ function render() {
     case 'progress': return renderProgress();
     case 'plan': return renderPlan();
     case 'team': return renderTeam();
+    case 'methods': return renderMethods();
     case 'proof': return renderProof();
     case 'focuscheck': return renderFocusCheck();
     case 'coach': return renderCoach();
@@ -1873,6 +1875,34 @@ function renderPlan() {
 }
 
 // ---------------- employer / team dashboard (preview) ----------------
+// "The science behind your measures" — makes the rigor legible. Lists each
+// active capacity with the validated paradigm its exercises draw on, framed
+// honestly as adaptation-for-formation, not clinical diagnosis.
+function renderMethods() {
+  const ids = activeDomainIds(state.profile && state.profile.settings && state.profile.settings.faithTrack);
+  const rows = ids.map((id) => {
+    const d = getDomain(id); const b = basisFor(id);
+    if (!d || !b) return '';
+    return `<div class="card" style="margin-bottom:10px;">
+      <div class="row"><span class="ico" aria-hidden="true">${d.icon}</span>
+        <strong style="margin-left:8px;">${esc(d.name)}</strong></div>
+      <div class="eyebrow" style="margin-top:8px;">${esc(b.paradigm)}</div>
+      <p class="muted small" style="margin-top:6px;">${esc(b.detail)}</p>
+    </div>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="fade-in">
+      <div class="row"><h1 style="margin:0;">The science behind your measures</h1><span class="spacer"></span>
+        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>
+      <div class="card" style="background:linear-gradient(180deg,#fff,#fbfaf7); border-left:4px solid var(--accent);">
+        <p class="muted small" style="margin:0;">Forma’s exercises adapt established cognitive and psychological paradigms — the same families of task used in research on attention, memory, reasoning, and emotional skill. They’re tuned to track <strong>growth over time</strong>, as formation, not to diagnose or label. The point is a measurement you can trust because you can see what it rests on.</p>
+      </div>
+      ${rows}
+      <p class="muted small center" style="margin-top:6px;">Measurement for formation — never a clinical diagnosis.</p>
+    </div>`;
+  document.getElementById('back').onclick = () => go('settings');
+}
+
 function renderTeam() {
   const cohort = Team.sampleCohort(8);
   const agg = Team.aggregate(cohort);
@@ -2222,6 +2252,14 @@ function renderSettings() {
       </div>
 
       <div class="card">
+        <div class="row"><span style="font-size:1.3rem;">🔬</span>
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">The science behind your measures</h2>
+            <p class="muted small" style="margin:2px 0 0;">The validated paradigm each capacity draws on — measurement you can see the basis of.</p></div>
+          <button class="btn ghost sm" id="tomethods" style="width:auto;">View →</button>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="row"><span style="font-size:1.3rem;">🏢</span>
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">For employers</h2>
             <p class="muted small" style="margin:2px 0 0;">A preview of the team dashboard — aggregated development signals, never individual raw data.</p></div>
@@ -2246,6 +2284,7 @@ function renderSettings() {
 
   document.getElementById('name').onchange = (e) => { p.settings.name = e.target.value.trim(); save(); };
   const tt = document.getElementById('toteam'); if (tt) tt.onclick = () => go('team');
+  const tm = document.getElementById('tomethods'); if (tm) tm.onclick = () => go('methods');
   document.getElementById('faith').onclick = () => {
     state.profile = p.settings.faithTrack ? Profile.disableFaithTrack(p) : Profile.enableFaithTrack(p);
     // Regenerate the plan so the change takes effect immediately.
