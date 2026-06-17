@@ -2458,6 +2458,7 @@ function renderSettings() {
           <button class="btn ghost sm" id="import">Import / restore from a backup</button>
           <input type="file" id="importfile" accept="application/json,.json" style="display:none;">
           <span class="muted small" id="importmsg" style="display:none;"></span>
+          ${(p.coachLog || []).length ? `<button class="btn ghost sm" id="clearcoach">Clear coach conversations</button>` : ''}
           <button class="btn danger sm" id="reset">Erase everything & start over</button>
         </div>
       </div>
@@ -2541,6 +2542,14 @@ function renderSettings() {
       msg.textContent = '✗ Couldn’t read that file.';
     };
     reader.readAsText(file);
+  };
+  const clearCoach = document.getElementById('clearcoach');
+  if (clearCoach) clearCoach.onclick = () => {
+    if (confirm('Clear your coach conversation history? Your scores, sessions, and goals are kept — only the chat is erased. This can’t be undone.')) {
+      state.profile = Profile.clearCoachLog(p);
+      save();
+      render();
+    }
   };
   document.getElementById('reset').onclick = () => {
     if (confirm('Erase all Forma data on this device and start over? This cannot be undone.')) {

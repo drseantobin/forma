@@ -191,6 +191,14 @@ export function toggleGoal(profile, goalId) {
   return p;
 }
 
+// Granular privacy control: wipe the coach conversation (the most sensitive data)
+// without touching the formation record — scores, sessions, goals all survive.
+export function clearCoachLog(profile) {
+  const p = clone(profile);
+  p.coachLog = [];
+  return p;
+}
+
 export function recentSeenIds(profile, n = 4) {
   return (profile.sessions || []).slice(-n).map((s) => s.exerciseId);
 }
