@@ -12,6 +12,14 @@
   --green: #3d8b6e;
   --green-soft: #e2f0ea;
   --red: #d2706b;
+  /* Accessible TEXT shades for colored text on the soft tinted pills/chips.
+     The base hues above stay for borders/dots/fills; these darker inks clear
+     WCAG AA 4.5:1 for the small bold labels that sit on the *-soft backgrounds.
+     amber-ink #8a5e12 on amber-soft ≈ 4.96:1 · green-ink #2f6b54 on green-soft
+     ≈ 5.3:1 · red-ink #a83833 on the down-pill #f9e7e6 ≈ 5.37:1. */
+  --amber-ink: #8a5e12;
+  --green-ink: #2f6b54;
+  --red-ink: #a83833;
   --shadow: 0 1px 2px rgba(27,28,40,.06), 0 8px 24px rgba(27,28,40,.06);
   --shadow-lg: 0 4px 12px rgba(27,28,40,.08), 0 24px 48px rgba(27,28,40,.10);
   --radius: 18px;
@@ -127,7 +135,7 @@ button { font-family: inherit; cursor: pointer; }
 .index-num { font-size: 3.4rem; font-weight: 800; letter-spacing:-.02em; line-height:1; }
 .index-label { color: var(--ink-faint); font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; }
 .streakchip {
-  display:inline-flex; align-items:center; gap:6px; background: var(--amber-soft); color:#9a6a16;
+  display:inline-flex; align-items:center; gap:6px; background: var(--amber-soft); color:var(--amber-ink);
   border-radius:999px; padding:6px 14px; font-weight:700; font-size:.9rem; margin-top:10px;
 }
 .streakchip.cold { background: var(--line); color: var(--ink-faint); }
@@ -162,14 +170,14 @@ button { font-family: inherit; cursor: pointer; }
 .chiprow { display:flex; flex-wrap:wrap; gap:8px; }
 .chip { border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:8px 14px; font-weight:600; }
 .chip.used { opacity:.4; }
-.chip.sel { border-color: var(--amber); background: var(--amber-soft); color:#9a6a16; }
+.chip.sel { border-color: var(--amber); background: var(--amber-soft); color:var(--amber-ink); }
 .slot-row { display:flex; flex-wrap:wrap; gap:8px; min-height:46px; padding:8px; border:1.5px dashed var(--line); border-radius:12px; margin-bottom:12px; }
-.slot { background: var(--green-soft); color: var(--green); border-radius:999px; padding:8px 14px; font-weight:700; }
+.slot { background: var(--green-soft); color: var(--green-ink); border-radius:999px; padding:8px 14px; font-weight:700; }
 .rationale { font-size:.92rem; color: var(--ink-soft); margin-top:10px; padding:12px 14px; background:#fcfbf8; border-radius:12px; border:1px solid var(--line); }
 .reflect-area { width:100%; min-height:120px; border:1.5px solid var(--line); border-radius: var(--radius-sm); padding:14px; font-family:inherit; font-size:1rem; resize:vertical; }
 .rating { display:flex; gap:8px; margin:14px 0; }
 .rating button { flex:1; border:1.5px solid var(--line); background:#fff; border-radius:12px; padding:12px 0; font-weight:700; font-size:1.1rem; }
-.rating button.on { border-color: var(--amber); background: var(--amber-soft); color:#9a6a16; }
+.rating button.on { border-color: var(--amber); background: var(--amber-soft); color:var(--amber-ink); }
 .score-reveal { text-align:center; padding: 14px 0; }
 .score-reveal .big { font-size:3rem; font-weight:800; }
 .score-reveal .lbl { color: var(--ink-faint); }
@@ -254,8 +262,8 @@ button { font-family: inherit; cursor: pointer; }
   white-space:nowrap; cursor: help;
 }
 .trendpill { font-size:.78rem; font-weight:700; padding:2px 8px; border-radius:999px; }
-.trendpill.up { background: var(--green-soft); color: var(--green); }
-.trendpill.down { background: #f9e7e6; color: var(--red); }
+.trendpill.up { background: var(--green-soft); color: var(--green-ink); }
+.trendpill.down { background: #f9e7e6; color: var(--red-ink); }
 .trendpill.flat { background: var(--line); color: var(--ink-faint); }
 
 /* ---------- settings ---------- */
