@@ -1434,8 +1434,8 @@ export const STEM = [
     prompt: 'What’s the most effective way for her to handle the disappointment?',
     options: [
       { id: 'a', text: 'Let herself actually feel it, and talk it through with someone she trusts.', score: 100, rationale: 'Acceptance plus adaptive support: she neither denies the feeling nor drowns in it, and naming it to a trusted person is one of the best-supported ways to metabolize a loss.' },
-      { id: 'b', text: 'Pour herself into constant busyness so she never has to sit with it.', score: 45, rationale: 'Distraction can take the edge off, but an unfelt disappointment waits. Staying busy isn’t the same as moving through it.' },
-      { id: 'c', text: 'Tell herself it didn’t matter and she never really wanted it.', score: 35, rationale: 'Minimizing protects you for an hour but invalidates a real desire — and it blocks the honest reflection that would help her aim at the next one.' },
+      { id: 'b', text: 'Pour herself into constant busyness so she never has to sit with it.', score: 35, rationale: 'Sustained busyness built to avoid the feeling is experiential avoidance — the disappointment waits, unmetabolized, and the strategy itself keeps her from ever moving through it.' },
+      { id: 'c', text: 'Tell herself it didn’t matter and she never really wanted it.', score: 40, rationale: 'Minimizing protects you for an hour and invalidates a real desire — but a single dismissive thought is more recoverable than a whole life arranged to never feel the loss.' },
       { id: 'd', text: 'Decide this means she isn’t good enough and probably won’t get the next one either.', score: 15, rationale: 'Turning one outcome into a verdict about yourself is overgeneralizing — it amplifies the pain and distorts the odds. One “no” is data about one decision, not about you.' },
     ],
   },
