@@ -128,10 +128,24 @@ export function rtToAttentionScore(ms) {
 // trials: [{rt:number} | {rt:null,miss:true} | {falseStart:true}]. Faster median
 // reaction = sharper attention; lapses (slow RTs), misses, and pressing early all
 // cost. This is a genuine performance measure, not self-report.
+// A reaction time below this is an anticipation, not a genuine response to the
+// stimulus — the person was already moving. Per the Psychomotor Vigilance Task
+// convention these are excluded (and treated as false starts) so a lucky early
+// guess can't inflate an attention score. Shared by the live vigilance test and
+// the Focus Check (proof.js re-exports it).
+export const ANTICIPATION_MS = 100;
+export function isValidReaction(rtMs) {
+  return typeof rtMs === 'number' && Number.isFinite(rtMs) && rtMs >= ANTICIPATION_MS;
+}
+
 export function scoreVigilance(trials) {
   if (!trials || !trials.length) return 0;
-  const valid = trials.filter((t) => typeof t.rt === 'number' && !t.falseStart);
-  const falseStarts = trials.filter((t) => t.falseStart).length;
+  // A tap faster than the anticipation floor isn't a real reaction — it's a guess
+  // that happened to land after the stimulus. Exclude it from the median AND
+  // count it as a false start, exactly like jumping the gun before the stimulus.
+  const anticipations = trials.filter((t) => typeof t.rt === 'number' && !t.falseStart && t.rt < ANTICIPATION_MS).length;
+  const valid = trials.filter((t) => typeof t.rt === 'number' && !t.falseStart && t.rt >= ANTICIPATION_MS);
+  const falseStarts = trials.filter((t) => t.falseStart).length + anticipations;
   const misses = trials.filter((t) => t.miss).length;
   if (!valid.length) return clamp(8 - falseStarts * 2 - misses);
   const rts = valid.map((t) => t.rt).sort((a, b) => a - b);

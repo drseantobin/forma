@@ -11,7 +11,7 @@
 // "Focus Check" — into honest, growth-framed progress metrics. Pure functions;
 // no side effects. Everything is framed as evidence-for-yourself, never a verdict.
 
-import { clamp, round, rtToAttentionScore } from './scoring.js';
+import { clamp, round, rtToAttentionScore, ANTICIPATION_MS, isValidReaction } from './scoring.js';
 import { domainTrend, daysBetween, todayStr } from './progress.js';
 
 // Map a median reaction time (ms) from the Focus Check to a 0–100 score, using
@@ -21,14 +21,10 @@ export function scoreFocusCheck(medianMs) {
   return rtToAttentionScore(medianMs);
 }
 
-// A reaction time below this is an anticipation, not a genuine response to the
-// stimulus — the person was already moving. Per the Psychomotor Vigilance Task
-// convention, these are excluded so they can't inflate the focus score (a 30ms
-// "reaction" is physiologically impossible; true reaction floors around 150ms).
-export const ANTICIPATION_MS = 100;
-export function isValidReaction(rtMs) {
-  return typeof rtMs === 'number' && Number.isFinite(rtMs) && rtMs >= ANTICIPATION_MS;
-}
+// Anticipation handling lives in scoring.js (shared with the live vigilance
+// test); re-exported here so the Focus Check UI and tests keep importing it
+// from proof.js.
+export { ANTICIPATION_MS, isValidReaction };
 
 export function median(nums) {
   if (!nums || !nums.length) return null;
