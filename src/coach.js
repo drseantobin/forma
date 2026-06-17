@@ -288,16 +288,82 @@ export async function coachReply(userText, profile) {
   }
 }
 
-// A useful-but-honest fallback when there's no API key. It points the person at
-// their own real data rather than pretending to be a conversational AI.
-function offlineCoachReply(userText, profile) {
+// Keyword → domain matching, so the offline coach can tell which capacity a
+// person is actually talking about. Emotionally-loaded words (anxious, angry…)
+// are deliberately NOT here — those route to the empathic struggle branch, not a
+// score readout.
+const DOMAIN_SYNONYMS = {
+  attention: ['attention', 'focus', 'distract', 'concentrat'],
+  memory: ['memory', 'remember', 'forget', 'recall'],
+  reading: ['reading', 'comprehen', 'deep read'],
+  persistence: ['persistence', 'persever', 'frustration tolerance', 'giving up'],
+  judgment: ['judgment', 'judgement', 'reasoning', 'decision', 'deciding', 'think clearly'],
+  ai_autonomy: ['ai independence', 'autonomy', 'automation', 'dependence', 'crutch', 'rely on ai'],
+  presence: ['presence', 'being present', 'listening', 'relationship'],
+  communication: ['communication', 'communicat', 'conversation', 'conflict', 'feedback'],
+  emotion_regulation: ['emotion regulation', 'regulat', 'my emotions', 'mood'],
+  values: ['values', 'meaning', 'purpose', 'self-knowledge', 'identity'],
+  interior: ['interior', 'spiritual', 'prayer', 'contemplat', 'silence', 'the soul'],
+};
+
+function domainFromText(t) {
+  return DOMAINS.find((d) => {
+    if (t.includes(d.name.toLowerCase())) return true;
+    return (DOMAIN_SYNONYMS[d.id] || []).some((w) => t.includes(w));
+  }) || null;
+}
+
+function lowestScoredDomain(scores) {
+  const ids = Object.keys(scores);
+  if (!ids.length) return null;
+  return ids.sort((a, b) => scores[a] - scores[b])[0];
+}
+
+// A useful-but-honest fallback when there's no API key. Unlike a canned dump, it
+// actually RESPONDS to what the person said — reflecting, then asking the kind of
+// question a solution-focused coach would, anchored in their own data. It never
+// pretends to be the live AI; a key deepens it, but this still earns the chat.
+export function offlineCoachReply(userText, profile) {
+  const t = (userText || '').toLowerCase();
+  const scores = (profile && profile.domainScores) || {};
+
+  // 1) They named a capacity → their real standing + a solution-focused opener.
+  const named = domainFromText(t);
+  if (named && scores[named.id] != null) {
+    const band = bandFor(scores[named.id]);
+    const low = named.name.toLowerCase();
+    return `${named.name} is sitting at ${scores[named.id]} right now — ${band.label.toLowerCase()}. `
+      + `Here's the more useful question than the number: when has your ${low} gone *better* than usual, even a little? `
+      + `What was different about that day — what were you already doing that helped? We build from that, not from willpower.`;
+  }
+
+  // 2) "What should I work on?" → the most room to grow, but their choice leads.
+  if (/\b(work on|where (do|should) i (start|begin)|where to start|focus on|what next|what should i)\b/.test(t)) {
+    const lowest = lowestScoredDomain(scores);
+    if (lowest) {
+      return `On the numbers, ${domainName(lowest)} has the most room right now. But the better question is which one you actually *want* to grow — formation sticks when it's yours to choose, not assigned. Which one pulls at you, and what's one small step you could take this week?`;
+    }
+  }
+
+  // 3) Struggle / hard feelings → validate, then an exception question (SFBT).
+  if (/\b(struggl|stuck|hard|can'?t|cannot|difficult|frustrat|overwhelm|tired|exhaust|fail|behind|stress|anx|angry|anger|\bsad\b|lonely|afraid|scared|worried|hopeless)\w*/.test(t)) {
+    return `That sounds genuinely hard, and I'm glad you said it plainly. A solution-focused place to start: think of a recent day this was even a little easier — even 10%. `
+      + `What were you doing differently then, or what was different around you? That small exception is more useful to build on than any amount of pushing harder.`;
+  }
+
+  // 4) A win → amplify it and ask how to repeat it.
+  if (/\b(better|good|great|proud|did it|progress|improv|won|breakthrough|easier|clicked|finally)\w*/.test(t)) {
+    return `That's worth pausing on — name it before it slips past. What made it possible? `
+      + `If you wanted one more day like that this week, what's the smallest thing you'd repeat on purpose?`;
+  }
+
+  // 5) Default → reflect, ask one solution-focused question, ground in real data.
   const patterns = weeklyPatterns(profile);
-  const intro =
-    'Live AI coaching turns on once you add your own Claude API key in Settings. In the meantime, here is what Forma can already see in your own data:';
-  const body = patterns.map((p) => `• ${p}`).join('\n');
-  const close =
-    'When you add a key, I can talk this through with you properly — reading your full history and responding to exactly what you ask.';
-  return `${intro}\n\n${body}\n\n${close}`;
+  const one = patterns && patterns.length ? patterns[0] : null;
+  return `I'm here — tell me a bit more about what's on your mind. `
+    + `And a solution-focused place to begin: when did this last go even slightly the way you'd want it to?`
+    + (one ? `\n\nOne thing Forma already notices in your data: ${one}` : '')
+    + `\n\n(Add your own Claude API key in Settings and I can talk this through live — reading your full history.)`;
 }
 
 // --- Vignette scoring (the AI-scored communication/EI exercise) ---
