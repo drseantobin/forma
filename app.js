@@ -389,6 +389,9 @@ function startConversation() {
 
 function renderConversationalOnboarding() {
   const d = state.diag;
+  // Persist the interview so an interruption resumes it (parity with the
+  // quick-check resume); only the transcript + ready flag, not transient busy.
+  Profile.saveOnboard({ mode: 'conversation', diag: { messages: d.messages, ready: d.ready } });
   const turns = d.messages.filter((m) => m.role === 'user').length;
   const canBuild = d.ready || turns >= Diagnostic.MAX_DIAGNOSTIC_TURNS;
   app.innerHTML = `
@@ -486,6 +489,7 @@ async function finishConversation() {
     if (state.profile.baseline.domainScores.interior == null) state.profile.baseline.domainScores.interior = 50;
   }
   state.onboard.mode = null;
+  Profile.clearOnboard(); // interview committed — no resume state to keep
   save();
   renderBaselineResult();
 }
@@ -2613,8 +2617,14 @@ if (state.profile && state.profile.baseline) {
 } else {
   const _saved = Profile.loadOnboard();
   if (_saved) {
-    if (_saved.responses) state.onboard.responses = _saved.responses;
-    if (typeof _saved.step === 'number') state.onboard.step = _saved.step;
+    if (_saved.mode === 'conversation' && _saved.diag) {
+      // Resume the AI-interview onboarding where it left off.
+      state.onboard.mode = 'conversation';
+      state.diag = { messages: _saved.diag.messages || [], ready: !!_saved.diag.ready, busy: false, error: '' };
+    } else {
+      if (_saved.responses) state.onboard.responses = _saved.responses;
+      if (typeof _saved.step === 'number') state.onboard.step = _saved.step;
+    }
   }
 }
 
