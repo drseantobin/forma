@@ -24,6 +24,7 @@ import * as Contact from './src/contact.js';
 import * as Release from './src/release.js';
 import { PROVIDERS, providerFor, defaultModelFor } from './src/llm.js';
 import { summarizeResearch, domainStability } from './src/analytics.js';
+import { OVERCLAIM_BANK, overclaimPooled, selfEnhancementReading } from './src/overclaiming.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
@@ -204,6 +205,7 @@ function render() {
     case 'snapshot': return renderSnapshot();
     case 'proof': return renderProof();
     case 'focuscheck': return renderFocusCheck();
+    case 'epistemiccheck': return renderEpistemicCheck();
     case 'coach': return renderCoach();
     case 'settings': return renderSettings();
     default: return renderHome();
@@ -3001,6 +3003,64 @@ function proofFocusCard(focus, daysElapsed) {
 }
 
 // ---------------- focus check (distraction-recovery micro-test) ----------------
+// Over-Claiming "epistemic check" (src/overclaiming.js) — a self-contained mirror for the
+// universal habit of nodding along to things we half-recognize. Tick what you recognize from a
+// shuffled list where ~25% are made up; the made-up items are disclosed afterward and a gentle,
+// numberless, directional reading is offered. Deliberately NOT gamified: no score, no streak, no
+// right/wrong colors, no retake-to-beat, no capture — transparency at the meta level (v175).
+function renderEpistemicCheck() {
+  if (!state.epistemic) {
+    const pool = [];
+    Object.keys(OVERCLAIM_BANK).forEach((k) => {
+      OVERCLAIM_BANK[k].real.forEach((t) => pool.push({ t, foil: false }));
+      OVERCLAIM_BANK[k].foil.forEach((t) => pool.push({ t, foil: true }));
+    });
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp; }
+    state.epistemic = { items: pool, selected: new Set(), revealed: false };
+  }
+  const e = state.epistemic;
+
+  if (!e.revealed) {
+    app.innerHTML = `
+    <div class="fade-in">
+      <div class="row"><h1 style="margin:0;">Epistemic check</h1><span class="spacer"></span>
+        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>
+      <p class="muted">Tick the ones you genuinely recognize — no pressure to tick many.</p>
+      <div class="likert-opts">
+        ${e.items.map((it, i) => `<button class="opt ${e.selected.has(it.t) ? 'selected' : ''}" data-i="${i}" aria-pressed="${e.selected.has(it.t)}">${esc(it.t)}</button>`).join('')}
+      </div>
+      <button class="btn" id="ecdone" style="margin-top:14px;">See what these were →</button>
+    </div>`;
+    document.getElementById('back').onclick = () => { state.epistemic = null; go('settings'); };
+    app.querySelectorAll('.opt[data-i]').forEach((b) => {
+      b.onclick = () => { const it = e.items[Number(b.dataset.i)]; if (e.selected.has(it.t)) e.selected.delete(it.t); else e.selected.add(it.t); render(); };
+    });
+    document.getElementById('ecdone').onclick = () => { e.revealed = true; render(); };
+    return;
+  }
+
+  // Reveal: name the made-up items neutrally (let people locate themselves — no per-item
+  // red ✗), then a numberless directional reading. No bias-c / d′ on screen by design.
+  const reading = selfEnhancementReading(overclaimPooled(e.selected).biasC);
+  const foils = e.items.filter((it) => it.foil);
+  app.innerHTML = `
+    <div class="fade-in">
+      <h1 tabindex="-1" id="echead">Epistemic check</h1>
+      <p>About a quarter of these don’t exist. That’s on purpose — and it’s not a trick on you. It’s one of the few honest mirrors for a habit we all share: nodding along to things we half-recognize.</p>
+      <div class="card">
+        <h2 style="font-size:1.05rem;">Here are the ones we made up.</h2>
+        <table class="snaptable"><tbody>${foils.map((f) => `<tr><td>${esc(f.t)}</td><td class="muted small" style="text-align:right;">made up</td></tr>`).join('')}</tbody></table>
+      </div>
+      <p class="eyebrow" style="margin-top:14px;">A gentle read — not a verdict</p>
+      <div class="insight">${esc(reading.note)}</div>
+      <p class="muted small" style="margin-top:10px;">There’s no good or bad score here. Noticing the gap between recognizing and knowing is the whole exercise.</p>
+      <button class="btn ghost" id="ecdone2" style="margin-top:8px;">Done</button>
+    </div>`;
+  const h = document.getElementById('echead'); if (h) h.focus();
+  announce('Here is what these were, and a gentle read.');
+  document.getElementById('ecdone2').onclick = () => { state.epistemic = null; go('settings'); };
+}
+
 function renderFocusCheck() {
   const TRIALS = 5;
   const fcState = state._focus || (state._focus = { phase: 'intro', rts: [], waiting: false, tooSoon: false });
@@ -3275,6 +3335,14 @@ function renderSettings() {
       </div>
 
       <div class="card">
+        <div class="row"><span style="font-size:1.3rem;">🪞</span>
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Epistemic check</h2>
+            <p class="muted small" style="margin:2px 0 0;">A two-minute mirror for a habit we all share — recognizing things we don’t actually know. Some items are made up on purpose.</p></div>
+          <button class="btn ghost sm" id="toepistemic" style="width:auto;">Begin →</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
         <p class="muted small">Everything Forma stores about you lives on this device — no server, no account, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
         <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to the AI provider you picked, using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
@@ -3359,6 +3427,7 @@ function renderSettings() {
   document.getElementById('name').onchange = (e) => { p.settings.name = e.target.value.trim(); save(); };
   const tt = document.getElementById('toteam'); if (tt) tt.onclick = () => go('team');
   const tm = document.getElementById('tomethods'); if (tm) tm.onclick = () => go('methods');
+  const tec = document.getElementById('toepistemic'); if (tec) tec.onclick = () => { state.epistemic = null; go('epistemiccheck'); };
   document.getElementById('faith').onclick = () => {
     state.profile = p.settings.faithTrack ? Profile.disableFaithTrack(p) : Profile.enableFaithTrack(p);
     // Regenerate the plan so the change takes effect immediately.
