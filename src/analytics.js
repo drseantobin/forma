@@ -57,6 +57,93 @@ export const STABILITY_MIN_SESSIONS = 4;
 // PURE. Caller must honor two honesty rules in the UI: (1) consistency is not growth
 // and can mean task-familiarity; (2) stability on a FROZEN/keyed-exhausted bank is
 // recall, not reliability — label it so (see snapshot.js precedent).
+// ============================================================================
+// BUILDER-ONLY psychometrics over the POOLED, de-identified research records.
+// These compute the reliability/validity numbers that make Forma's measures DEMONSTRABLE — but only
+// once enough consented data has pooled (on the server, later). Every stat is GATED: suppressed below a
+// defensible N, so a number is never shown off too few people. NOT user-facing — for the builder and the
+// eventual validity white paper. A "record" is one de-identified event the server has joined to its
+// install: { installId, domain, item, score (0-100), measured, day }. Pure, no DOM. (Approach per the
+// construct-validity review: item difficulty, corrected item-total discrimination, test-retest on
+// repeated measures; per-item stats suppressed below ~30 independent installs.)
+// ============================================================================
+export const ITEM_MIN_N = 30;        // independent installs before a per-item stat is trustworthy
+export const RETEST_MIN_PAIRS = 50;  // person-pairs before a test-retest r is trustworthy
+const _avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+const _round2 = (x) => (x == null ? null : Math.round(x * 100) / 100);
+function _clean(records) {
+  return (Array.isArray(records) ? records : []).filter((r) => r && r.measured && typeof r.score === 'number' && r.item != null && r.domain != null && r.installId != null);
+}
+function _pearson(xs, ys) {
+  const n = xs.length;
+  if (n < 2) return null;
+  let sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (let i = 0; i < n; i++) { sx += xs[i]; sy += ys[i]; sxx += xs[i] * xs[i]; syy += ys[i] * ys[i]; sxy += xs[i] * ys[i]; }
+  const cov = sxy - (sx * sy) / n, vx = sxx - (sx * sx) / n, vy = syy - (sy * sy) / n;
+  if (vx <= 0 || vy <= 0) return null;
+  return cov / Math.sqrt(vx * vy);
+}
+
+// Item DIFFICULTY: per keyed item, how hard it is (mean score; lower = harder). Suppressed below minN.
+export function itemDifficulty(records, minN = ITEM_MIN_N) {
+  const byItem = {};
+  for (const r of _clean(records)) { (byItem[r.item] || (byItem[r.item] = { domain: r.domain, scores: [] })).scores.push(r.score); }
+  return Object.keys(byItem).map((item) => {
+    const g = byItem[item], n = g.scores.length;
+    return { item, domain: g.domain, n, meanScore: Math.round(_avg(g.scores)), suppressed: n < minN };
+  }).sort((a, b) => a.meanScore - b.meanScore);
+}
+
+// Item DISCRIMINATION: corrected item-total correlation within the item's domain — does doing well on
+// THIS item track doing well on the domain's OTHER items? Per person, pair their item score with the
+// mean of their other items in that domain; Pearson across persons. Suppressed below minN persons.
+export function itemDiscrimination(records, minN = ITEM_MIN_N) {
+  const recs = _clean(records);
+  const P = {}, itemDom = {};
+  for (const r of recs) {
+    const dom = ((P[r.installId] || (P[r.installId] = {}))[r.domain] || (P[r.installId][r.domain] = {}));
+    (dom[r.item] || (dom[r.item] = [])).push(r.score);
+    itemDom[r.item] = r.domain;
+  }
+  return Object.keys(itemDom).map((item) => {
+    const domain = itemDom[item];
+    const xs = [], ys = [];
+    for (const inst of Object.keys(P)) {
+      const dom = P[inst][domain];
+      if (!dom || dom[item] == null) continue;
+      const others = Object.keys(dom).filter((it) => it !== item);
+      if (!others.length) continue;
+      xs.push(_avg(dom[item]));
+      ys.push(_avg(others.map((it) => _avg(dom[it]))));
+    }
+    const n = xs.length;
+    return { item, domain, n, discrimination: n >= minN ? _round2(_pearson(xs, ys)) : null, suppressed: n < minN };
+  }).sort((a, b) => (b.discrimination == null ? -2 : b.discrimination) - (a.discrimination == null ? -2 : a.discrimination));
+}
+
+// TEST-RETEST: per domain, stability of a person's EARLIEST vs LATEST score; Pearson across persons
+// with >=2 timepoints. Suppressed below minPairs. Pass GENERATED-task records (n-back/flanker/span/etc.)
+// for a clean retest — keyed banks are confounded by exhaustion, so they must not be pooled in here.
+export function testRetest(records, minPairs = RETEST_MIN_PAIRS) {
+  const P = {};
+  for (const r of _clean(records).filter((r) => r.day)) {
+    ((P[r.installId] || (P[r.installId] = {}))[r.domain] || (P[r.installId][r.domain] = [])).push({ day: r.day, score: r.score });
+  }
+  const domains = {};
+  for (const inst of Object.keys(P)) {
+    for (const domain of Object.keys(P[inst])) {
+      const seq = P[inst][domain].slice().sort((a, b) => (a.day < b.day ? -1 : (a.day > b.day ? 1 : 0)));
+      if (seq.length < 2) continue;
+      const d = (domains[domain] || (domains[domain] = { xs: [], ys: [] }));
+      d.xs.push(seq[0].score); d.ys.push(seq[seq.length - 1].score);
+    }
+  }
+  return Object.keys(domains).map((domain) => {
+    const d = domains[domain], nPairs = d.xs.length;
+    return { domain, nPairs, retest: nPairs >= minPairs ? _round2(_pearson(d.xs, d.ys)) : null, suppressed: nPairs < minPairs };
+  });
+}
+
 export function domainStability(events, domainId) {
   const list = Array.isArray(events) ? events : [];
   const xs = [];
