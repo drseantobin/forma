@@ -17,6 +17,7 @@ import * as Planner from './src/planner.js';
 import { bandAscension, ascensionLine, streakMilestone, nextStreakMark } from './src/milestones.js';
 import { confidenceTag, confidence, milestoneEligible, indexConfidence, scaleFreshness } from './src/reliability.js';
 import { basisFor, INSTRUMENT_BASIS } from './src/methods.js';
+import { CONSTRUCTS } from './src/constructs.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
 import * as Research from './src/research.js';
@@ -2861,6 +2862,17 @@ function renderMethods() {
       <div class="card" style="background:linear-gradient(180deg,#fff,#fbfaf7); border-left:4px solid var(--accent);">
         <p class="muted small" style="margin:0;">Forma’s exercises adapt established cognitive and psychological paradigms — the same families of task used in research on attention, memory, reasoning, and emotional skill. They’re tuned to track <strong>growth over time</strong>, as formation, not to diagnose or label. The point is a measurement you can trust because you can see what it rests on.</p>
       </div>
+
+      <h2 style="font-size:1.05rem; margin:16px 0 8px;">The capacities, and why these</h2>
+      <p class="muted small" style="margin:0 0 10px;">We group the measures into a few higher-order capacities that AI quietly erodes when we let it do our thinking and relating for us. Each is shown as a <strong>profile of its facets</strong> — never a single validated score, until enough real data earns one.</p>
+      ${CONSTRUCTS.map((c) => `<div class="card" style="margin-bottom:10px;">
+        <div class="row"><strong>${esc(c.name)}</strong>${c.track === 'self-report' ? '<span class="spacer"></span><span class="muted small">self-report · never shown to employers</span>' : ''}</div>
+        <p class="muted small" style="margin:6px 0 0;">${esc(c.definition)}</p>
+        <p class="muted small" style="margin:6px 0 0;"><em>What AI offloads:</em> ${esc(c.atrophy)}</p>
+        <div class="eyebrow" style="margin-top:8px;">${c.facets.map((f) => esc(f.name)).join(' · ')}</div>
+      </div>`).join('')}
+
+      <h2 style="font-size:1.05rem; margin:18px 0 8px;">The paradigm behind each measure</h2>
       ${rows}
       <h2 style="font-size:1.05rem; margin:18px 0 8px;">Self-knowledge instruments</h2>
       <p class="muted small" style="margin:0 0 10px;">Optional checks in Settings, each adapted from an established research paradigm — the same honesty: a mirror you can see the basis of, never a verdict.</p>
