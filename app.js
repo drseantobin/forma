@@ -27,6 +27,7 @@ import { summarizeResearch, domainStability } from './src/analytics.js';
 import { OVERCLAIM_BANK, overclaimPooled, selfEnhancementReading } from './src/overclaiming.js';
 import { CALIBRATION_ITEMS, calibrationScore, calibrationReading, CALIBRATION_CAVEATS } from './src/calibration.js';
 import { breathCountScore, breathCountReading, BREATHCOUNT_CAVEATS } from './src/breathcount.js';
+import { SVT_BANK, svtScore, svtReading, SVT_CAVEATS } from './src/svt.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
@@ -216,6 +217,7 @@ function render() {
     case 'epistemiccheck': return renderEpistemicCheck();
     case 'calibration': return renderCalibration();
     case 'breathcount': return renderBreathCount();
+    case 'svt': return renderSvt();
     case 'coach': return renderCoach();
     case 'settings': return renderSettings();
     default: return renderHome();
@@ -3013,6 +3015,87 @@ function proofFocusCard(focus, daysElapsed) {
 }
 
 // ---------------- focus check (distraction-recovery micro-test) ----------------
+// Sentence Verification (src/svt.js) — deep-reading comprehension. Read a passage; it is REMOVED
+// (verifying from memory IS the paradigm — re-reading would void it); then judge sentences one at a
+// time as same-meaning or not. No per-answer feedback (that would make it a scored quiz); the reveal
+// gives proportion-correct + a gentle say-yes-bias note, never a leaderboard. (v181)
+function renderSvt() {
+  if (!state.svt) {
+    const passages = SVT_BANK.slice();
+    for (let i = passages.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = passages[i]; passages[i] = passages[j]; passages[j] = t; }
+    state.svt = { passages, pi: 0, phase: 'read', items: null, ii: 0, trials: [] };
+  }
+  const s = state.svt;
+  const total = s.passages.reduce((n, p) => n + p.items.length, 0);
+
+  if (s.phase === 'reveal') {
+    const r = svtReading(svtScore(s.trials));
+    app.innerHTML = `
+    <div class="fade-in">
+      <h1 tabindex="-1" id="svthead">Deep reading</h1>
+      <p class="eyebrow" style="margin-top:14px;">A gentle read — not a verdict</p>
+      <div class="insight">${esc(r.note)}</div>
+      <div class="card" style="margin-top:14px;">
+        ${SVT_CAVEATS.map((c) => `<p class="muted small" style="margin:0 0 6px;">${esc(c)}</p>`).join('')}
+      </div>
+      <button class="btn ghost" id="svtdone" style="margin-top:8px;">Done</button>
+    </div>`;
+    const h = document.getElementById('svthead'); if (h) h.focus();
+    announce('Here is your deep-reading read.');
+    document.getElementById('svtdone').onclick = () => go('settings');
+    return;
+  }
+
+  const p = s.passages[s.pi];
+
+  if (s.phase === 'read') {
+    app.innerHTML = `
+    <div class="fade-in">
+      <div class="row"><p class="eyebrow" style="margin:0;">Passage ${s.pi + 1} of ${s.passages.length} · read once, unhurried</p><span class="spacer"></span>
+        <button class="btn ghost sm" id="back" style="width:auto;">← Leave</button></div>
+      <div class="passage" style="line-height:1.8; max-width:62ch; font-size:1.08rem; margin-top:10px;">${esc(p.text)}</div>
+      <p class="muted small">Take the time you need. When you continue, the passage is put away and you’ll answer from memory.</p>
+      <button class="btn" id="svtread">I’ve read it — put it away →</button>
+    </div>`;
+    document.getElementById('back').onclick = () => go('settings');
+    document.getElementById('svtread').onclick = () => {
+      const items = p.items.slice();
+      for (let i = items.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = items[i]; items[i] = items[j]; items[j] = t; }
+      s.items = items; s.ii = 0; s.phase = 'judge'; render();
+      announce('The passage is now hidden. Answer the sentences from memory.');
+    };
+    return;
+  }
+
+  // Judge phase — one sentence at a time, no per-answer right/wrong feedback (would make it a quiz).
+  const item = s.items[s.ii];
+  const done = s.trials.length;
+  app.innerHTML = `
+    <div class="fade-in">
+      <div class="row"><span class="muted small">Sentence ${done + 1} of ${total}</span><span class="spacer"></span>
+        <button class="btn ghost sm" id="back" style="width:auto;">← Leave</button></div>
+      <div class="progress-top"><div style="width:${Math.round(done / total * 100)}%"></div></div>
+      <p class="eyebrow">The passage is now hidden — answer from memory</p>
+      <p class="likert-q" style="margin-top:8px;">${esc(item.text)}</p>
+      <div class="likert-opts">
+        <button class="opt" data-yes="1">This means the same as something I read</button>
+        <button class="opt" data-yes="0">This is different, or wasn’t in the passage</button>
+      </div>
+    </div>`;
+  document.getElementById('back').onclick = () => go('settings');
+  app.querySelectorAll('.opt[data-yes]').forEach((b) => {
+    b.onclick = () => {
+      s.trials.push({ same: item.same, yes: b.dataset.yes === '1' });
+      s.ii += 1;
+      if (s.ii >= s.items.length) {
+        if (s.pi + 1 < s.passages.length) { s.pi += 1; s.phase = 'read'; s.items = null; s.ii = 0; }
+        else { s.phase = 'reveal'; }
+      }
+      render();
+    };
+  });
+}
+
 // Breath-Counting Task (src/breathcount.js) — an objective meta-awareness measure that sits beside
 // the silence practice. You count your own breaths silently (NOTHING on screen shows the number —
 // that would defeat it), tapping Breath for 1-8 and the round Ninth pill on breath 9, with a quiet,
@@ -3537,6 +3620,14 @@ function renderSettings() {
       </div>
 
       <div class="card">
+        <div class="row"><span style="font-size:1.3rem;">📖</span>
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Deep reading</h2>
+            <p class="muted small" style="margin:2px 0 0;">Read a short passage, then tell true restatements from clever near-misses — a measure of how accurately you take in what you read.</p></div>
+          <button class="btn ghost sm" id="tosvt" style="width:auto;">Begin →</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
         <p class="muted small">Everything Forma stores about you lives on this device — no server, no account, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
         <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to the AI provider you picked, using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
@@ -3624,6 +3715,7 @@ function renderSettings() {
   const tec = document.getElementById('toepistemic'); if (tec) tec.onclick = () => { state.epistemic = null; go('epistemiccheck'); };
   const tcal = document.getElementById('tocalibration'); if (tcal) tcal.onclick = () => { state.calib = null; go('calibration'); };
   const tbr = document.getElementById('tobreath'); if (tbr) tbr.onclick = () => { state.bct = null; go('breathcount'); };
+  const tsvt = document.getElementById('tosvt'); if (tsvt) tsvt.onclick = () => { state.svt = null; go('svt'); };
   document.getElementById('faith').onclick = () => {
     state.profile = p.settings.faithTrack ? Profile.disableFaithTrack(p) : Profile.enableFaithTrack(p);
     // Regenerate the plan so the change takes effect immediately.
