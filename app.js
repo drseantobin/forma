@@ -15,9 +15,9 @@ import * as Diagnostic from './src/diagnostic.js';
 import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import { bandAscension, ascensionLine, streakMilestone, nextStreakMark } from './src/milestones.js';
-import { confidenceTag, confidence, milestoneEligible, indexConfidence, scaleFreshness } from './src/reliability.js';
+import { confidenceTag, confidence, milestoneEligible, indexConfidence, scaleFreshness, constructConfidence } from './src/reliability.js';
 import { basisFor, INSTRUMENT_BASIS } from './src/methods.js';
-import { CONSTRUCTS } from './src/constructs.js';
+import { CONSTRUCTS, constructProfile } from './src/constructs.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
 import * as Research from './src/research.js';
@@ -2667,6 +2667,26 @@ function renderProgress() {
         <div class="domain-list">
           ${domainOrder().map((id) => progressRow(id)).join('')}
         </div>
+      </div>
+
+      <h2 style="margin-top:6px;">By capacity</h2>
+      <p class="muted small" style="margin:0 0 8px;">Your scales grouped into the capacities AI erodes. Each is a <strong>profile of its facets</strong>, shown only while it’s measured — not a single validated score.</p>
+      <div class="card">
+        ${(() => {
+          const profs = constructProfile(p.domainScores);
+          if (!profs.length) return emptyState('Once you’ve measured a few capacities, they group here — by the construct each one belongs to.');
+          return `<div class="domain-list">${profs.map((pr) => {
+            const cc = constructConfidence(p, pr.id);
+            const band = bandFor(pr.provisionalMean);
+            return `<div class="domain-row" style="align-items:center;">
+              <div class="meta"><div class="dn">${esc(pr.name)}</div>
+                <div class="muted small">${pr.members.map((m) => esc(getDomain(m.domain) ? getDomain(m.domain).name : m.domain)).join(' · ')}</div>
+                <div class="muted small">${esc(cc.note)}</div></div>
+              <span class="sc" style="color:${band.color};">~${pr.provisionalMean}</span>
+            </div>`;
+          }).join('')}</div>
+          <p class="muted small" style="margin-top:8px;">The “~” marks a provisional profile average — it becomes a real construct score only once enough data confirms the facets hold together.</p>`;
+        })()}
       </div>
 
       <div class="card" style="background:linear-gradient(180deg,#fff,#fbfaf7); border-left:4px solid var(--green);">
