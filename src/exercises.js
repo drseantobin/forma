@@ -1704,6 +1704,32 @@ export const VIGNETTES = [
 // the reveal coloring (shared with decision/tradeoff) marks the adaptive move.
 export const STEM = [
   {
+    // STEM (MacCann & Roberts 2008): self-emotion; keyed to consensus effectiveness — going to the
+    // fixable source > reframing > distraction-avoidance > suppression (forma-researcher-vetted v182).
+    id: 'stem-friend-distance', type: 'stem', domain: 'emotion_regulation', title: 'Managing the Moment',
+    scenario: 'A close friend has been short with you and slow to reply for a couple of weeks, and you have no idea why. You feel hurt and a little anxious.',
+    prompt: 'What’s the most effective way to handle what you’re feeling?',
+    options: [
+      { id: 'a', text: 'Gently ask the friend directly whether something is wrong between you.', score: 100, rationale: 'The cause is unclear but fixable, so going to the source can resolve both the feeling and the actual problem — the most effective move here.' },
+      { id: 'b', text: 'Remind yourself there may be an innocent explanation you can’t see yet, and stay open.', score: 70, rationale: 'Reframing eases the hurt and keeps you steady, but it leaves the real question unanswered — solid rather than complete.' },
+      { id: 'c', text: 'Give them space and throw yourself into other things until it blows over.', score: 40, rationale: 'Distraction lowers the sting short-term, but avoiding it lets the worry and the rift quietly grow.' },
+      { id: 'd', text: 'Act normal and bury the hurt so it doesn’t show.', score: 15, rationale: 'Pushing the feeling down (suppression) tends to keep it around and adds strain, without touching the cause.' },
+    ],
+  },
+  {
+    // STEM: frustration after a self-caused, still-controllable setback → re-engage control (reappraisal/
+    // learning) > acceptance > venting > rumination (forma-researcher-vetted v182).
+    id: 'stem-mistake-replay', type: 'stem', domain: 'emotion_regulation', title: 'Managing the Moment',
+    scenario: 'You sent an important message with an obvious error after rushing it, and now you keep replaying the moment. You feel frustrated with yourself.',
+    prompt: 'What’s the most effective way to handle the frustration?',
+    options: [
+      { id: 'a', text: 'Note the one thing that would prevent it next time, then turn back to what you can still do now.', score: 100, rationale: 'Turning the slip into a concrete lesson restores your sense of control — which is what frustration is really asking for.' },
+      { id: 'b', text: 'Remind yourself everyone makes mistakes, and let it be without forcing it away.', score: 65, rationale: 'Accepting the feeling calms it and stops the spiral, though it doesn’t yet convert the error into anything useful.' },
+      { id: 'c', text: 'Text a friend to vent about how annoyed you are at yourself.', score: 35, rationale: 'Venting feels like release but usually keeps the irritation warm rather than settling it.' },
+      { id: 'd', text: 'Keep going over exactly how you let it happen until it stops bothering you.', score: 10, rationale: 'Replaying it (rumination) reliably deepens and prolongs the bad feeling instead of resolving it.' },
+    ],
+  },
+  {
     id: 'stem-credit', type: 'stem', domain: 'emotion_regulation', title: 'Managing the Moment',
     scenario: 'In a meeting, a colleague presents Alex’s idea as their own. Alex feels a hot flash of anger rise.',
     prompt: 'What’s the most effective way for Alex to manage that anger?',
@@ -1771,6 +1797,19 @@ export const STEM = [
 // defensive, or vague scores low. Growth-framed rationales; exactly one best
 // option (>=80) per item so the shared reveal coloring marks the effective move.
 export const COMM = [
+  {
+    // Communication (Gottman validation / soft-start-up evidence): validating the feeling FIRST > advice
+    // > minimizing > defending-the-other-side (which predicts escalation). forma-researcher-vetted v182.
+    id: 'comm-overwhelmed', type: 'comm', domain: 'communication', title: 'The Effective Word',
+    scenario: 'Your partner comes home and unloads about a stressful, unfair day at work. They’re tense and clearly wound up.',
+    prompt: 'What’s the most effective thing to say first?',
+    options: [
+      { id: 'a', text: '“That sounds genuinely draining — no wonder you’re wound up.”', score: 100, rationale: 'Naming and validating what they feel signals you actually heard them, which calms tension before anything else can land.' },
+      { id: 'b', text: '“Here’s what I’d do about your boss…”', score: 45, rationale: 'Jumping to advice can help later, but offered first it skips the part they came home for: being understood.' },
+      { id: 'c', text: '“At least it’s over now — try not to let it get to you.”', score: 20, rationale: 'Looking on the bright side this early reads as minimizing, and tends to make a person feel unheard.' },
+      { id: 'd', text: '“It probably wasn’t as unfair as it felt.”', score: 10, rationale: 'Correcting their read of the day while they’re still upset feels like taking the other side, and usually escalates things.' },
+    ],
+  },
   {
     id: 'comm-feedback', type: 'comm', domain: 'communication', title: 'The Effective Word',
     scenario: 'A teammate, Dana, hands you work that misses the brief in a few important ways. You have to tell her.',
@@ -1932,6 +1971,20 @@ export const PRESENCE_SCENES = [
 // 100) with graded near-misses, so the reveal still marks exactly one best and
 // the rationale teaches the appraisal that distinguishes the emotions.
 export const STEU_ITEMS = [
+  {
+    // STEU (Roseman appraisal theory): a feared outcome that resolves favorably and was NOT self-caused
+    // yields RELIEF — distinct from pride (self-caused success) and gratitude (other-caused benefit).
+    // forma-researcher-vetted v182.
+    id: 'steu-relief', type: 'steu', domain: 'emotion_regulation', title: 'Name the Feeling',
+    scenario: 'A coworker was braced for bad news about a review they were sure had gone poorly. Word comes back that it actually passed fine. They let out a long breath and go quiet.',
+    prompt: 'What are they most likely feeling?',
+    options: [
+      { id: 'a', text: 'Relief', score: 100, rationale: 'A dreaded outcome that turned out okay produces relief — the long breath and the quiet are its classic signs.' },
+      { id: 'b', text: 'Happiness', score: 55, rationale: 'They’re glad, yes, but plain happiness misses the specific weight-lifting-off quality of escaping a feared result.' },
+      { id: 'c', text: 'Pride', score: 45, rationale: 'Pride fits a success they credit to themselves; here the good news landed despite their fear, so relief comes first.' },
+      { id: 'd', text: 'Gratitude', score: 25, rationale: 'Gratitude needs someone to thank; nothing here points to another person rescuing them, so it fits least.' },
+    ],
+  },
   {
     id: 'steu-gift', type: 'steu', domain: 'emotion_regulation', title: 'Name the Feeling',
     scenario: 'Clara receives a gift she had wanted for a long time, from someone she loves.',
