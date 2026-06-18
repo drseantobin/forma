@@ -161,6 +161,57 @@ export function scoreVigilance(trials) {
   return clamp(round(score));
 }
 
+// --- Flanker: executive attention / inhibitory control (Eriksen; NIH Toolbox arrows) ---
+// The headline is the NIH 2-vector accuracy+speed COMPUTED score (0-100) — deliberately NOT the raw
+// conflict cost, whose difference-score reliability is too low for longitudinal tracking ("reliability
+// paradox", Hedge, Powell & Sumner 2018). The construct-pure conflict cost (incongruent − congruent RT)
+// is returned as SECONDARY/informational only. trial = { congruent:bool, correct:bool, rt:number|null }.
+// flankerDetail returns the full read; scoreFlanker returns just the 0-100 headline, or NULL on an
+// invalid run (too few valid trials / guessing) so the session is held as unscored, not polluting the scale.
+export const FLANKER_ANTICIPATION_MS = 200; // discrimination needs perceptual + decision time
+export const FLANKER_MIN_VALID = 40;
+function _median(xs) {
+  if (!xs.length) return null;
+  const s = xs.slice().sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+export function flankerDetail(trials) {
+  const all = Array.isArray(trials) ? trials.filter((t) => t && typeof t.correct === 'boolean') : [];
+  const valid = all.filter((t) => typeof t.rt === 'number' && t.rt >= FLANKER_ANTICIPATION_MS && t.rt <= 2000);
+  const n = valid.length;
+  if (n < FLANKER_MIN_VALID) return { score: null, invalid: true, reason: 'too-few-valid', valid: n };
+  const correct = valid.filter((t) => t.correct);
+  const acc = correct.length / n;
+  // Below ~chance+ on a 2-choice task = guessing / non-engagement → invalid, hold the prior scale.
+  if (acc < 0.60) return { score: null, invalid: true, reason: 'below-floor', valid: n, accuracy: acc };
+  const accVec = acc * 5;
+  let computed = accVec; // <=80% accuracy: speed earns no credit (NIH rule) — fast-and-sloppy can't win.
+  const medRT = _median(correct.map((t) => t.rt));
+  if (acc > 0.80 && medRT != null) {
+    const lo = Math.log10(500), hi = Math.log10(3000);
+    const lr = Math.min(hi, Math.max(lo, Math.log10(medRT)));
+    const rtVec = 5 * (1 - (lr - lo) / (hi - lo)); // faster → up to 5
+    computed = accVec + rtVec;
+  }
+  const congRT = _median(correct.filter((t) => t.congruent).map((t) => t.rt));
+  const incRT = _median(correct.filter((t) => !t.congruent).map((t) => t.rt));
+  const conflictCost = (congRT != null && incRT != null) ? Math.round(incRT - congRT) : null;
+  return {
+    score: clamp(round((computed / 10) * 100)),
+    invalid: false, valid: n, accuracy: acc,
+    medianRT: medRT == null ? null : Math.round(medRT),
+    congruentRT: congRT == null ? null : Math.round(congRT),
+    incongruentRT: incRT == null ? null : Math.round(incRT),
+    conflictCost,
+  };
+}
+
+export function scoreFlanker(trials) {
+  return flankerDetail(trials).score; // null when invalid → session held as unscored
+}
+
 // --- Working memory: position-correct recall, length-weighted ---
 // Reward getting items in the RIGHT position. A longer sequence recalled
 // perfectly should not score lower than a short one, so we score by proportion.
@@ -254,6 +305,8 @@ export function scoreExercise(exercise, response) {
       return scoreCRT(response.optionId, exercise.options);
     case 'nback':
       return scoreNBack(response.flagged || [], exercise.targets, exercise.sequence.length, exercise.n);
+    case 'flanker':
+      return scoreFlanker(response.trials || []);
     case 'stream':
       return scoreStream(response.tapped || [], exercise.items);
     case 'stay':

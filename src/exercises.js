@@ -1382,6 +1382,36 @@ export function makeVigilanceExercise(level = 1) {
   };
 }
 
+// ----- FLANKER: executive attention / inhibitory control (Eriksen; NIH Toolbox arrows) -----
+// Respond to the CENTER arrow's direction while flanking arrows pull congruently or incongruently.
+// 8 practice + 64 scored (32 congruent / 32 incongruent), direction-balanced and lightly de-runned.
+// Each trial: { congruent, dir:'L'|'R', iti } — the screen renders the 5-arrow row and records
+// { correct, rt } per trial; scoreFlanker reads those. Higher-reliability executive-attention measure
+// than the PVT/pursuit blob (which index sustained/psychomotor vigilance — a different facet).
+export function makeFlankerExercise() {
+  const jitterIti = () => 500 + Math.floor(Math.random() * 10) * 50; // 500..950 ms, 50 ms steps
+  const build = (perCell) => {
+    const cells = [];
+    for (const congruent of [true, false]) for (const dir of ['L', 'R']) for (let i = 0; i < perCell; i++) cells.push({ congruent, dir, iti: jitterIti() });
+    const noLongRun = (arr) => {
+      let cc = 1, dc = 1;
+      for (let i = 1; i < arr.length; i++) {
+        cc = arr[i].congruent === arr[i - 1].congruent ? cc + 1 : 1;
+        dc = arr[i].dir === arr[i - 1].dir ? dc + 1 : 1;
+        if (cc > 3 || dc > 3) return false;
+      }
+      return true;
+    };
+    let out = cells;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = out[i]; out[i] = out[j]; out[j] = t; }
+      if (noLongRun(out)) break;
+    }
+    return out;
+  };
+  return { id: `flanker-${Date.now()}`, type: 'flanker', domain: 'attention', title: 'Filter the Noise', practice: build(2), trials: build(16) };
+}
+
 // ----- FOLLOW THE DOT: visuomotor pursuit tracking (Attention) -----
 // Validated visuomotor sustained-attention paradigm: keep your finger/cursor on
 // a moving target. Score = proportion of time on target (see scoring.scorePursuit).
