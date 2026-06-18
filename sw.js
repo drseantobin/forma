@@ -4,7 +4,7 @@
 // SHELL must list EVERY src/*.js module — otherwise a freshly-installed user who
 // goes offline before that module is fetched at runtime hits a broken dynamic
 // import. Keep in sync with src/; the deploy step diffs SHELL against src/*.js.
-const CACHE = 'forma-v175';
+const CACHE = 'forma-v176';
 const SHELL = [
   './',
   './index.html',
@@ -39,6 +39,7 @@ const SHELL = [
   './src/release.js',
   './src/validity.js',
   './src/overclaiming.js',
+  './src/calibration.js',
 ];
 
 self.addEventListener('install', (e) => {
