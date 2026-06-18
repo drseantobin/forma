@@ -1107,6 +1107,175 @@ export function makeContemplation(level = 1) {
   };
 }
 
+// ----- GUIDED PRACTICE: short, ACT-based micro-practices -----
+// An "advanced mode" the person chooses on demand. Each module adapts an
+// established Acceptance & Commitment Therapy technique into a ~2-minute guided
+// practice with a breathing visualization. Grounded, never clinical: this is a
+// PRACTICE in psychological flexibility, NOT a treatment or a measure. So a
+// guided practice is logged (it counts as showing up, for the streak) but is
+// UNSCORED — scoreExercise returns null for type 'guided', so it never moves a
+// measurement scale. Selection is on-device; nothing here is sent to any API.
+//
+// Scripts adapted faithfully from the ACT literature (Hayes/Strosahl/Wilson 1999;
+// Harris, ACT Made Simple). Design rules baked in, from the evidence:
+//   • Acceptance breath makes ROOM for a feeling — never "to get rid of it."
+//   • Defusion changes a thought's FUNCTION (it becomes just words) — it does not
+//     suppress, dispute, or disprove the thought.
+//   • Present-moment (Dropping Anchor) is deliberately EYES-OPEN and outward.
+//   • Values ends in one small, concrete next step (committed action).
+//   • Invite "something weighing on you," never the worst memory; always close
+//     re-grounded and forward — no raw open affect, no over-claiming.
+export const ACT_MODULES = [
+  {
+    id: 'defusion',
+    process: 'Cognitive defusion',
+    name: 'Unhooking from a thought',
+    lead: 'For when a thought keeps gripping you. You’ll loosen its hold — without arguing with it or pushing it away.',
+    basis: 'Adapts the “I’m having the thought that…” and word-repetition defusion techniques (Hayes et al., 1999; Masuda et al., 2004), which reduce a thought’s grip without disputing it.',
+    breath: { inhale: 4, hold: 0, exhale: 5 },
+    eyesOpen: false,
+    before: 'Bring to mind a thought that’s been weighing on you — put it in just a few words.',
+    scale: { label: 'How much does that thought grip you right now?', lo: 'Barely', hi: 'Completely', better: 'down' },
+    steps: [
+      { text: 'Let the thought come fully to mind, in just a few words. Let it be here.', sec: 16 },
+      { text: 'Now silently put four words in front of it: “I’m having the thought that…” — and say the whole thing, slowly.', sec: 20 },
+      { text: 'Notice it’s a thought — something your mind is offering you — not an order you have to obey.', sec: 18 },
+      { text: 'Take the few sharpest words of it, and repeat just those — quietly, quickly — for a little while.', sec: 20, freezeBreath: true },
+      { text: 'Hear how the words start to become just sounds, losing some of their sting.', sec: 16 },
+      { text: 'The thought can stay. You don’t have to believe it or push it away. Let it be — and let it pass.', sec: 18 },
+    ],
+    after: 'Bring the thought to mind once more. How much does it grip you now?',
+  },
+  {
+    id: 'acceptance',
+    process: 'Acceptance / making room',
+    name: 'Making room for a hard feeling',
+    lead: 'For when a feeling is hard to sit with. You’ll make room for it rather than fight it — which, oddly, is what loosens it.',
+    basis: 'Adapts Harris’s “expansion / making room” and the acceptance rationale tested by Levitt et al. (2004), where allowing a feeling — not suppressing it — increased willingness and tolerance.',
+    breath: { inhale: 4, hold: 0, exhale: 6 },
+    eyesOpen: false,
+    before: 'Notice the feeling that’s hardest right now. You don’t have to name it perfectly — just let it be here.',
+    scale: { label: 'How much are you struggling against this feeling?', lo: 'Not at all', hi: 'Hard', better: 'down' },
+    steps: [
+      { text: 'Find where the feeling sits in your body — chest, throat, stomach. Just locate it.', sec: 18 },
+      { text: 'Rest your attention right on that spot, with curiosity — the way you’d notice the weather.', sec: 18 },
+      { text: 'Notice its edges. Is it heavy, tight, warm? You don’t have to change it. Just observe.', sec: 18 },
+      { text: 'Breathe slowly, and let the breath open a little space around the feeling — not to push it out, just to give it room.', sec: 20 },
+      { text: 'Let it be there. You don’t have to like it or want it — only allow it the room it needs.', sec: 18 },
+      { text: 'It’s a feeling, and feelings move. Keep breathing, and let it be exactly as it is.', sec: 16 },
+    ],
+    after: 'Come back to the feeling. How much are you struggling against it now?',
+  },
+  {
+    id: 'present',
+    process: 'Contact with the present moment',
+    name: 'Dropping anchor',
+    lead: 'For when your mind is racing or scattered. You’ll come back to the present and steady yourself — eyes open, here.',
+    basis: 'Adapts Russ Harris’s “Dropping Anchor” (ACE: Acknowledge · Come back to the body · Engage) — a structured, eyes-open grounding skill for when attention is pulled in every direction.',
+    breath: { inhale: 4, hold: 0, exhale: 4 },
+    eyesOpen: true,
+    before: 'Keep your eyes open for this one. Just notice that you’re here, about to steady yourself.',
+    scale: { label: 'How present and grounded do you feel?', lo: 'Scattered', hi: 'Grounded', better: 'up' },
+    steps: [
+      { text: 'Quietly name what’s showing up inside you. “Here is worry.” “Here is tightness.” Just name it.', sec: 16 },
+      { text: 'Now come back into your body. Press your feet into the floor and feel it hold you up.', sec: 16 },
+      { text: 'Straighten your back. Slowly stretch your arms or shoulders. Feel yourself, here, in your own body.', sec: 16 },
+      { text: 'Widen your attention. Look around and silently name five things you can see.', sec: 22 },
+      { text: 'Now two sounds you can hear — near, or far.', sec: 16 },
+      { text: 'You’re here, in this moment. The thoughts and feelings can come along — and you get to choose what’s next.', sec: 16 },
+    ],
+    after: 'And now? How present and grounded do you feel?',
+  },
+  {
+    id: 'values',
+    process: 'Contact with values',
+    name: 'What you want to stand for',
+    lead: 'For when things feel pointless or adrift. You’ll reconnect with what matters — and pick one small step toward it.',
+    basis: 'Adapts ACT values-clarification and self-affirmation work (Hayes et al., 1999; Cohen & Sherman, 2014). Naming a value and one concrete next step is what links it to action.',
+    breath: { inhale: 4, hold: 0, exhale: 6 },
+    eyesOpen: false,
+    before: 'Set the hard moment down for one breath. We’re going to turn toward what matters to you.',
+    // Values uses written capture (the writing is the active ingredient), not a 0-10 scale.
+    capture: { value: 'In a word or short phrase: what do you most want to stand for?', action: 'One small thing you could do in the next hour that moves you that way:' },
+    steps: [
+      { text: 'Ask yourself: in the life I want to live, what do I most want to stand for?', sec: 18 },
+      { text: 'Let one word or short phrase come — kindness, courage, being there for the people I love.', sec: 16 },
+      { text: 'Picture one time you lived that out, even in a small way. Notice how it felt to be that person.', sec: 18 },
+      { text: 'Bring that quality into right now. Even with this difficulty here, you can act from it.', sec: 16 },
+      { text: 'Name one small thing you could do in the next hour that moves you that way.', sec: 18 },
+      { text: 'That’s the direction. The feelings can come too — you can carry them and still walk it.', sec: 14 },
+    ],
+    after: 'Hold onto that.',
+  },
+];
+
+export const ACT_MODULE_BY_ID = Object.fromEntries(ACT_MODULES.map((m) => [m.id, m]));
+
+// Theme keywords → which ACT process fits what the person has been naming. Pure
+// keyword match over the text they've already shared (coach chat + practice
+// notes). Deliberately on-device and conservative.
+const ACT_THEME_KEYWORDS = {
+  defusion: ['can’t stop thinking', 'cant stop thinking', 'keep thinking', 'stuck in my head', 'overthink', 'spiral', 'ruminat', 'i always', 'i never', 'not good enough', 'i’m such', 'im such', 'failure', 'my fault', 'beating myself', 'self-critic', 'self critic'],
+  acceptance: ['anxious', 'anxiety', 'afraid', 'scared', 'angry', 'furious', 'frustrat', 'overwhelm', 'panic', 'stress', 'can’t stand', 'cant stand', 'hate feeling', 'dread', 'nervous', 'tense', 'grief', 'sad', 'hurts'],
+  present: ['distract', 'scattered', 'can’t focus', 'cant focus', 'racing', 'restless', 'too much going', 'all over', 'can’t settle', 'cant settle', 'frazzled', 'wired', 'spinning'],
+  values: ['pointless', 'what’s the point', 'whats the point', 'no point', 'don’t care', 'dont care', 'feel lost', 'no motivation', 'why bother', 'going through the motions', 'empty', 'meaningless', 'adrift', 'aimless', 'numb'],
+};
+
+// Choose the ACT module that best fits this person right now — on-device, from
+// what they've already told the coach and written in recent practices, with a
+// gentle fall-back to their lowest-scoring relevant capacity, and finally to
+// "dropping anchor" (the safest, most general grounding practice).
+export function chooseActModule(profile = {}) {
+  const texts = [];
+  for (const m of (profile.coachLog || []).slice(-12)) {
+    if (m && m.role === 'user' && m.content) texts.push(String(m.content));
+  }
+  for (const s of (profile.sessions || []).slice(-8)) {
+    const note = s && s.response && s.response.note;
+    if (note) texts.push(String(note));
+  }
+  const hay = texts.join(' \n ').toLowerCase();
+  let best = null;
+  for (const id of Object.keys(ACT_THEME_KEYWORDS)) {
+    const hits = ACT_THEME_KEYWORDS[id].reduce((n, kw) => n + (hay.includes(kw) ? 1 : 0), 0);
+    if (hits > 0 && (!best || hits > best.hits)) best = { id, hits };
+  }
+  if (best) return ACT_MODULE_BY_ID[best.id];
+
+  // No textual signal: lean on the lowest of the capacities each process serves.
+  const scores = profile.domainScores || {};
+  const byDomain = [
+    { id: 'present', score: scores.attention },
+    { id: 'acceptance', score: scores.emotion_regulation },
+    { id: 'acceptance', score: scores.persistence },
+    { id: 'values', score: scores.values },
+  ].filter((x) => typeof x.score === 'number');
+  if (byDomain.length) {
+    byDomain.sort((a, b) => a.score - b.score);
+    return ACT_MODULE_BY_ID[byDomain[0].id];
+  }
+  return ACT_MODULE_BY_ID.present;
+}
+
+// Build a guided-practice "exercise". Domain emotion_regulation so it lives with
+// the inner-weather capacity, but flagged practice:true and UNSCORED (see
+// scoring.js) so it never inflates that measure. The chosen module rides along
+// on the exercise so the renderer needs no extra lookup.
+export function makeGuided(profile = {}, moduleId = null) {
+  const m = (moduleId && ACT_MODULE_BY_ID[moduleId]) || chooseActModule(profile);
+  const totalSeconds = m.steps.reduce((n, s) => n + (s.sec || 0), 0);
+  return {
+    id: `guided-${m.id}`,
+    type: 'guided',
+    domain: 'emotion_regulation',
+    title: m.name,
+    practice: true,
+    moduleId: m.id,
+    module: m,
+    totalSeconds,
+  };
+}
+
 // ----- THE STREAM: SART go/no-go sustained-attention drill (Attention) -----
 const STREAM_LETTERS = ['A', 'E', 'O', 'U', 'M', 'R', 'S', 'T', 'L', 'N'];
 export function makeStreamExercise(level = 1, rng = Math.random) {

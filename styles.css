@@ -158,6 +158,22 @@ button { font-family: inherit; cursor: pointer; }
    Warm growth-green, not the grey "cold/relight it" branch a lapse would get. */
 .streakchip.fresh { background: var(--green-soft); color: var(--green-ink); }
 
+/* Guided ACT practice: breathing orb, breath label, guiding line, 0–10 slider. */
+.breath-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; margin:30px 0 18px; }
+.breath-orb {
+  width:170px; height:170px; border-radius:50%;
+  background: radial-gradient(circle at 50% 42%, var(--amber-soft), var(--card));
+  border:2px solid var(--amber); transform:scale(0.55);
+  transition: transform linear; will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) { .breath-orb { transition-duration:.4s !important; } }
+.breath-orb.held { transition:none; animation: breathHold 3.2s ease-in-out infinite; }
+@keyframes breathHold { 0%,100% { transform:scale(0.72); } 50% { transform:scale(0.8); } }
+.breath-label { color:var(--ink-faint); font-size:.92rem; letter-spacing:.06em; min-height:1.2em; }
+.guide-step { font-size:1.18rem; line-height:1.55; max-width:30ch; margin:0 auto; min-height:4.6em; }
+.slider-row { display:flex; align-items:center; gap:10px; margin:8px 0 2px; }
+.slider-row input[type="range"] { flex:1; accent-color: var(--amber); }
+
 /* Opt-in consent row: a real checkbox + label, comfortable tap target. */
 .consent-row { display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-weight:600; padding:4px 0; }
 .consent-row input[type="checkbox"] { width:20px; height:20px; margin-top:1px; flex:none; accent-color: var(--green); cursor:pointer; }

@@ -260,6 +260,11 @@ export function scoreExercise(exercise, response) {
       return scoreStay(response.stayed, response.selfRating, response.dwellMs);
     case 'contemplation':
       return scoreContemplation(response.seconds || 0, exercise.targetSeconds, response.presence != null ? response.presence : null);
+    case 'guided':
+      // A guided ACT practice is a PRACTICE, not a measure. It's recorded (it
+      // counts as showing up, for the streak) but deliberately UNSCORED — null
+      // keeps it from ever moving the Emotional Regulation scale via self-report.
+      return null;
     case 'vigilance':
       return scoreVigilance(response.trials || []);
     case 'vignette':

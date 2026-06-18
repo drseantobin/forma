@@ -205,6 +205,19 @@ function summarizeResponse(exercise, response) {
         timeFelt: response.timeFelt,
         note: response.note || '',
       };
+    case 'guided':
+      // ACT guided practice. Stored on-device only; the personal note/value text
+      // is never sent to any API (a guided session is unscored, and the live
+      // coach paths only ever see domain/type/score, never these fields).
+      return {
+        moduleId: response.moduleId,
+        completed: !!response.completed,
+        before: response.before,
+        after: response.after,
+        value: response.value || '',
+        action: response.action || '',
+        note: response.note || '',
+      };
     default:
       return {};
   }

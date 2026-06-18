@@ -3,7 +3,7 @@
 
 import { DOMAINS, getDomain, bandFor, activeDomainIds, BANDS } from './src/domains.js';
 import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
-import { pickExercise, nextMathProblem, shuffledIndices, exerciseMode } from './src/exercises.js';
+import { pickExercise, nextMathProblem, shuffledIndices, exerciseMode, makeGuided } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
 import {
   todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween, startRoute, indexTrend, isLapsedReturn,
@@ -104,9 +104,15 @@ function go(route) {
   // against a stale view.
   if (route !== 'session' && state.session && state.session._timer) {
     clearInterval(state.session._timer);
+    clearTimeout(state.session._timer); // guided uses a setTimeout step clock
     state.session._timer = null;
   }
-  // Leaving a contemplation mid-silence: release the audio context too.
+  // Leaving a guided practice mid-run: stop the breathing controller.
+  if (route !== 'session' && state.session && state.session._breathStop) {
+    state.session._breathStop();
+    state.session._breathStop = null;
+  }
+  // Leaving a contemplation/guided practice: release the audio context too.
   if (route !== 'session' && state.session && state.session._tones) {
     state.session._tones.close();
     state.session._tones = null;
@@ -663,6 +669,17 @@ function renderHome() {
         <button class="btn amber" id="startsession">${doneToday ? 'Practice again →' : 'Go to today’s session →'}</button>
       </div>
 
+      <div class="card">
+        <div class="row" style="margin-bottom:6px;">
+          <span class="ico" style="font-size:1.3rem;">${getDomain('emotion_regulation').icon}</span>
+          <strong>Guided practice</strong>
+          <span class="spacer"></span>
+          <span class="muted small">~2 min</span>
+        </div>
+        <p class="muted small" style="margin:0 0 12px;">A short, breath-guided practice to settle and steady — chosen for what you’ve been carrying lately. Optional, anytime, and never scored.</p>
+        <button class="btn ghost" id="startguided">Begin a guided practice →</button>
+      </div>
+
       ${weekStripCard(p)}
 
       ${commitmentsCard(p)}
@@ -671,6 +688,8 @@ function renderHome() {
     </div>`;
 
   document.getElementById('startsession').onclick = () => go('session');
+  const sg = document.getElementById('startguided');
+  if (sg) sg.onclick = () => startGuidedSession();
   const wp = document.getElementById('toplan');
   if (wp) wp.onclick = () => go('plan');
   const nb = document.getElementById('nudgebackup');
@@ -812,7 +831,19 @@ function initialPhase(ex) {
     : ex.type === 'mathfluency' ? 'math-intro'
     : ex.type === 'pursuit' ? 'pursuit-intro'
     : ex.type === 'contemplation' ? 'contempl-intro'
+    : ex.type === 'guided' ? 'guided-intro'
     : 'play';
+}
+
+// Start an on-demand guided ACT practice. Unlike the daily session it's not
+// chosen by the measurement rotation — the person reaches for it when they want
+// it, and the module is picked on-device from what they've been naming.
+function startGuidedSession(moduleId = null) {
+  const ex = makeGuided(state.profile, moduleId);
+  state.session = { exercise: ex, phase: 'guided-intro', response: { moduleId: ex.moduleId }, started: Date.now() };
+  state.route = 'session';
+  render();
+  window.scrollTo(0, 0);
 }
 
 function startTodaysSession() {
@@ -1032,13 +1063,14 @@ function renderSession() {
     case 'sentence': return renderSentence();
     case 'stay': return renderStay();
     case 'contemplation': return renderContemplation();
+    case 'guided': return renderGuided();
     case 'reflection': return renderReflection();
   }
 }
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
   const mode = exerciseMode(ex.type);
   const modeTitle = mode === 'practice'
     ? 'A practice — a formation rep, not graded right or wrong.'
@@ -2132,6 +2164,268 @@ function renderContemplationReflect() {
   app.querySelectorAll('[data-n]').forEach((b) => b.onclick = () => { r.presence = Number(b.dataset.n); render(); });
   app.querySelectorAll('[data-d]').forEach((b) => b.onclick = () => { r.distraction = Number(b.dataset.d); render(); });
   document.getElementById('cfin').onclick = completeSession;
+}
+
+// ---------------- guided ACT practice (advanced mode) ----------------
+// Three phases: intro (frame + an optional 0–10 "before") → run (breathing orb
+// + stepped script, chimes) → reflect (the "after" + note, and for the values
+// module a small committed-action capture). It's a PRACTICE: unscored, logged
+// for the streak only, and its personal text never leaves the device.
+function stopGuidedTimers(s) {
+  if (!s) return;
+  if (s._timer) { clearInterval(s._timer); clearTimeout(s._timer); s._timer = null; }
+  if (s._breathStop) { s._breathStop(); s._breathStop = null; }
+}
+
+function renderGuided() {
+  const s = state.session;
+  const ex = s.exercise;
+  const m = ex.module;
+  const r = s.response;
+
+  // ----- intro -----
+  if (s.phase === 'guided-intro') {
+    const hasAudio = (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext));
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="card">
+          <div class="k">${esc(m.process)}</div>
+          <h2 style="font-size:1.15rem; margin:6px 0 8px;">${esc(m.name)}</h2>
+          <p>${esc(m.lead)}</p>
+          <p class="muted small" style="margin-top:8px;">${esc(m.before)}</p>
+          ${m.eyesOpen ? '<p class="muted small">Keep your eyes open for this one — it’s about coming back to where you are.</p>' : '<p class="muted small">You can close your eyes; the chime will guide you.</p>'}
+        </div>
+        ${m.scale ? `
+          <p class="muted small" style="margin-top:4px;">${esc(m.scale.label)}</p>
+          <div class="slider-row">
+            <span class="muted small">${esc(m.scale.lo)}</span>
+            <input type="range" id="gbefore" min="0" max="10" value="${r.before != null ? r.before : 5}" />
+            <span class="muted small">${esc(m.scale.hi)}</span>
+          </div>
+          <div class="center muted small" id="gbeforeval">${r.before != null ? r.before : 5}/10</div>
+        ` : ''}
+        <button class="btn amber" id="gbegin" style="margin-top:14px;">Begin</button>
+        <p class="muted small" style="margin-top:12px; opacity:.85;">${esc(m.basis)} A brief practice in psychological flexibility — not therapy, and never a diagnosis.</p>
+      </div>`;
+    const slider = document.getElementById('gbefore');
+    if (slider) {
+      r.before = Number(slider.value);
+      slider.oninput = () => { r.before = Number(slider.value); const v = document.getElementById('gbeforeval'); if (v) v.textContent = `${slider.value}/10`; };
+    }
+    document.getElementById('gbegin').onclick = () => {
+      s._tones = createTones();
+      if (s._tones) { s._tones.unlock(); s._tones.start(); }
+      s.stepIdx = 0;
+      s.phase = 'guided-run';
+      render();
+    };
+    return;
+  }
+
+  // ----- reflect -----
+  if (s.phase === 'guided-reflect') return renderGuidedReflect();
+
+  // ----- run: breathing orb + stepped script -----
+  const eyesLine = m.eyesOpen ? 'Eyes open, soft gaze.' : 'Settle in. Let the breath lead.';
+  app.innerHTML = `
+    <div class="fade-in center">
+      <p class="muted small" style="margin-top:14px;">${esc(eyesLine)}</p>
+      <div class="breath-wrap">
+        <div class="breath-orb" id="orb"></div>
+        <div class="breath-label" id="breathlbl"></div>
+      </div>
+      <p class="guide-step" id="gstep">${esc(m.steps[0].text)}</p>
+      <button class="btn ghost sm" id="gend" style="width:auto; margin-top:18px;">End early</button>
+    </div>`;
+
+  const orb = document.getElementById('orb');
+  const breathLbl = document.getElementById('breathlbl');
+
+  // Breathing controller: a chained-timeout cycle (inhale → hold → exhale) that
+  // drives the orb's scale and the in/out label, with a soft chime per breath.
+  const breath = m.breath || { inhale: 4, hold: 0, exhale: 6 };
+  let breathStopped = false;
+  let breathTimer = null;
+  const setOrb = (scale, durSec) => { if (orb) { orb.style.transitionDuration = `${durSec}s`; orb.style.transform = `scale(${scale})`; } };
+  const inhale = () => {
+    if (breathStopped) return;
+    if (breathLbl) breathLbl.textContent = 'Breathe in';
+    if (s._tones) s._tones.tick();
+    setOrb(1, breath.inhale);
+    breathTimer = setTimeout(breath.hold > 0 ? hold : exhale, breath.inhale * 1000);
+  };
+  const hold = () => {
+    if (breathStopped) return;
+    if (breathLbl) breathLbl.textContent = 'Hold';
+    breathTimer = setTimeout(exhale, breath.hold * 1000);
+  };
+  const exhale = () => {
+    if (breathStopped) return;
+    if (breathLbl) breathLbl.textContent = 'Breathe out';
+    setOrb(0.55, breath.exhale);
+    breathTimer = setTimeout(inhale, breath.exhale * 1000);
+  };
+  const stopBreath = () => { breathStopped = true; if (breathTimer) clearTimeout(breathTimer); };
+  s._breathStop = stopBreath;
+  inhale();
+
+  // Step progression: advance the guiding line on each step's own timer, chiming
+  // softly on the change. A "freezeBreath" step (defusion's word-repetition) holds
+  // the orb steady instead of pacing breath against the repetition.
+  const stepEl = document.getElementById('gstep');
+  const runStep = (i) => {
+    if (state.session !== s || state.route !== 'session') return;
+    if (i >= m.steps.length) { toGuidedReflect(true); return; }
+    s.stepIdx = i;
+    const step = m.steps[i];
+    if (stepEl) stepEl.textContent = step.text;
+    if (i > 0 && s._tones) s._tones.interval();
+    if (step.freezeBreath) {
+      stopBreath();
+      if (orb) orb.classList.add('held');
+      if (breathLbl) breathLbl.textContent = '';
+    } else if (orb && orb.classList.contains('held')) {
+      // (resume not needed in current scripts — repeat step is last-but-one — but
+      // keep it correct if scripts change.)
+      orb.classList.remove('held');
+    }
+    s._timer = setTimeout(() => runStep(i + 1), (step.sec || 16) * 1000);
+  };
+  const toGuidedReflect = (completed) => {
+    stopGuidedTimers(s);
+    if (s._tones) { s._tones.done(); const t = s._tones; s._tones = null; setTimeout(() => t.close(), 2500); }
+    r.completed = !!completed;
+    s.phase = 'guided-reflect';
+    render();
+  };
+  document.getElementById('gend').onclick = () => toGuidedReflect(false);
+
+  // Kick off step 0's dwell (text already shown). Guard against double-start on
+  // re-render: only schedule if no step timer is pending.
+  if (!s._timer) s._timer = setTimeout(() => runStep((s.stepIdx || 0) + 1), (m.steps[0].sec || 16) * 1000);
+}
+
+function renderGuidedReflect() {
+  const s = state.session;
+  const ex = s.exercise;
+  const m = ex.module;
+  const r = s.response;
+
+  // For scale modules the "after" defaults to the slider's starting value, so the
+  // practice can always be finished; values modules require a value word first.
+  // (The honest before→after shift is shown on the close screen, not live here —
+  // re-rendering on every slider tick would fight the user's drag.)
+  const canFinish = m.scale ? true : (!!(r.value && r.value.trim()));
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <p class="muted small">${r.completed ? 'You stayed with the whole practice.' : 'You stepped out early — that’s fine. Even a few breaths count.'}</p>
+      ${m.scale ? `
+        <p class="likert-q" style="font-size:1.05rem; margin-top:12px;">${esc(m.after)}</p>
+        <div class="slider-row">
+          <span class="muted small">${esc(m.scale.lo)}</span>
+          <input type="range" id="gafter" min="0" max="10" value="${r.after != null ? r.after : (r.before != null ? r.before : 5)}" />
+          <span class="muted small">${esc(m.scale.hi)}</span>
+        </div>
+        <div class="center muted small" id="gafterval">${r.after != null ? r.after : (r.before != null ? r.before : 5)}/10</div>
+      ` : ''}
+      ${m.capture ? `
+        <p class="likert-q" style="font-size:1.05rem; margin-top:12px;">${esc(m.capture.value)}</p>
+        <div class="row" style="gap:8px; align-items:flex-start;">
+          <textarea class="reflect-area" id="gvalue" style="min-height:60px;" placeholder="A word or short phrase…">${esc(r.value || '')}</textarea>
+          <button class="btn amber" id="gvaluemic" aria-label="Dictate your answer" style="width:auto; padding:12px 14px;">🎤</button>
+        </div>
+        <p class="likert-q" style="font-size:1.05rem; margin-top:12px;">${esc(m.capture.action)}</p>
+        <div class="row" style="gap:8px; align-items:flex-start;">
+          <textarea class="reflect-area" id="gaction" style="min-height:60px;" placeholder="One small, doable step…">${esc(r.action || '')}</textarea>
+          <button class="btn amber" id="gactionmic" aria-label="Dictate your step" style="width:auto; padding:12px 14px;">🎤</button>
+        </div>
+      ` : ''}
+      <p class="muted small" style="margin-top:14px;">Anything you want to note? (optional)</p>
+      <div class="row" style="gap:8px; align-items:flex-start;">
+        <textarea class="reflect-area" id="gnote" style="min-height:60px;" placeholder="Write or speak a few words. Stays on your device.">${esc(r.note || '')}</textarea>
+        <button class="btn amber" id="gnotemic" aria-label="Dictate your note" style="width:auto; padding:12px 14px;">🎤</button>
+      </div>
+      <button class="btn" id="gfin" ${canFinish ? '' : 'disabled'} style="margin-top:14px;">Finish practice</button>
+    </div>`;
+
+  const after = document.getElementById('gafter');
+  if (after) {
+    r.after = Number(after.value); // default = starting value, so Finish is always available
+    after.oninput = () => { r.after = Number(after.value); const v = document.getElementById('gafterval'); if (v) v.textContent = `${after.value}/10`; };
+  }
+  const val = document.getElementById('gvalue');
+  if (val) { val.oninput = () => { r.value = val.value; const b = document.getElementById('gfin'); if (b) b.disabled = !(r.value && r.value.trim()); }; attachMicButton(document.getElementById('gvaluemic'), val); }
+  const act = document.getElementById('gaction');
+  if (act) { act.oninput = () => { r.action = act.value; }; attachMicButton(document.getElementById('gactionmic'), act); }
+  const note = document.getElementById('gnote');
+  note.oninput = () => { r.note = note.value; };
+  attachMicButton(document.getElementById('gnotemic'), note);
+  document.getElementById('gfin').onclick = () => completeGuided();
+}
+
+// Finish a guided practice: log it (unscored — streak only), then a calm close.
+// No score reveal (it isn't a measure), and for the values module, an offer to
+// keep the committed action as a real commitment.
+function completeGuided() {
+  const s = state.session;
+  if (!s || s._completed) return;
+  s._completed = true;
+  stopGuidedTimers(s);
+  const ex = s.exercise;
+  const m = ex.module;
+  const r = s.response;
+  const { profile } = Profile.applySession(state.profile, ex, r);
+  state.profile = profile;
+  save();
+
+  const savedAction = (m.capture && r.action && r.action.trim()) ? r.action.trim() : '';
+  app.innerHTML = `
+    <div class="fade-in">
+      <div class="center" style="padding-top:24px;">
+        <div style="font-size:2.2rem;">${esc(getDomain('emotion_regulation').icon)}</div>
+        <h2 style="font-size:1.15rem; margin-top:8px;">Practice complete</h2>
+        <p class="muted small" style="max-width:32ch; margin:8px auto 0;">${esc(closingLineFor(m, r))}</p>
+      </div>
+      ${savedAction ? `
+        <div class="card" style="margin-top:18px;">
+          <div class="k">Your next step</div>
+          <p style="margin:6px 0 10px;">“${esc(savedAction)}”</p>
+          <button class="btn sm" id="gcommit">Keep this as a commitment</button>
+          <span id="gcommitted" class="trendpill up" style="display:none;">saved ✓</span>
+        </div>` : ''}
+      <button class="btn ghost" id="gtalk" style="margin-top:16px;">💬 Talk this through with the coach →</button>
+      <button class="btn amber" id="gdone" style="margin-top:10px;">Done →</button>
+    </div>`;
+
+  const commit = document.getElementById('gcommit');
+  if (commit) commit.onclick = () => {
+    state.profile.goals = state.profile.goals || [];
+    state.profile.goals.push({ text: savedAction, done: false, createdAt: Date.now() });
+    save();
+    commit.style.display = 'none';
+    const tag = document.getElementById('gcommitted'); if (tag) tag.style.display = '';
+  };
+  document.getElementById('gdone').onclick = () => { state.session = null; go('home'); };
+  document.getElementById('gtalk').onclick = () => {
+    const ctx = { kind: 'session', domain: 'emotion_regulation', exerciseLabel: `the “${m.name}” practice` };
+    state.session = null;
+    talkThrough(ctx);
+  };
+}
+
+// A gentle, on-device closing line — tuned to the module, never over-claiming.
+function closingLineFor(m, r) {
+  if (m.id === 'values' && r.value && r.value.trim()) {
+    return `You named ${r.value.trim()} — and a way to live it today. That’s the whole move: a direction, then one step.`;
+  }
+  if (m.scale && r.before != null && r.after != null) {
+    const better = m.scale.better === 'up' ? r.after > r.before : r.after < r.before;
+    if (better) return 'Something loosened, even a little. That’s the muscle — and it strengthens with the returning.';
+    return 'Nothing has to have shifted yet. Showing up to the practice is the rep; the change comes in the repeating.';
+  }
+  return 'You made a little room. That’s the practice — and it grows in the returning, not the result.';
 }
 
 function renderReflection() {
