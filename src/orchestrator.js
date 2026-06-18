@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS, makeFlankerExercise, makeSeriesExercise } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS, makeFlankerExercise, makeSeriesExercise, makeSymmetrySpanExercise } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -56,11 +56,13 @@ export function chooseExercise(profile, opts = {}) {
   // pickFrom/pickExercise prefer unseen items and fall back to reuse ONLY once a
   // bank is genuinely exhausted. (slice(-Infinity) returns the whole history.)
   const seen = recentSeenIds(profile, Infinity);
-  const recentTypes = (profile.sessions || []).slice(-3).map((s) => s.type);
+  const recentTypes = (profile.sessions || []).slice(-4).map((s) => s.type);
 
   if (focus === 'memory') {
     const level = Math.max(1, Math.round(score / 25));
-    // Rotate the n-back trainer, timed mental math, and sequence recall.
+    // Symmetry Span (complex span) is the construct-valid Gwm headline; n-back is kept only as a
+    // SECONDARY updating probe (it shares little variance with span). Then mental math + recall.
+    if (!recentTypes.includes('span')) return makeSymmetrySpanExercise();
     if (!recentTypes.includes('nback')) return makeNBackExercise(level, rng);
     if (!recentTypes.includes('mathfluency')) return makeMathFluency(level);
     if (!recentTypes.includes('digitspan')) return makeDigitSpan(level, rng);

@@ -844,6 +844,7 @@ function initialPhase(ex) {
     : ex.type === 'stream' ? 'stream-intro'
     : ex.type === 'vigilance' ? 'vigilance-intro'
     : ex.type === 'flanker' ? 'flanker-intro'
+    : ex.type === 'span' ? 'span-intro'
     : ex.type === 'mathfluency' ? 'math-intro'
     : ex.type === 'pursuit' ? 'pursuit-intro'
     : ex.type === 'contemplation' ? 'contempl-intro'
@@ -1074,6 +1075,7 @@ function renderSession() {
     case 'stream': return renderStream();
     case 'vigilance': return renderVigilance();
     case 'flanker': return renderFlanker();
+    case 'span': return renderSpan();
     case 'mathfluency': return renderMathFluency();
     case 'maze': return renderMaze();
     case 'pursuit': return renderPursuit();
@@ -1088,7 +1090,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', series: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', series: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', span: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
   const mode = exerciseMode(ex.type);
   const modeTitle = mode === 'practice'
     ? 'A practice — a formation rep, not graded right or wrong.'
@@ -1669,6 +1671,91 @@ function renderFlanker() {
   };
   stage.focus();
   if (!s._started) { s._started = true; nextTrial(); }
+}
+
+// Symmetry Span (working-memory capacity). A sub-phase machine: for each set, alternate a symmetry
+// judgment (8×8, Yes/No, 6s cap) with a flashed red cell in a 4×4 grid; after the set, recall the cells
+// in order by tapping. Per-set { sequence, recalled, symAcc } feeds scoreSpan (PCU + the 85% gate).
+function renderSpan() {
+  const s = state.session;
+  const ex = s.exercise;
+  const aborted = () => state.session !== s || state.route !== 'session';
+  const clearT = () => { if (s._timer) { clearTimeout(s._timer); s._timer = null; } };
+
+  if (s.phase === 'span-intro') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="card">
+          <p>Two things at once. First, decide if a pattern is <strong>symmetric</strong> — a mirror image, left to right — and tap Yes or No, quickly. Then a <strong>red square</strong> flashes in a grid: remember <em>where</em>, and in what order.</p>
+          <p class="muted small">After a few of each, you’ll tap the squares back in order. Answer the symmetry honestly and fast — dawdling there to rehearse defeats the measure. This is the Symmetry Span, a standard working-memory test.</p>
+        </div>
+        <button class="btn amber" id="begin">Begin</button>
+      </div>`;
+    document.getElementById('begin').onclick = () => { s.response.sets = []; s.span = { setIdx: 0, itemIdx: 0, sub: 'sym', symCorrect: 0, recalled: [] }; render(); };
+    return;
+  }
+
+  const sp = s.span;
+  const set = ex.sets[sp.setIdx];
+  const item = set.items[sp.itemIdx];
+  const grid8 = (g) => `<div style="display:grid; grid-template-columns:repeat(8,1fr); gap:2px; width:208px; margin:10px auto;">${g.map((v) => `<div style="aspect-ratio:1; background:${v ? 'var(--ink)' : 'var(--line)'}; border-radius:2px;"></div>`).join('')}</div>`;
+  const grid4 = (opts) => {
+    const cells = [];
+    for (let i = 0; i < 16; i++) {
+      const hl = opts.highlight === i;
+      const pos = opts.tapped ? opts.tapped.indexOf(i) : -1;
+      const bg = hl ? 'var(--red)' : (pos >= 0 ? 'var(--accent-soft)' : 'var(--card)');
+      const num = (opts.tapped && pos >= 0) ? (pos + 1) : '';
+      const tap = opts.tappable ? `data-cell="${i}" role="button" tabindex="0" aria-label="Grid cell ${i + 1}"` : '';
+      cells.push(`<div ${tap} style="aspect-ratio:1; background:${bg}; border:1px solid var(--line); border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:600; ${opts.tappable ? 'cursor:pointer;' : ''}">${num}</div>`);
+    }
+    return `<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:236px; margin:10px auto;">${cells.join('')}</div>`;
+  };
+
+  if (sp.sub === 'sym') {
+    app.innerHTML = `
+      <div class="fade-in center">
+        <p class="muted small">Set ${sp.setIdx + 1} of ${ex.sets.length} · is this pattern symmetric?</p>
+        ${grid8(item.grid)}
+        <div class="row" style="gap:10px; margin-top:14px;">
+          <button class="btn" id="symY" style="font-size:1.05rem;">Symmetric</button>
+          <button class="btn ghost" id="symN" style="font-size:1.05rem;">Not symmetric</button>
+        </div>
+      </div>`;
+    const answer = (yes) => { clearT(); if (yes === item.symmetric) sp.symCorrect++; sp.sub = 'cell'; render(); };
+    document.getElementById('symY').onclick = () => answer(true);
+    document.getElementById('symN').onclick = () => answer(false);
+    s._timer = setTimeout(() => { if (aborted()) { clearT(); return; } sp.sub = 'cell'; render(); }, ex.symTimeCapMs || 6000); // timeout = processing miss
+    return;
+  }
+
+  if (sp.sub === 'cell') {
+    app.innerHTML = `<div class="fade-in center"><p class="muted small">Remember this square…</p>${grid4({ highlight: item.cell })}</div>`;
+    s._timer = setTimeout(() => {
+      if (aborted()) { clearT(); return; }
+      sp.itemIdx++;
+      sp.sub = sp.itemIdx < set.setSize ? 'sym' : 'recall';
+      render();
+    }, 900);
+    return;
+  }
+
+  // recall
+  const finalizeSet = () => {
+    s.response.sets.push({ sequence: set.sequence, recalled: sp.recalled.slice(), symAcc: set.setSize ? sp.symCorrect / set.setSize : 0 });
+    sp.setIdx++; sp.itemIdx = 0; sp.symCorrect = 0; sp.recalled = [];
+    if (sp.setIdx >= ex.sets.length) completeSession(); else { sp.sub = 'sym'; render(); }
+  };
+  app.innerHTML = `
+    <div class="fade-in center">
+      <p class="muted small">Tap the squares in the order they appeared — ${sp.recalled.length} of ${set.setSize}.</p>
+      ${grid4({ tappable: true, tapped: sp.recalled })}
+      <button class="btn ghost sm" id="blank" style="width:auto; margin-top:6px;">I don’t remember this one</button>
+    </div>`;
+  const add = (cell) => { if (sp.recalled.length >= set.setSize) return; sp.recalled.push(cell); if (sp.recalled.length >= set.setSize) finalizeSet(); else render(); };
+  app.querySelectorAll('[data-cell]').forEach((b) => { b.onclick = () => add(Number(b.dataset.cell)); b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); add(Number(b.dataset.cell)); } }; });
+  document.getElementById('blank').onclick = () => add(null);
 }
 
 // Mental Math — a 60-second timed arithmetic sprint. Answers auto-advance the
