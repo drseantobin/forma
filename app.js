@@ -26,6 +26,7 @@ import { PROVIDERS, providerFor, defaultModelFor } from './src/llm.js';
 import { summarizeResearch, domainStability } from './src/analytics.js';
 import { OVERCLAIM_BANK, overclaimPooled, selfEnhancementReading } from './src/overclaiming.js';
 import { CALIBRATION_ITEMS, calibrationScore, calibrationReading, CALIBRATION_CAVEATS } from './src/calibration.js';
+import { breathCountScore, breathCountReading, BREATHCOUNT_CAVEATS } from './src/breathcount.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
@@ -129,6 +130,12 @@ function go(route) {
     clearTimeout(state._focus._t);
     state._focus = null;
   }
+  // Leaving the Breath-Counting run: stop its tick and release the audio context.
+  if (route !== 'breathcount' && state.bct) {
+    if (state.bct._timer) { clearInterval(state.bct._timer); state.bct._timer = null; }
+    if (state.bct._tones) { state.bct._tones.close(); state.bct._tones = null; }
+    state.bct = null;
+  }
   // Leaving a vignette mid-recording: stop the mic.
   if (route !== 'session' && state.session && state.session.recognizer) {
     try { state.session.recognizer.stop(); } catch (e) { /* noop */ }
@@ -208,6 +215,7 @@ function render() {
     case 'focuscheck': return renderFocusCheck();
     case 'epistemiccheck': return renderEpistemicCheck();
     case 'calibration': return renderCalibration();
+    case 'breathcount': return renderBreathCount();
     case 'coach': return renderCoach();
     case 'settings': return renderSettings();
     default: return renderHome();
@@ -3005,6 +3013,103 @@ function proofFocusCard(focus, daysElapsed) {
 }
 
 // ---------------- focus check (distraction-recovery micro-test) ----------------
+// Breath-Counting Task (src/breathcount.js) — an objective meta-awareness measure that sits beside
+// the silence practice. You count your own breaths silently (NOTHING on screen shows the number —
+// that would defeat it), tapping Breath for 1-8 and the round Ninth pill on breath 9, with a quiet,
+// never-shameful "I lost count" reset. A breathing dot + two chimes keep calm time (no countdown).
+// The reveal presents accuracy and the self-caught reset rate as an equal-weight PROFILE — the reset
+// row framed as meta-awareness (a win), never one hero score. (v179)
+function renderBreathCount() {
+  if (!state.bct) state.bct = { phase: 'intro', events: [] };
+  const b = state.bct;
+
+  if (b.phase === 'intro') {
+    app.innerHTML = `
+    <div class="fade-in">
+      <div class="row"><h1 style="margin:0;">Breath counting</h1><span class="spacer"></span>
+        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>
+      <div class="card">
+        <p><strong>Count your breaths, silently, in your head.</strong></p>
+        <p>Breathe naturally. With each breath, tap <strong>Breath</strong>. On every <strong>ninth</strong> breath, tap <strong>Ninth</strong> instead — then start again at one.</p>
+        <p>Lost the count? That’s normal — tap <strong>I lost count</strong> and begin again at one. Noticing you’ve drifted <em>is</em> the skill.</p>
+        <p class="muted small">Count in your head — nothing on screen shows the number. A chime marks the halfway point and the end (about 3½ minutes).</p>
+        <p class="muted small">${esc(BREATHCOUNT_CAVEATS[1])}</p>
+      </div>
+      <button class="btn amber" id="begin">Begin</button>
+    </div>`;
+    document.getElementById('back').onclick = () => go('settings');
+    document.getElementById('begin').onclick = () => {
+      b._tones = createTones();
+      if (b._tones) { b._tones.unlock(); b._tones.start(); }
+      b.target = 210; b.remaining = 210; b.events = []; b.phase = 'run';
+      render();
+    };
+    return;
+  }
+
+  if (b.phase === 'run') {
+    const target = b.target, half = Math.max(1, Math.floor(target / 2));
+    app.innerHTML = `
+    <div class="fade-in center">
+      <p class="eyebrow" style="margin-top:18px;">Be here</p>
+      <div class="stillness-dot" aria-hidden="true"></div>
+      <button class="bct-field" id="bbreath" aria-label="Tap for a breath, counts one through eight"><span class="g" aria-hidden="true">◯</span><span class="eyebrow">Breath</span></button>
+      <button class="bct-ninth" id="bninth" aria-label="Tap on your ninth breath"><span class="g" aria-hidden="true">●</span>Ninth</button>
+      <div style="margin-top:18px;"><button class="btn ghost sm" id="breset" style="width:auto;" aria-label="I lost count, start the count over">I lost count — start over</button></div>
+      <div style="margin-top:14px;"><button class="btn ghost sm" id="bend" style="width:auto;">End</button></div>
+    </div>`;
+    const push = (type) => { b.events.push({ type, t: performance.now() }); };
+    document.getElementById('bbreath').onclick = () => push('B');
+    document.getElementById('bninth').onclick = () => push('N');
+    document.getElementById('breset').onclick = () => push('R');
+    const toReveal = () => {
+      if (b._timer) { clearInterval(b._timer); b._timer = null; }
+      if (b._tones) { const t = b._tones; b._tones = null; setTimeout(() => t.close(), 2500); }
+      b.phase = 'reveal'; render();
+    };
+    document.getElementById('bend').onclick = toReveal;
+    if (!b._timer) {
+      b._timer = setInterval(() => {
+        if (state.bct !== b || state.route !== 'breathcount') { clearInterval(b._timer); b._timer = null; return; }
+        b.remaining -= 1;
+        const elapsed = target - b.remaining;
+        if (b.remaining <= 0) { if (b._tones) b._tones.done(); toReveal(); }
+        else if (elapsed === half) { if (b._tones) b._tones.interval(); announce('Halfway.'); }
+      }, 1000);
+    }
+    return;
+  }
+
+  // Reveal — accuracy + reset-rate as an equal-weight profile (never one hero score).
+  const score = breathCountScore(b.events);
+  const reading = breathCountReading(score);
+  let body;
+  if (reading.level === 'suspect') {
+    body = `<div class="insight">${esc(reading.note)}</div>
+      <button class="btn ghost" id="bredo" style="margin-top:12px;">Try again, unhurried</button>`;
+  } else if (!score.ready) {
+    body = `<div class="score-reveal"><div class="lbl">You completed ${score.correct} clean ${score.correct === 1 ? 'cycle' : 'cycles'}.</div></div>
+      <p class="muted small">${esc(reading.note)}</p>
+      <button class="btn ghost" id="bdone" style="margin-top:12px;">Done</button>`;
+  } else {
+    const acc = Math.round(score.accuracy * 100);
+    const caught = score.resetRate == null ? null : Math.round(score.resetRate * 100);
+    body = `
+      <table class="snaptable"><tbody>
+        <tr><td>Stayed with the count</td><td class="snapsc">${acc}%</td></tr>
+        ${caught != null ? `<tr><td><span class="eyebrow" style="color:var(--green-ink);">Meta-awareness</span><br>Caught yourself drifting</td><td class="snapsc">${caught}%<span class="muted small"> of slips</span></td></tr>` : ''}
+      </tbody></table>
+      <div class="insight" style="margin-top:12px;">${esc(reading.note)}</div>
+      <p class="muted small" style="margin-top:8px;">${esc(BREATHCOUNT_CAVEATS[2])}</p>
+      <button class="btn ghost" id="bdone" style="margin-top:12px;">Done</button>`;
+  }
+  app.innerHTML = `<div class="fade-in"><h1 tabindex="-1" id="bchead">Breath counting</h1>${body}</div>`;
+  const h = document.getElementById('bchead'); if (h) h.focus();
+  announce('Your breath-counting read is ready.');
+  const redo = document.getElementById('bredo'); if (redo) redo.onclick = () => { state.bct = null; go('breathcount'); };
+  const done = document.getElementById('bdone'); if (done) done.onclick = () => go('settings');
+}
+
 // Calibration (src/calibration.js) — a 2AFC "how well does your confidence track your accuracy?"
 // mirror. Per item: answer, then say how sure (50-100% — below 50 is incoherent for 2AFC). The
 // reveal headlines the over/under-confidence read (no Brier/number-chase), handles underconfidence
@@ -3424,6 +3529,14 @@ function renderSettings() {
       </div>
 
       <div class="card">
+        <div class="row"><span style="font-size:1.3rem;">🫧</span>
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Breath counting</h2>
+            <p class="muted small" style="margin:2px 0 0;">A few quiet minutes counting your own breaths — a mirror for attention and for noticing when the mind has wandered.</p></div>
+          <button class="btn ghost sm" id="tobreath" style="width:auto;">Begin →</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
         <p class="muted small">Everything Forma stores about you lives on this device — no server, no account, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
         <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to the AI provider you picked, using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
@@ -3510,6 +3623,7 @@ function renderSettings() {
   const tm = document.getElementById('tomethods'); if (tm) tm.onclick = () => go('methods');
   const tec = document.getElementById('toepistemic'); if (tec) tec.onclick = () => { state.epistemic = null; go('epistemiccheck'); };
   const tcal = document.getElementById('tocalibration'); if (tcal) tcal.onclick = () => { state.calib = null; go('calibration'); };
+  const tbr = document.getElementById('tobreath'); if (tbr) tbr.onclick = () => { state.bct = null; go('breathcount'); };
   document.getElementById('faith').onclick = () => {
     state.profile = p.settings.faithTrack ? Profile.disableFaithTrack(p) : Profile.enableFaithTrack(p);
     // Regenerate the plan so the change takes effect immediately.
