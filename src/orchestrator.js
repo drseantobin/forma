@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS, makeFlankerExercise } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS, makeFlankerExercise, makeSeriesExercise } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -68,9 +68,11 @@ export function chooseExercise(profile, opts = {}) {
   }
 
   if (focus === 'judgment') {
-    // Rotate cognitive-reflection ("The Lure"), matrix reasoning, and decisions.
+    // Rotate cognitive-reflection ("The Lure"), matrix reasoning, ICAR-style letter-number series
+    // (a second public-domain Gf indicator that diversifies the facet), and decisions.
     if (!recentTypes.includes('crt')) return pickFrom(CRT, seen, rng);
     if (!recentTypes.includes('matrix')) return pickFrom(MATRICES, seen, rng);
+    if (!recentTypes.includes('series')) { const sx = makeSeriesExercise(Math.max(1, Math.round(score / 25))); if (sx) return sx; }
     return pickExercise('judgment', { seenIds: seen, rng });
   }
 

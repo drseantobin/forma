@@ -1068,6 +1068,7 @@ function renderSession() {
     case 'attend': return renderDecision();
     case 'steu': return renderDecision();
     case 'matrix': return renderMatrix();
+    case 'series': return renderSeries();
     case 'crt': return renderCRT();
     case 'nback': return renderNBack();
     case 'stream': return renderStream();
@@ -1087,7 +1088,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', series: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
   const mode = exerciseMode(ex.type);
   const modeTitle = mode === 'practice'
     ? 'A practice — a formation rep, not graded right or wrong.'
@@ -1823,6 +1824,43 @@ function renderMatrix() {
       announce(chosen === ex.answer ? `Correct. ${ex.explanation}` : `Not quite. ${ex.explanation}`);
       render();
     };
+  } else {
+    document.getElementById('fin').onclick = completeSession;
+  }
+}
+
+// Letter-Number Series (fluid reasoning). A simple "what comes next" MC item; mirrors the matrix
+// reveal flow. The series is generated, so the answer index is computed and the rule is shown on reveal.
+function renderSeries() {
+  const s = state.session;
+  const ex = s.exercise;
+  const chosen = s.response.optionId;
+  const revealed = s.revealed;
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <p class="muted small">What comes next in the series?</p>
+      <div class="card" style="text-align:center; font-family:var(--font-num); font-size:1.7rem; letter-spacing:.08em;">
+        ${ex.terms.map((t) => esc(String(t))).join('&nbsp;&nbsp;')}&nbsp;&nbsp;<span style="color:var(--ink-faint);">?</span>
+      </div>
+      <p class="muted small" style="margin-top:8px;">Choose:</p>
+      <div class="row" style="flex-wrap:wrap; gap:8px;">
+        ${ex.options.map((o, i) => {
+          let cls = 'opt';
+          if (revealed) { if (i === ex.answer) cls += ' correct'; else if (i === chosen) cls += ' wrong'; }
+          else if (i === chosen) cls += ' selected';
+          const mark = revealed ? (i === ex.answer ? revealMark('correct') : (i === chosen ? revealMark('wrong') : '')) : '';
+          const lbl = revealed && i === ex.answer ? ', correct answer' : (revealed && i === chosen ? ', your answer, not correct' : '');
+          return `<button class="${cls}" data-i="${i}" aria-pressed="${!revealed && i === chosen}" aria-label="Option ${esc(String(o))}${lbl}" ${revealed ? 'disabled' : ''} style="flex:0 0 auto; min-width:66px; text-align:center; font-family:var(--font-num); font-size:1.2rem;">${esc(String(o))}${mark}</button>`;
+        }).join('')}
+      </div>
+      ${revealed
+        ? `<div class="rationale" style="margin-top:14px;">${esc(ex.explanation)}</div><button class="btn" id="fin" style="margin-top:12px;">Continue →</button>`
+        : `<button class="btn" id="reveal" ${chosen == null ? 'disabled' : ''} style="margin-top:16px;">Lock in my answer</button>`}
+    </div>`;
+  if (!revealed) {
+    app.querySelectorAll('.opt[data-i]').forEach((b) => { b.onclick = () => { s.response.optionId = Number(b.dataset.i); render(); }; });
+    document.getElementById('reveal').onclick = () => { s.revealed = true; announce(chosen === ex.answer ? `Correct. ${ex.explanation}` : `Not quite. ${ex.explanation}`); render(); };
   } else {
     document.getElementById('fin').onclick = completeSession;
   }

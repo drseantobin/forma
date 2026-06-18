@@ -1382,6 +1382,59 @@ export function makeVigilanceExercise(level = 1) {
   };
 }
 
+// ----- LETTER-NUMBER SERIES: fluid reasoning (Gf), ICAR-style (Condon & Revelle 2014) -----
+// GENERATED from explicit rules so the correct answer is computed (no mis-key, fresh items, no bank
+// exhaustion). 5 shown terms → "what comes next", 6-option MC. Distractors are procedural error-types
+// (off-by-step, wrong-op continuation, repeat-last, adjacent). A uniqueness/sanity guard rejects any
+// sequence whose shown terms a competing simple rule would also fit with a DIFFERENT next term — the
+// correctness check series items live or die on (Simon & Kotovsky). Diversifies the Reasoning facet.
+const _LN_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function _seriesCandidate(level) {
+  const ri = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const easy = ['arith', 'sub', 'geom', 'letter'];
+  const med = ['accel', 'fib'];
+  const fam = pick(level >= 3 ? med.concat(easy) : (level >= 2 ? easy.concat(med) : easy));
+  let terms = [], kind = 'number', why = '';
+  if (fam === 'arith') { const a = ri(1, 9), k = ri(2, 6); for (let i = 0; i < 6; i++) terms.push(a + k * i); why = `add ${k} each step`; }
+  else if (fam === 'sub') { const k = ri(2, 6), a = 40 + ri(0, 9); for (let i = 0; i < 6; i++) terms.push(a - k * i); why = `subtract ${k} each step`; }
+  else if (fam === 'geom') { const r = ri(2, 3), a = ri(1, 3); for (let i = 0; i < 6; i++) terms.push(a * Math.pow(r, i)); why = `multiply by ${r} each step`; }
+  else if (fam === 'accel') { let v = ri(1, 4), step = ri(1, 3); terms.push(v); for (let i = 1; i < 6; i++) { v += step; terms.push(v); step += 1; } why = 'the gap grows by one each step'; }
+  else if (fam === 'fib') { const a = ri(1, 3), b = ri(2, 4); terms = [a, b]; for (let i = 2; i < 6; i++) terms.push(terms[i - 1] + terms[i - 2]); why = 'each term is the sum of the two before it'; }
+  else { kind = 'letter'; const skip = ri(2, 4), start = ri(0, 6); const idx = []; for (let i = 0; i < 6; i++) idx.push(start + skip * i); if (idx[5] > 25) return null; terms = idx.map((x) => _LN_LETTERS[x]); why = `skip ${skip} letters each step`; }
+  return { shown: terms.slice(0, 5), answer: terms[5], kind, fam, why };
+}
+
+export function makeSeriesExercise(level = 1) {
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const c = _seriesCandidate(level);
+    if (!c) continue;
+    const { shown, answer, kind, fam, why } = c;
+    if (kind === 'number' && (!Number.isInteger(answer) || answer < -50 || answer > 9999 || shown.some((x) => !Number.isInteger(x)))) continue;
+    let pool;
+    if (kind === 'number') {
+      const d = shown[4] - shown[3];
+      pool = [answer + 1, answer - 1, shown[4], shown[4] + d, answer + d, answer + 2, answer - 2];
+    } else {
+      const ai = _LN_LETTERS.indexOf(answer);
+      pool = [ai + 1, ai - 1, ai + 2, ai - 2, _LN_LETTERS.indexOf(shown[4])].filter((x) => x >= 0 && x <= 25).map((x) => _LN_LETTERS[x]);
+    }
+    const seen = new Set([answer]); const distractors = [];
+    for (const x of pool) { if (x == null || seen.has(x)) continue; seen.add(x); distractors.push(x); if (distractors.length === 5) break; }
+    if (distractors.length < 5) continue;
+    // Uniqueness sanity: a non-arithmetic family must NOT have constant differences (which would make a
+    // plain arithmetic continuation an equally-defensible — and different — answer).
+    if (kind === 'number') {
+      const diffs = shown.slice(1).map((v, i) => v - shown[i]);
+      if (diffs.every((x) => x === diffs[0]) && fam !== 'arith' && fam !== 'sub') continue;
+    }
+    const opts = [answer, ...distractors];
+    for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = opts[i]; opts[i] = opts[j]; opts[j] = t; }
+    return { id: `series-${Date.now()}`, type: 'series', domain: 'judgment', title: 'What Comes Next', terms: shown, options: opts, answer: opts.indexOf(answer), rule: fam, difficulty: (fam === 'accel' || fam === 'fib') ? 'medium' : 'easy', explanation: `The rule: ${why}.` };
+  }
+  return null;
+}
+
 // ----- FLANKER: executive attention / inhibitory control (Eriksen; NIH Toolbox arrows) -----
 // Respond to the CENTER arrow's direction while flanking arrows pull congruently or incongruently.
 // 8 practice + 64 scored (32 congruent / 32 incongruent), direction-balanced and lightly de-runned.

@@ -301,6 +301,10 @@ export function scoreExercise(exercise, response) {
       // item, so blind guessing can't manufacture a mid-band Judgment score:
       // expected blind guess = 0.25·100 + 0.75·15 = ~36 (Emerging), not ~51.
       return response.optionId === exercise.answer ? 100 : 15;
+    case 'series':
+      // Letter-Number Series (Gf), 6-option MC. Same keying as matrix: correct 100, wrong 15, so a
+      // blind guess (1/6) expects ~29 — comfortably below the band midpoint, can't fake a Reasoning score.
+      return response.optionId === exercise.answer ? 100 : 15;
     case 'crt':
       return scoreCRT(response.optionId, exercise.options);
     case 'nback':
