@@ -60,3 +60,29 @@ export const MEASURE_BASIS = {
 export function basisFor(domainId) {
   return MEASURE_BASIS[domainId] || null;
 }
+
+// Standalone self-knowledge INSTRUMENTS (they live in Settings, not tied to one capacity domain).
+// Same ADAPTS-not-administers framing. Each names its validated paradigm + a citation so a thoughtful
+// person can see the basis of what they just did — Forma's whole credibility premise. Order = display order.
+export const INSTRUMENT_BASIS = [
+  {
+    id: 'epistemiccheck', name: 'Epistemic check', icon: '🪞',
+    paradigm: 'Over-Claiming Technique (Paulhus, Harms, Bruce & Lysy, 2003)',
+    detail: 'You rate familiarity with terms where about a quarter are invented. Claiming the made-up ones is scored by signal detection as self-enhancement — a faking-resistant mirror for the habit of recognizing what we don’t actually know.',
+  },
+  {
+    id: 'calibration', name: 'Calibration', icon: '🎯',
+    paradigm: 'Confidence–accuracy calibration; over/under-confidence index (Lichtenstein & Fischhoff lineage; Brier, 1950)',
+    detail: 'You answer questions and say how sure you are; the gap between your confidence and your accuracy is your calibration. It asks whether your self-assessment is honest — the skill of knowing when you actually know versus should check.',
+  },
+  {
+    id: 'breathcount', name: 'Breath counting', icon: '🫧',
+    paradigm: 'Breath-Counting Task (Levinson, Stoll, Kindy, Merry & Davidson, 2014)',
+    detail: 'An objective measure of meta-awareness: counting accuracy reflects sustained attention, and catching yourself when you lose count reflects noticing a wandering mind — the very muscle the practice builds.',
+  },
+  {
+    id: 'deepreading', name: 'Deep reading', icon: '📖',
+    paradigm: 'Sentence Verification Technique (Royer, Hastings & Hook, 1979)',
+    detail: 'After reading a passage, you tell true restatements from reworded contradictions and plausible additions. Scored by signal detection (d′), it captures comprehension fidelity — how accurately you took in what the text actually said.',
+  },
+];

@@ -16,7 +16,7 @@ import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import { bandAscension, ascensionLine, streakMilestone, nextStreakMark } from './src/milestones.js';
 import { confidenceTag, confidence, milestoneEligible, indexConfidence, scaleFreshness } from './src/reliability.js';
-import { basisFor } from './src/methods.js';
+import { basisFor, INSTRUMENT_BASIS } from './src/methods.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
 import * as Research from './src/research.js';
@@ -2862,6 +2862,14 @@ function renderMethods() {
         <p class="muted small" style="margin:0;">Forma’s exercises adapt established cognitive and psychological paradigms — the same families of task used in research on attention, memory, reasoning, and emotional skill. They’re tuned to track <strong>growth over time</strong>, as formation, not to diagnose or label. The point is a measurement you can trust because you can see what it rests on.</p>
       </div>
       ${rows}
+      <h2 style="font-size:1.05rem; margin:18px 0 8px;">Self-knowledge instruments</h2>
+      <p class="muted small" style="margin:0 0 10px;">Optional checks in Settings, each adapted from an established research paradigm — the same honesty: a mirror you can see the basis of, never a verdict.</p>
+      ${INSTRUMENT_BASIS.map((b) => `<div class="card" style="margin-bottom:10px;">
+        <div class="row"><span class="ico" aria-hidden="true">${b.icon}</span>
+          <strong style="margin-left:8px;">${esc(b.name)}</strong></div>
+        <div class="eyebrow" style="margin-top:8px;">${esc(b.paradigm)}</div>
+        <p class="muted small" style="margin-top:6px;">${esc(b.detail)}</p>
+      </div>`).join('')}
       <p class="muted small center" style="margin-top:6px;">Measurement for formation — never a clinical diagnosis.</p>
     </div>`;
   document.getElementById('back').onclick = () => go('settings');
