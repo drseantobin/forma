@@ -10,8 +10,10 @@
 //   • The optional Interior Life / faith track is NEVER collected — a 'interior'
 //     domain event is dropped whole, mirroring the snapshot's exclusion.
 //   • NO FREE TEXT, ever. Reflection / sentence-completion / vignette / coach text
-//     never enters an event. Only the numeric score and the short keyed option id
-//     (e.g. 'a' or 2 — a choice, not content) are kept.
+//     never enters an event. Only the numeric score, the short keyed option id
+//     (e.g. 'a' or 2 — a choice, not content), and the keyed ITEM id (e.g.
+//     'stem-credit' — which item, needed for item difficulty/discrimination and the
+//     factor model) are kept. The item id is a non-PII internal identifier, not content.
 //   • Day-coarse timestamps (no clock time), so events can't be lined up to
 //     re-identify someone in a small sample.
 //
@@ -59,6 +61,13 @@ export function buildEvent(session, response, today) {
   if (response && (typeof response.optionId === 'string' || typeof response.optionId === 'number')) {
     ev.option = response.optionId;
   }
+  // The keyed ITEM id (which exercise) — the unit of item analysis (difficulty, discrimination)
+  // and the column key of the future CFA person×indicator matrix. A non-PII internal id, not content;
+  // interior events are already dropped above. Generated tasks carry their task-type id (fine — they're
+  // analyzed separately from keyed banks, per the validity review).
+  if (session.exerciseId != null && (typeof session.exerciseId === 'string' || typeof session.exerciseId === 'number')) {
+    ev.item = session.exerciseId;
+  }
   return ev;
 }
 
@@ -97,7 +106,7 @@ export function recordSession(profile, session, response, today) {
 export const FLUSH_SCHEMA = 1;
 // ALLOW-LIST: the ONLY fields that may leave the device. PII is impossible by
 // construction — buildBatch never references profile.contact/release/settings/coachLog.
-const FLUSH_EVENT_FIELDS = ['t', 'day', 'type', 'domain', 'score', 'measured', 'option', 'seq'];
+const FLUSH_EVENT_FIELDS = ['t', 'day', 'type', 'domain', 'score', 'measured', 'option', 'item', 'seq'];
 function cleanFlushEvent(ev) {
   if (!ev || typeof ev !== 'object') return null;
   const out = {};
