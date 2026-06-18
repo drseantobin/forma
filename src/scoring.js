@@ -228,6 +228,32 @@ export function scoreMemory(recalled, sequence) {
   return clamp(round(proportion * 100 * lengthBonus));
 }
 
+// --- Complex span (Symmetry Span): visuospatial working-memory capacity (Gwm) ---
+// The construct-valid WMC workhorse (Foster/Engle), replacing n-back as the Memory headline (n-back
+// shares little variance with span — Redick & Lindsey 2013). Headline = Partial-Credit UNIT (PCU):
+// per trial, proportion of cells recalled in the CORRECT serial position; averaged across trials → 0-100.
+// PROCESSING GATE: the symmetry-judgment accuracy must be >= 85% across the run, or the person traded
+// processing for storage and the run is invalid → null (session held, not scored), like the flanker gate.
+// set = { sequence:[cellIdx...], recalled:[cellIdx...], symAcc:0..1 (correct symmetry judgments / setSize) }.
+export const SPAN_PROC_GATE = 0.85;
+export function scoreSpan(sets) {
+  if (!sets || !sets.length) return null;
+  const totalSym = sets.reduce((a, s) => a + (s.sequence ? s.sequence.length : 0), 0);
+  const symCorrect = sets.reduce((a, s) => a + Math.round((s.symAcc || 0) * (s.sequence ? s.sequence.length : 0)), 0);
+  const procAcc = totalSym ? symCorrect / totalSym : 0;
+  if (procAcc < SPAN_PROC_GATE) return null; // failed processing gate → hold the prior scale
+  let sum = 0, trials = 0;
+  for (const s of sets) {
+    const n = s.sequence ? s.sequence.length : 0;
+    if (!n) continue;
+    let pos = 0;
+    for (let i = 0; i < n; i++) if (s.recalled && s.recalled[i] != null && s.recalled[i] === s.sequence[i]) pos++;
+    sum += pos / n; trials++;
+  }
+  if (!trials) return null;
+  return clamp(round((sum / trials) * 100));
+}
+
 // --- Decision scenario: the chosen option carries its own reasoning score ---
 export function scoreDecision(optionId, options) {
   const opt = options.find((o) => o.id === optionId);
@@ -311,6 +337,8 @@ export function scoreExercise(exercise, response) {
       return scoreNBack(response.flagged || [], exercise.targets, exercise.sequence.length, exercise.n);
     case 'flanker':
       return scoreFlanker(response.trials || []);
+    case 'span':
+      return scoreSpan(response.sets || []);
     case 'stream':
       return scoreStream(response.tapped || [], exercise.items);
     case 'stay':

@@ -1382,6 +1382,31 @@ export function makeVigilanceExercise(level = 1) {
   };
 }
 
+// ----- SYMMETRY SPAN: visuospatial working-memory capacity (Foster/Engle shortened) -----
+// The construct-valid WMC headline (replacing n-back). Each trial alternates a symmetry JUDGMENT
+// (is this 8×8 pattern left-right symmetric?) with a to-remember red CELL in a 4×4 grid, for `setSize`
+// items, then serial recall by tapping the grid. Shortened battery: set sizes 2-5, two trials each
+// (8 trials / 28 items, ~4-5 min — Foster 2014 shows shortened spans retain validity). scoreSpan reads
+// the screen's per-trial { sequence, recalled, symAcc }; the symmetry judgments gate the run at >=85%.
+function _symMatrix(makeSymmetric) {
+  const g = new Array(64).fill(0);
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 4; c++) { const v = Math.random() < 0.5 ? 1 : 0; g[r * 8 + c] = v; g[r * 8 + (7 - c)] = v; }
+  if (!makeSymmetric) { const r = Math.floor(Math.random() * 8), c = Math.floor(Math.random() * 4); g[r * 8 + (7 - c)] = g[r * 8 + (7 - c)] ? 0 : 1; } // flip one mirror cell → guaranteed asymmetric
+  return g;
+}
+export function makeSymmetrySpanExercise() {
+  const sizes = [2, 2, 3, 3, 4, 4, 5, 5];
+  for (let i = sizes.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = sizes[i]; sizes[i] = sizes[j]; sizes[j] = t; }
+  const sets = sizes.map((setSize) => {
+    const pool = Array.from({ length: 16 }, (_, k) => k);
+    const cells = [];
+    for (let k = 0; k < setSize; k++) { const idx = Math.floor(Math.random() * pool.length); cells.push(pool.splice(idx, 1)[0]); }
+    const items = cells.map((cell) => { const symmetric = Math.random() < 0.5; return { grid: _symMatrix(symmetric), symmetric, cell }; });
+    return { setSize, items, sequence: cells };
+  });
+  return { id: `span-${Date.now()}`, type: 'span', domain: 'memory', title: 'Symmetry Span', sets, symTimeCapMs: 6000, procGate: 0.85 };
+}
+
 // ----- LETTER-NUMBER SERIES: fluid reasoning (Gf), ICAR-style (Condon & Revelle 2014) -----
 // GENERATED from explicit rules so the correct answer is computed (no mis-key, fresh items, no bank
 // exhaustion). 5 shown terms → "what comes next", 6-option MC. Distractors are procedural error-types
