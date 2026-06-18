@@ -43,8 +43,8 @@ export const MEASURE_BASIS = {
     detail: 'Two performance measures of emotional intelligence: STEM — given an emotional situation, the most effective way to MANAGE the feeling (adaptive strategy over suppression or rumination); and STEU — reading which emotion a situation evokes, scored against appraisal theory. Understanding and managing, not self-report.',
   },
   values: {
-    paradigm: 'Sentence completion (Rotter RISB lineage)',
-    detail: 'What you complete a sentence stem with — before you have time to curate it — reveals orientation that a Likert scale can’t. Adapted from the Rotter Incomplete Sentences Blank tradition, scored for self-knowledge, never for labels.',
+    paradigm: 'Meaning in Life Questionnaire — Presence (Steger 2006); self-report',
+    detail: 'Your own honest rating of how purposeful and meaningful life feels — the Presence-of-Meaning subscale. A self-report reading held in your private Purpose track, never a performance score and never shown to employers. (A reflective sentence-completion practice sits alongside it.)',
   },
   persistence: {
     paradigm: 'Behavioral persistence + self-report',

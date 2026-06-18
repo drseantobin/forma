@@ -1617,6 +1617,23 @@ export const MATRICES = [
 // ----- SENTENCE COMPLETION: AI-scored self-knowledge (Values Alignment) -----
 // Rotter RISB lineage: finish open stems; Claude scores honesty/self-awareness/
 // coherence formatively (see coach.scoreSentences). Requires a live key.
+// Meaning in Life Questionnaire — Presence-of-Meaning subscale (Steger, Frazier, Oishi & Kaler 2006).
+// The validated SELF-REPORT headline for the Purpose track, replacing the projective sentence-completion
+// (RISB can't be validly app-scored). Verbatim items (item 9 reverse-keyed); 7-pt anchors. Self-report,
+// never a performance score, never shown to employers. Cite Steger 2006; confirm commercial use w/ author.
+export const MLQ_PRESENCE = {
+  id: 'mlq-presence', type: 'meaning', domain: 'values', title: 'Meaning in Life',
+  instrument: 'Meaning in Life Questionnaire — Presence subscale (Steger et al., 2006)',
+  anchors: ['Absolutely untrue', 'Mostly untrue', 'Somewhat untrue', 'Can’t say true or false', 'Somewhat true', 'Mostly true', 'Absolutely true'],
+  items: [
+    { text: 'I understand my life’s meaning.', reverse: false },
+    { text: 'My life has a clear sense of purpose.', reverse: false },
+    { text: 'I have a good sense of what makes my life meaningful.', reverse: false },
+    { text: 'I have discovered a satisfying life purpose.', reverse: false },
+    { text: 'My life has no clear purpose.', reverse: true },
+  ],
+};
+
 export const SENTENCES = [
   {
     id: 'sent-self', type: 'sentence', domain: 'values', title: 'Finish the Thought',

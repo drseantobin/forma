@@ -1076,6 +1076,7 @@ function renderSession() {
     case 'vigilance': return renderVigilance();
     case 'flanker': return renderFlanker();
     case 'span': return renderSpan();
+    case 'meaning': return renderMeaning();
     case 'mathfluency': return renderMathFluency();
     case 'maze': return renderMaze();
     case 'pursuit': return renderPursuit();
@@ -1090,7 +1091,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', series: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', span: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', series: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', span: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', meaning: 'Purpose', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
   const mode = exerciseMode(ex.type);
   const modeTitle = mode === 'practice'
     ? 'A practice — a formation rep, not graded right or wrong.'
@@ -1914,6 +1915,33 @@ function renderMatrix() {
   } else {
     document.getElementById('fin').onclick = completeSession;
   }
+}
+
+// Meaning in Life (MLQ Presence subscale) — a 5-item self-report on a 7-point scale. Self-report, not
+// a performance score; the private Purpose track, never shown to employers. Single-screen questionnaire.
+function renderMeaning() {
+  const s = state.session;
+  const ex = s.exercise;
+  if (!s.response.ratings) s.response.ratings = new Array(ex.items.length).fill(null);
+  const r = s.response.ratings;
+  const done = r.every((v) => v != null);
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <p class="muted small">How true is each statement for you, right now? There’s no right answer — this is your own honest read.</p>
+      ${ex.items.map((it, i) => `
+        <div class="card" style="margin-bottom:10px;">
+          <p style="margin:0 0 8px;">${esc(it.text)}</p>
+          <div class="row" style="gap:6px; flex-wrap:wrap;">
+            ${[1, 2, 3, 4, 5, 6, 7].map((v) => `<button class="chip${r[i] === v ? ' sel' : ''}" data-i="${i}" data-v="${v}" aria-pressed="${r[i] === v}" aria-label="${esc(ex.anchors[v - 1])}" style="min-width:36px;">${v}</button>`).join('')}
+          </div>
+          <div class="row" style="justify-content:space-between; margin-top:4px;"><span class="muted small">1 · ${esc(ex.anchors[0])}</span><span class="muted small">7 · ${esc(ex.anchors[6])}</span></div>
+        </div>`).join('')}
+      <p class="muted small">${esc(ex.instrument)}. A self-report reading, not a performance score — your private Purpose track, never shown to employers. Seeking meaning is a normal part of growth, never a deficit.</p>
+      <button class="btn" id="fin" ${done ? '' : 'disabled'}>Done →</button>
+    </div>`;
+  app.querySelectorAll('.chip[data-i]').forEach((b) => { b.onclick = () => { r[Number(b.dataset.i)] = Number(b.dataset.v); render(); }; });
+  document.getElementById('fin').onclick = () => { if (r.every((v) => v != null)) completeSession(); };
 }
 
 // Letter-Number Series (fluid reasoning). A simple "what comes next" MC item; mirrors the matrix

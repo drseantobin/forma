@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS, makeFlankerExercise, makeSeriesExercise, makeSymmetrySpanExercise } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS, makeFlankerExercise, makeSeriesExercise, makeSymmetrySpanExercise, MLQ_PRESENCE } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -140,8 +140,9 @@ export function chooseExercise(profile, opts = {}) {
   }
 
   if (focus === 'values') {
-    // The AI-scored sentence-completion is the showcase for self-knowledge;
-    // needs a live key. Otherwise a values reflection.
+    // MLQ Presence-of-Meaning is the validated SELF-REPORT headline for the Purpose track. The
+    // AI-scored sentence-completion is kept only as a secondary reflective practice (needs a live key).
+    if (!recentTypes.includes('meaning')) return MLQ_PRESENCE;
     if (hasKey(profile) && !recentTypes.includes('sentence')) return pickFrom(SENTENCES, seen, rng);
     return pickExercise('values', { seenIds: seen, rng });
   }

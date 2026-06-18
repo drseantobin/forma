@@ -254,6 +254,22 @@ export function scoreSpan(sets) {
   return clamp(round((sum / trials) * 100));
 }
 
+// --- Meaning in Life (MLQ Presence subscale): SELF-REPORT, not a performance score ---
+// Sum the 5 Presence items with item 9 reverse-keyed (8 - v), then linearly stretch the logical
+// range (5..35) to 0..100 — a transparent rescale, NOT a population percentile (no norms). Returns
+// null if any item is unanswered (session held). items = [{reverse}]; ratings = [1..7] per item.
+export function scoreMeaning(ratings, items) {
+  if (!Array.isArray(ratings) || !items || ratings.length !== items.length || !items.length) return null;
+  let sum = 0;
+  for (let i = 0; i < items.length; i++) {
+    const v = ratings[i];
+    if (typeof v !== 'number' || v < 1 || v > 7) return null; // incomplete → unscored
+    sum += items[i].reverse ? (8 - v) : v;
+  }
+  const n = items.length;
+  return clamp(round(((sum - n) / (6 * n)) * 100)); // n..7n → 0..100
+}
+
 // --- Decision scenario: the chosen option carries its own reasoning score ---
 export function scoreDecision(optionId, options) {
   const opt = options.find((o) => o.id === optionId);
@@ -339,6 +355,8 @@ export function scoreExercise(exercise, response) {
       return scoreFlanker(response.trials || []);
     case 'span':
       return scoreSpan(response.sets || []);
+    case 'meaning':
+      return scoreMeaning(response.ratings || [], exercise.items);
     case 'stream':
       return scoreStream(response.tapped || [], exercise.items);
     case 'stay':
