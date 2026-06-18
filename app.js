@@ -843,6 +843,7 @@ function initialPhase(ex) {
     : ex.type === 'nback' ? 'nback-intro'
     : ex.type === 'stream' ? 'stream-intro'
     : ex.type === 'vigilance' ? 'vigilance-intro'
+    : ex.type === 'flanker' ? 'flanker-intro'
     : ex.type === 'mathfluency' ? 'math-intro'
     : ex.type === 'pursuit' ? 'pursuit-intro'
     : ex.type === 'contemplation' ? 'contempl-intro'
@@ -1071,6 +1072,7 @@ function renderSession() {
     case 'nback': return renderNBack();
     case 'stream': return renderStream();
     case 'vigilance': return renderVigilance();
+    case 'flanker': return renderFlanker();
     case 'mathfluency': return renderMathFluency();
     case 'maze': return renderMaze();
     case 'pursuit': return renderPursuit();
@@ -1085,7 +1087,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
   const mode = exerciseMode(ex.type);
   const modeTitle = mode === 'practice'
     ? 'A practice — a formation rep, not graded right or wrong.'
@@ -1553,6 +1555,118 @@ function renderVigilance() {
   };
   stage.focus(); // so a keyboard user is ready without hunting for the target
 
+  if (!s._started) { s._started = true; nextTrial(); }
+}
+
+// Flanker (executive attention / inhibitory control). Respond to the MIDDLE arrow's direction while
+// flankers pull with or against it. Practice (gated ~6/8) → 64 scored trials. RT via performance.now();
+// scoreFlanker uses the NIH accuracy+speed score (the conflict cost is informational only). The count
+// is never shown mid-stimulus; built once, the loop drives the DOM so re-renders can't restart it.
+function renderFlanker() {
+  const s = state.session;
+  const ex = s.exercise;
+  const ARROW = { L: '◀', R: '▶' };
+  const rowFor = (t) => {
+    const c = ARROW[t.dir];
+    const f = ARROW[t.congruent ? t.dir : (t.dir === 'L' ? 'R' : 'L')];
+    return `${f} ${f} ${c} ${f} ${f}`;
+  };
+
+  if (s.phase === 'flanker-intro') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="card">
+          <p>A row of arrows will flash. Tap <strong>the direction the MIDDLE arrow points</strong> — ignore the ones around it. Be as fast as you can <em>while staying accurate</em>.</p>
+          <p class="muted small">A short practice first, then the real run. This is the flanker task (executive attention / resisting distraction) — one slice of focus, not your whole “attention span.”</p>
+        </div>
+        <button class="btn amber" id="begin">Start practice</button>
+      </div>`;
+    document.getElementById('begin').onclick = () => { s.phase = 'flanker-practice'; s.practice = []; s.fi = 0; s._started = false; s._practiceReplayed = s._practiceReplayed || false; render(); };
+    return;
+  }
+
+  const practice = s.phase === 'flanker-practice';
+  const trials = practice ? ex.practice : ex.trials;
+  app.innerHTML = `
+    <div class="fade-in center">
+      <p class="muted small" id="fcount">${practice ? 'Practice' : 'Trial 1 of ' + ex.trials.length}</p>
+      <div id="fstage" tabindex="0" role="group" aria-label="Tap the direction the middle arrow points — or press the left or right arrow key" style="position:relative; height:200px; display:flex; align-items:center; justify-content:center; user-select:none; outline:none;">
+        <div id="ffix" style="color:var(--ink-faint); font-size:2rem;">+</div>
+        <div id="farrows" style="display:none; font-size:3rem; letter-spacing:.18em; color:var(--ink);"></div>
+        <div id="ffeed" style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); font-size:1rem;"></div>
+      </div>
+      <div class="row" style="gap:10px;">
+        <button class="btn" id="fL" aria-label="Middle arrow points left" style="font-size:1.6rem; padding:18px 0;">◀</button>
+        <button class="btn" id="fR" aria-label="Middle arrow points right" style="font-size:1.6rem; padding:18px 0;">▶</button>
+      </div>
+      <p class="muted small" style="margin-top:8px;">Tap the side the MIDDLE arrow points — or use ← →.</p>
+    </div>`;
+  const fix = document.getElementById('ffix');
+  const arrows = document.getElementById('farrows');
+  const feed = document.getElementById('ffeed');
+  const count = document.getElementById('fcount');
+  const stage = document.getElementById('fstage');
+  const aborted = () => state.session !== s || state.route !== 'session';
+  const clearT = () => { if (s._timer) { clearTimeout(s._timer); s._timer = null; } };
+  const sink = practice ? s.practice : (s.response.trials = s.response.trials || []);
+
+  const finishPhase = () => {
+    clearT();
+    if (practice) {
+      const correct = s.practice.filter((t) => t.correct).length;
+      if (correct < 6 && !s._practiceReplayed) { s._practiceReplayed = true; s.practice = []; s.fi = 0; s._started = false; render(); return; }
+      s.phase = 'flanker-run'; s.response.trials = []; s.fi = 0; s._started = false; render(); return;
+    }
+    completeSession();
+  };
+
+  const nextTrial = () => {
+    if (aborted()) { clearT(); return; }
+    if (s.fi >= trials.length) { finishPhase(); return; }
+    const t = trials[s.fi];
+    if (!practice) count.textContent = `Trial ${s.fi + 1} of ${trials.length}`;
+    s.awaiting = false;
+    feed.textContent = '';
+    arrows.style.display = 'none';
+    fix.style.display = 'block';
+    s._timer = setTimeout(() => {
+      if (aborted()) { clearT(); return; }
+      fix.style.display = 'none';
+      arrows.textContent = rowFor(t);
+      arrows.style.display = 'block';
+      s.shownAt = performance.now();
+      s.awaiting = true;
+      s._timer = setTimeout(() => { // no response in 2s → miss
+        if (aborted() || !s.awaiting) { return; }
+        s.awaiting = false;
+        sink.push({ congruent: t.congruent, correct: false, rt: null });
+        s.fi++; arrows.style.display = 'none'; nextTrial();
+      }, 2000);
+    }, t.iti);
+  };
+
+  const respond = (side) => {
+    if (!s.awaiting) return;
+    clearT();
+    s.awaiting = false;
+    const t = trials[s.fi];
+    const rt = performance.now() - s.shownAt;
+    const correct = side === t.dir;
+    sink.push({ congruent: t.congruent, correct, rt });
+    s.fi++;
+    arrows.style.display = 'none';
+    if (practice) { feed.textContent = correct ? '✓' : '✗'; feed.style.color = correct ? 'var(--green)' : 'var(--red)'; }
+    s._timer = setTimeout(() => { if (!aborted()) nextTrial(); }, practice ? 500 : 250);
+  };
+
+  document.getElementById('fL').onclick = () => respond('L');
+  document.getElementById('fR').onclick = () => respond('R');
+  stage.onkeydown = (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); respond('L'); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); respond('R'); }
+  };
+  stage.focus();
   if (!s._started) { s._started = true; nextTrial(); }
 }
 

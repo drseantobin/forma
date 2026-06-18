@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS, makeFlankerExercise } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -75,11 +75,12 @@ export function chooseExercise(profile, opts = {}) {
   }
 
   if (focus === 'attention') {
-    // Rotate the vigilance test, the "Follow the Dot" pursuit tracker, the SART
-    // "Stream", and deep reading — several distinct attention task types.
+    // The two reliable, construct-valid attention facets: executive attention (Flanker — high
+    // test-retest, NIH Toolbox) and sustained attention (SART "Stream"). The PVT 'vigilance' and
+    // 'pursuit' tracker are RETIRED from selection — they index psychomotor/sustained vigilance
+    // (a weaker fit for the offloading thesis) and their RT-difference signals are noisier.
     const level = Math.max(1, Math.round(score / 25));
-    if (!recentTypes.includes('vigilance')) return makeVigilanceExercise(level);
-    if (!recentTypes.includes('pursuit')) return makePursuitExercise(level);
+    if (!recentTypes.includes('flanker')) return makeFlankerExercise();
     if (!recentTypes.includes('stream')) return makeStreamExercise(level, rng);
     return pickExercise('attention', { seenIds: seen, rng });
   }
