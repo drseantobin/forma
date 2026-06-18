@@ -14,6 +14,7 @@
 // Pure functions, no DOM — fully testable.
 
 import { activeDomainIds } from './domains.js';
+import { getConstruct } from './constructs.js';
 
 // How many direct measurements stand behind a domain's scale.
 export function domainEvidence(profile, domainId) {
@@ -102,4 +103,36 @@ export function indexConfidence(profile) {
     thin,
     note: thin ? `Provisional · ${covered} of ${total} capacities measured` : '',
   };
+}
+
+const _LEVEL_ORDER = { provisional: 0, building: 1, established: 2 };
+
+// Confidence in a CONSTRUCT profile (the v184 construct layer). A construct is only as trustworthy
+// as its WEAKEST measured facet — and, per the honesty contract, it is NEVER a validated single score
+// yet (`validated` stays false until a CFA on pooled data beats a 1-factor g model). So this reports
+// PROFILE confidence: how many member facets are measured, the weakest facet's level, whether any
+// bank is frozen — always framed as a provisional profile, never a settled construct score. Only
+// domain-backed facets count here; standalone instruments roll in once they persist scores. Pure.
+export function constructConfidence(profile, constructId) {
+  const c = getConstruct(constructId);
+  const memberDomains = c ? c.facets.flatMap((f) => f.domains || []) : [];
+  const scores = (profile && profile.domainScores) || {};
+  const measuredIds = memberDomains.filter((d) => scores[d] != null);
+  const total = memberDomains.length;
+  const measured = measuredIds.length;
+  if (!c || measured === 0) {
+    return { constructId, measured: 0, total, frozenAny: false, worstLevel: null, thin: true, validated: false, note: 'Not yet measured' };
+  }
+  let worstOrder = 99, frozenAny = false;
+  for (const d of measuredIds) {
+    const cf = confidence(profile, d);
+    if (_LEVEL_ORDER[cf.level] < worstOrder) worstOrder = _LEVEL_ORDER[cf.level];
+    if (cf.frozen) frozenAny = true;
+  }
+  const worstLevel = Object.keys(_LEVEL_ORDER).find((k) => _LEVEL_ORDER[k] === worstOrder) || 'provisional';
+  const thin = measured < total || worstLevel === 'provisional' || frozenAny;
+  const note = frozenAny
+    ? `Provisional profile · some items used up · ${measured} of ${total} facets`
+    : `${thin ? 'Provisional' : 'Profile'} · ${measured} of ${total} facets measured`;
+  return { constructId, measured, total, frozenAny, worstLevel, thin, validated: false, note };
 }
