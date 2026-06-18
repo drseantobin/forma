@@ -21,6 +21,29 @@ export const CALIBRATION_CAVEATS = [
   'It is a formation mirror, not a trait and not a diagnosis.',
 ];
 
+// 2AFC general-knowledge bank — forma-researcher-vetted (2026-06-17): every key web-verified,
+// difficulty centered on MEDIUM (3 easy / 10 medium / 3 hard) so mean accuracy lands ~70-80% and
+// the measure can detect BOTH over- and under-confidence (the hard-easy artifact is the #1 threat).
+// Time-sensitive (populations) and contested (longest-river) items were deliberately excluded.
+export const CALIBRATION_ITEMS = [
+  { q: 'Which is larger by surface area: the Pacific Ocean or the Atlantic Ocean?', a: 'Pacific', b: 'Atlantic', correct: 'a' },
+  { q: 'Which is larger by surface area: Lake Superior or Lake Victoria?', a: 'Lake Superior', b: 'Lake Victoria', correct: 'a' },
+  { q: 'Which is more abundant in Earth’s atmosphere: nitrogen or oxygen?', a: 'Nitrogen', b: 'Oxygen', correct: 'a' },
+  { q: 'Diamond and graphite are both made entirely of which element?', a: 'Carbon', b: 'Silicon', correct: 'a' },
+  { q: 'Which metal is denser: gold or iron?', a: 'Gold', b: 'Iron', correct: 'a' },
+  { q: 'Which has more legs: an adult spider or an adult insect?', a: 'Spider', b: 'Insect', correct: 'a' },
+  { q: 'Does an adult human skeleton have more or fewer bones than a newborn’s?', a: 'More', b: 'Fewer', correct: 'b' },
+  { q: 'Which is a mammal: the dolphin or the shark?', a: 'Dolphin', b: 'Shark', correct: 'a' },
+  { q: 'Which began earlier: the American Revolution or the French Revolution?', a: 'American', b: 'French', correct: 'a' },
+  { q: 'Which came first: the classical Roman Empire or the Byzantine Empire?', a: 'Roman', b: 'Byzantine', correct: 'a' },
+  { q: 'The word “alphabet” comes from the first two letters of which writing system?', a: 'Greek (alpha, beta)', b: 'Latin', correct: 'a' },
+  { q: 'Which language gave the root of the word “democracy”?', a: 'Greek', b: 'Latin', correct: 'a' },
+  { q: 'Is 91 a prime number?', a: 'Yes', b: 'No', correct: 'b' },
+  { q: 'Which is the larger angle: the interior angle of an equilateral triangle, or a right angle?', a: 'Triangle’s angle', b: 'Right angle', correct: 'b' },
+  { q: 'Which planet is larger in diameter: Jupiter or Saturn?', a: 'Jupiter', b: 'Saturn', correct: 'a' },
+  { q: 'Which planet has the hotter average surface: Venus or Mars?', a: 'Venus', b: 'Mars', correct: 'a' },
+];
+
 function clean(trials) {
   return (Array.isArray(trials) ? trials : []).filter(
     (t) => t && typeof t.confidence === 'number' && t.confidence >= 50 && t.confidence <= 100 && typeof t.correct === 'boolean'

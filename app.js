@@ -25,6 +25,7 @@ import * as Release from './src/release.js';
 import { PROVIDERS, providerFor, defaultModelFor } from './src/llm.js';
 import { summarizeResearch, domainStability } from './src/analytics.js';
 import { OVERCLAIM_BANK, overclaimPooled, selfEnhancementReading } from './src/overclaiming.js';
+import { CALIBRATION_ITEMS, calibrationScore, calibrationReading, CALIBRATION_CAVEATS } from './src/calibration.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
@@ -206,6 +207,7 @@ function render() {
     case 'proof': return renderProof();
     case 'focuscheck': return renderFocusCheck();
     case 'epistemiccheck': return renderEpistemicCheck();
+    case 'calibration': return renderCalibration();
     case 'coach': return renderCoach();
     case 'settings': return renderSettings();
     default: return renderHome();
@@ -3003,6 +3005,77 @@ function proofFocusCard(focus, daysElapsed) {
 }
 
 // ---------------- focus check (distraction-recovery micro-test) ----------------
+// Calibration (src/calibration.js) — a 2AFC "how well does your confidence track your accuracy?"
+// mirror. Per item: answer, then say how sure (50-100% — below 50 is incoherent for 2AFC). The
+// reveal headlines the over/under-confidence read (no Brier/number-chase), handles underconfidence
+// gently, and states the honest caveats. Self-contained routed screen from Settings (v177).
+function renderCalibration() {
+  if (!state.calib) {
+    const items = CALIBRATION_ITEMS.slice();
+    for (let i = items.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = items[i]; items[i] = items[j]; items[j] = t; }
+    state.calib = { items, i: 0, picked: null, trials: [] };
+  }
+  const c = state.calib;
+
+  // Reveal once every item is answered.
+  if (c.i >= c.items.length) {
+    const reading = calibrationReading(calibrationScore(c.trials));
+    app.innerHTML = `
+    <div class="fade-in">
+      <h1 tabindex="-1" id="calhead">Calibration</h1>
+      <p>This isn’t about how many you got right. It’s about whether your <em>confidence</em> tracked your accuracy — knowing what you know, and what you only half-know.</p>
+      <p class="eyebrow" style="margin-top:14px;">A gentle read — not a verdict</p>
+      <div class="insight">${esc(reading.note)}</div>
+      <div class="card" style="margin-top:14px;">
+        ${CALIBRATION_CAVEATS.map((c2) => `<p class="muted small" style="margin:0 0 6px;">${esc(c2)}</p>`).join('')}
+      </div>
+      <button class="btn ghost" id="caldone" style="margin-top:8px;">Done</button>
+    </div>`;
+    const h = document.getElementById('calhead'); if (h) h.focus();
+    announce('Here is your calibration read.');
+    document.getElementById('caldone').onclick = () => { state.calib = null; go('settings'); };
+    return;
+  }
+
+  const it = c.items[c.i];
+  const stepHead = `<div class="row"><span class="muted small">Question ${c.i + 1} of ${c.items.length}</span><span class="spacer"></span>
+        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>`;
+
+  if (c.picked == null) {
+    // Answer phase.
+    app.innerHTML = `
+    <div class="fade-in">
+      ${stepHead}
+      <p class="likert-q" style="margin-top:8px;">${esc(it.q)}</p>
+      <div class="likert-opts">
+        <button class="opt" data-pick="a">${esc(it.a)}</button>
+        <button class="opt" data-pick="b">${esc(it.b)}</button>
+      </div>
+    </div>`;
+    document.getElementById('back').onclick = () => { state.calib = null; go('settings'); };
+    app.querySelectorAll('.opt[data-pick]').forEach((b) => { b.onclick = () => { c.picked = b.dataset.pick; render(); }; });
+    return;
+  }
+
+  // Confidence phase.
+  app.innerHTML = `
+    <div class="fade-in">
+      ${stepHead}
+      <p class="likert-q" style="margin-top:8px;">How sure are you?</p>
+      <p class="muted small">You chose “${esc(c.picked === 'a' ? it.a : it.b)}”. There’s no penalty for low confidence — be honest about how sure you really are.</p>
+      <div class="row" style="flex-wrap:wrap; gap:8px; margin-top:8px;">
+        ${[50, 60, 70, 80, 90, 100].map((p) => `<button class="chip" data-conf="${p}" aria-label="${p === 50 ? 'Fifty percent — a guess' : p + ' percent sure'}">${p === 50 ? '50% (a guess)' : p + '%'}</button>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('back').onclick = () => { state.calib = null; go('settings'); };
+  app.querySelectorAll('.chip[data-conf]').forEach((b) => {
+    b.onclick = () => {
+      c.trials.push({ confidence: Number(b.dataset.conf), correct: it.correct === c.picked });
+      c.i += 1; c.picked = null; render();
+    };
+  });
+}
+
 // Over-Claiming "epistemic check" (src/overclaiming.js) — a self-contained mirror for the
 // universal habit of nodding along to things we half-recognize. Tick what you recognize from a
 // shuffled list where ~25% are made up; the made-up items are disclosed afterward and a gentle,
@@ -3343,6 +3416,14 @@ function renderSettings() {
       </div>
 
       <div class="card">
+        <div class="row"><span style="font-size:1.3rem;">🎯</span>
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Calibration</h2>
+            <p class="muted small" style="margin:2px 0 0;">A few questions where you answer and say how sure you are — a mirror for whether your confidence tracks what you actually know.</p></div>
+          <button class="btn ghost sm" id="tocalibration" style="width:auto;">Begin →</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
         <p class="muted small">Everything Forma stores about you lives on this device — no server, no account, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
         <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to the AI provider you picked, using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
@@ -3428,6 +3509,7 @@ function renderSettings() {
   const tt = document.getElementById('toteam'); if (tt) tt.onclick = () => go('team');
   const tm = document.getElementById('tomethods'); if (tm) tm.onclick = () => go('methods');
   const tec = document.getElementById('toepistemic'); if (tec) tec.onclick = () => { state.epistemic = null; go('epistemiccheck'); };
+  const tcal = document.getElementById('tocalibration'); if (tcal) tcal.onclick = () => { state.calib = null; go('calibration'); };
   document.getElementById('faith').onclick = () => {
     state.profile = p.settings.faithTrack ? Profile.disableFaithTrack(p) : Profile.enableFaithTrack(p);
     // Regenerate the plan so the change takes effect immediately.
