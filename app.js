@@ -264,7 +264,7 @@ function renderOnboarding() {
   if (step === 0) {
     const needKey = state.onboard.showKey && !Coach.hasKey(state.profile);
     app.innerHTML = `
-      <div class="fade-in">
+      <div class="welcome-stagger">
         <div class="hero">
           <div class="glyph">✦</div>
           <h1>Forma</h1>

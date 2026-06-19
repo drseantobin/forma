@@ -436,6 +436,21 @@ button { font-family: inherit; cursor: pointer; }
 /* ---------- misc ---------- */
 .fade-in { animation: fade .35s ease; }
 @keyframes fade { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+/* Welcome first-impression: each block rises in sequence (opacity + translateY only —
+   no scale, no bounce), so the first screen feels authored, not dumped. The initial
+   hidden state lives INSIDE the no-preference guard, so reduced-motion users (and the
+   default if animation is off) see everything immediately and fully visible. */
+@media (prefers-reduced-motion: no-preference) {
+  .welcome-stagger > * { opacity: 0; animation: riseIn .5s cubic-bezier(.2, .8, .2, 1) both; }
+  .welcome-stagger > *:nth-child(1) { animation-delay: .04s; }
+  .welcome-stagger > *:nth-child(2) { animation-delay: .10s; }
+  .welcome-stagger > *:nth-child(3) { animation-delay: .16s; }
+  .welcome-stagger > *:nth-child(4) { animation-delay: .22s; }
+  .welcome-stagger > *:nth-child(5) { animation-delay: .28s; }
+  .welcome-stagger > *:nth-child(6) { animation-delay: .34s; }
+  .welcome-stagger > *:nth-child(n+7) { animation-delay: .40s; }
+}
+@keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .spinner { width:18px; height:18px; border:2.5px solid var(--accent-soft); border-top-color: var(--accent); border-radius:50%; display:inline-block; animation: spin .7s linear infinite; vertical-align:middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .row { display:flex; align-items:center; gap:10px; }
