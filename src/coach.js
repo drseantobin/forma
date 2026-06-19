@@ -107,7 +107,7 @@ export function solutionFocusedOpener(profile, ctx = {}) {
 // insight they were shown — so the conversation starts inside the moment
 // instead of with a template. Falls back to the rule-based opener offline.
 export async function sessionOpener(profile, ctx = {}) {
-  // Privacy invariant (mirrors dailyInsight, v78): an Interior Life (faith) session
+  // Privacy invariant (mirrors dailyInsight, v78): an Spiritual Life (faith) session
   // is NEVER sent to the API — not its domain name, score, or reflection insight.
   // ctx carries those straight from the score-reveal screen, bypassing the scrubbed
   // profileSummary, so this is the sibling path that must be guarded too. Keep the
@@ -191,7 +191,7 @@ export function profileSummary(profile) {
   const scores = profile.domainScores || {};
   lines.push('Current domain scales (0-100):');
   for (const d of DOMAINS) {
-    // Privacy invariant: the Interior Life (faith) track NEVER enters any context
+    // Privacy invariant: the Spiritual Life (faith) track NEVER enters any context
     // assembled for the API. The interior screens promise it "stays on your
     // device / never shown to anyone but you," and this summary feeds every live
     // call (coach chat, baseline interpretation, daily insight). Mirrors the same
@@ -265,7 +265,7 @@ export async function interpretBaseline(profile) {
 export async function dailyInsight(session, profile) {
   const offline = ruleDailyInsight(session, profile);
   if (!hasKey(profile)) return { text: offline, live: false };
-  // Privacy invariant: an Interior Life (faith) session is never sent to the API
+  // Privacy invariant: an Spiritual Life (faith) session is never sent to the API
   // — not even its name/score. The rule-based insight is generated on-device so
   // the spiritual track keeps its "stays on your device" promise in fact. (The
   // shared profileSummary already omits interior; this guards the session line

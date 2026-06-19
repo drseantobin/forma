@@ -52,7 +52,7 @@ export const MEASURE_BASIS = {
   },
   interior: {
     paradigm: 'Contemplative practice + DSES-informed self-report',
-    detail: 'The optional Interior Life track pairs a timed contemplative-silence practice with self-report informed by the Daily Spiritual Experience Scale. Entirely opt-in, never shown to employers, and held as formation rather than assessment.',
+    detail: 'The optional Spiritual Life track pairs a timed contemplative-silence practice with self-report informed by the Daily Spiritual Experience Scale. Entirely opt-in, never shown to employers, and held as formation rather than assessment.',
   },
 };
 

@@ -223,7 +223,7 @@ function summarizeResponse(exercise, response) {
   }
 }
 
-// Opt-in / opt-out of the Interior Life track. Enabling seeds a neutral interior
+// Opt-in / opt-out of the Spiritual Life track. Enabling seeds a neutral interior
 // score (if not already baselined) so it appears on the scales and gets trained;
 // disabling removes it from the scored set so it leaves the Formation Index and
 // the radar entirely.

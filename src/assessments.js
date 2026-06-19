@@ -84,7 +84,7 @@ export const BASELINE_ITEMS = [
   { id: 'val4', domain: 'values', reverse: true, text: 'I often end the day unsure where my time and attention actually went.' },
 ];
 
-// Optional Interior Life / Spiritual Formation baseline (DSES-derived; opt-in).
+// Optional Spiritual Life / Spiritual Formation baseline (DSES-derived; opt-in).
 // Frequency-of-experience items, phrased on the same agree scale. Not reverse-
 // scored. Only used when the user has enabled the faith track.
 export const INTERIOR_ITEMS = [

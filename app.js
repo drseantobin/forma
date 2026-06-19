@@ -34,7 +34,7 @@ import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
-// The domains to display for the current user (adds Interior Life when the
+// The domains to display for the current user (adds Spiritual Life when the
 // opt-in faith track is on).
 function domainOrder() {
   return activeDomainIds(state.profile && state.profile.settings && state.profile.settings.faithTrack);
@@ -269,7 +269,7 @@ function renderOnboarding() {
     app.innerHTML = `
       <div class="welcome-stagger">
         <div class="hero">
-          <div class="glyph eyeglyph">${eyeMark}</div>
+          <div class="glyph fmarkglyph">${formaMark}</div>
           <h1>Forma</h1>
           <p class="lede">AI keeps getting better at the work. The quieter question is who you become while it does.</p>
           <p class="muted small" style="max-width:32rem; margin:12px auto 0; line-height:1.5;">Forma measures and trains the human capacities that grow more valuable as the machines take the rest — attention, judgment, deep reading, presence, the patience to stay with what's hard. A few minutes a day.</p>
@@ -296,8 +296,8 @@ function renderOnboarding() {
         <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
           <span style="font-size:1.3rem;">🕊️</span>
           <div style="flex:1;">
-            <div style="font-weight:600; font-size:.95rem;">Interior Life track <span class="muted small">· optional</span></div>
-            <div class="muted small">Bring prayer, silence, and the interior life into your formation — tended alongside the rest, kept private, and never shown to anyone but you.</div>
+            <div style="font-weight:600; font-size:.95rem;">Spiritual Life track <span class="muted small">· optional</span></div>
+            <div class="muted small">Bring prayer, silence, and the spiritual life into your formation — tended alongside the rest, kept private, and never shown to anyone but you.</div>
           </div>
           <button class="opt ${state.onboard.faithTrack ? 'selected' : ''}" id="faithtoggle" style="width:auto; padding:8px 14px; font-weight:700;">${state.onboard.faithTrack ? 'On' : 'Off'}</button>
         </div>
@@ -416,7 +416,7 @@ async function renderBaselineResult() {
   const p = state.profile;
   app.innerHTML = `
     <div class="fade-in">
-      <div class="brandmark"><div class="logo">${eyeMark}</div><div class="name">Forma</div><div class="tag">Your starting line</div></div>
+      <div class="brandmark"><div class="logo">${formaMark}</div><div class="name">Forma</div><div class="tag">Your starting line</div></div>
       ${radarCard(p.domainScores)}
       <div class="card" id="interp">
         <div class="row"><span class="spinner"></span> <span class="muted">Reading your profile…</span></div>
@@ -424,7 +424,7 @@ async function renderBaselineResult() {
       <button class="btn ghost" id="talkbaseline" style="margin-bottom:10px;">${coachGlyph} Talk through my profile with the coach →</button>
       <div class="card" id="researchconsent-card" style="text-align:left;">
         <div class="eyebrow" style="color:var(--green);">Help improve Forma — optional</div>
-        <p class="muted small" style="margin-top:4px;">Share your <strong>anonymous</strong> results so we can learn what actually helps people grow. It changes nothing about your experience — and never includes your name, anything you write, or your Interior Life. Just anonymous scores.</p>
+        <p class="muted small" style="margin-top:4px;">Share your <strong>anonymous</strong> results so we can learn what actually helps people grow. It changes nothing about your experience — and never includes your name, anything you write, or your Spiritual Life. Just anonymous scores.</p>
         <label class="consent-row" for="researchconsent">
           <input type="checkbox" id="researchconsent" />
           <span>Share my anonymous results to help improve Forma</span>
@@ -519,7 +519,7 @@ function renderConversationalOnboarding() {
   const canBuild = d.ready || turns >= Diagnostic.MAX_DIAGNOSTIC_TURNS;
   app.innerHTML = `
     <div class="fade-in">
-      <div class="brandmark"><div class="logo">${eyeMark}</div><div class="name">Forma</div><div class="tag">Getting to know you</div></div>
+      <div class="brandmark"><div class="logo">${formaMark}</div><div class="name">Forma</div><div class="tag">Getting to know you</div></div>
       <div class="chat" id="dchat">
         <div class="bubble coach">${esc(Diagnostic.OPENING)}</div>
         ${d.messages.map((m) => `<div class="bubble ${m.role === 'user' ? 'me' : 'coach'}">${esc(m.content)}</div>`).join('')}
@@ -645,11 +645,12 @@ function welcomeBackCard(p) {
 // emoji either. Sized in em (.binline) so it tracks the button text.
 const coachGlyph = '<svg class="binline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9l-4 3.5V7a1 1 0 0 1 1-1Z"/></svg>';
 
-// Forma's brandmark — an eye / lens: perception, attention, the examined life (the very
-// capacities Forma forms). Its iris is a RING, echoing the Formation Index ring, so the
-// mark and the product's core instrument rhyme. Inherits currentColor: white on the
-// gradient tiles, accent on the welcome screen. One stroke weight, calm, instrument-grade.
-const eyeMark = '<svg class="eyemark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.6 12C6.1 6.9 17.9 6.9 21.4 12 17.9 17.1 6.1 17.1 2.6 12Z"/><circle cx="12" cy="12" r="3.3"/><circle cx="12" cy="12" r=".9" fill="currentColor" stroke="none"/></svg>';
+// Forma's brandmark — a bold "F" with a green leaf forming its left edge (growth /
+// formation). Adapted from Sean's logo to Forma's palette: the F is var(--ink) so it
+// flips with the theme (dark navy in light mode, light in dark), and the leaf is
+// var(--green), readable in both. Shown directly (no tile) — the wordmark "Forma" sits
+// beside it. Used everywhere the brand glyph renders.
+const formaMark = '<svg class="fmark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M13 6 C6 9 6 20 11 26 C12 19 12 12 13 6 Z" fill="var(--green)"/><path d="M13 4 H26 V8.5 H17.5 V13.2 H23 V17.4 H17.5 V28 H13 Z" fill="var(--ink)"/></svg>';
 
 // Dictation glyphs — same inline-SVG stroke system as the rest. micGlyph = a mic;
 // stopGlyph = a filled stop square (mid-recording). They replace the last mic/stop emoji in
@@ -732,7 +733,7 @@ function renderHome() {
 
   app.innerHTML = `
     <div class="fade-in">
-      <div class="brandmark"><div class="logo">${eyeMark}</div><div class="name">Forma</div>
+      <div class="brandmark"><div class="logo">${formaMark}</div><div class="name">Forma</div>
         <div class="tag">${greeting()}${p.settings.name ? ', ' + esc(p.settings.name) : ''}</div></div>
 
       <div class="card index-hero">
@@ -1190,7 +1191,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', series: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', span: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', meaning: 'Purpose', stay: 'Frustration Tolerance', contemplation: 'Interior Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', series: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', span: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', meaning: 'Purpose', stay: 'Frustration Tolerance', contemplation: 'Spiritual Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
   const mode = exerciseMode(ex.type);
   const modeTitle = mode === 'practice'
     ? 'A practice — a formation rep, not graded right or wrong.'
@@ -2405,7 +2406,7 @@ function renderStay() {
   document.getElementById('fin').onclick = completeSession;
 }
 
-// Contemplation — a timed silence practice (Interior Life).
+// Contemplation — a timed silence practice (Spiritual Life).
 function renderContemplation() {
   const s = state.session;
   const ex = s.exercise;
@@ -3207,7 +3208,7 @@ function renderSnapshot() {
 
       <div class="card snapsheet">
         <div class="snaphead">
-          <div class="logo" aria-hidden="true">${eyeMark}</div>
+          <div class="logo" aria-hidden="true">${formaMark}</div>
           <div>
             <div class="snaptitle">Forma · Capacity Snapshot</div>
             <div class="muted small">${snap.name ? esc(snap.name) + ' · ' : ''}${snap.sessionCount} session${snap.sessionCount === 1 ? '' : 's'}${snap.since ? ` over ${snap.days} days` : ''}${snap.generated ? ` · generated ${esc(snap.generated)}` : ''}</div>
@@ -3236,7 +3237,7 @@ function renderSnapshot() {
         </table>
         <p class="muted small" style="margin-top:12px;">Strengths: <strong>${snap.strengths.map(esc).join(', ')}</strong>. Growth edges: <strong>${snap.growthEdges.map(esc).join(', ')}</strong>.</p>
         <div class="snapref">Reference FM-${refCode}${snap.generated ? ` · ${esc(snap.generated)}` : ''} · self-generated on device</div>
-        <p class="muted small snapfoot">Measurement for formation, not diagnosis. Generated by the individual from their own device data; the optional Interior Life track is kept private and excluded here.</p>
+        <p class="muted small snapfoot">Measurement for formation, not diagnosis. Generated by the individual from their own device data; the optional Spiritual Life track is kept private and excluded here.</p>
       </div>
 
       <div class="row no-print" style="gap:8px;">
@@ -3354,7 +3355,7 @@ function renderTeam() {
     <div class="fade-in snapshot">
       <div class="row"><h1 style="margin:0;">Team</h1><span class="spacer"></span>
         <button class="btn ghost sm no-print" id="back" style="width:auto;">← Settings</button></div>
-      <p class="muted small">Preview · a sample cohort of ${agg.n}${agg.generated ? `, generated ${esc(agg.generated)}` : ''}. In production, an employer would see only <strong>aggregated development signals</strong> across a team — never an individual's raw data, scores, or reflections, and never the Interior Life track. Signals appear only at <strong>${Team.MIN_COHORT} or more members</strong>, so no one can be identified from an aggregate.</p>
+      <p class="muted small">Preview · a sample cohort of ${agg.n}${agg.generated ? `, generated ${esc(agg.generated)}` : ''}. In production, an employer would see only <strong>aggregated development signals</strong> across a team — never an individual's raw data, scores, or reflections, and never the Spiritual Life track. Signals appear only at <strong>${Team.MIN_COHORT} or more members</strong>, so no one can be identified from an aggregate.</p>
 
       ${signalCards}
 
@@ -4045,7 +4046,7 @@ function renderSettings() {
         <div class="row">
           <span style="font-size:1.3rem;">🕊️</span>
           <div style="flex:1;">
-            <h2 style="font-size:1.05rem; margin:0;">Interior Life track</h2>
+            <h2 style="font-size:1.05rem; margin:0;">Spiritual Life track</h2>
             <p class="muted small" style="margin:2px 0 0;">Optional, faith-based. Adds a spiritual-formation scale, daily reflections, and a contemplative-silence practice. Kept private — never shown to any employer view.</p>
           </div>
           <button class="opt ${p.settings.faithTrack ? 'selected' : ''}" id="faith" style="width:auto; padding:8px 16px; font-weight:700;">${p.settings.faithTrack ? 'On' : 'Off'}</button>
@@ -4054,7 +4055,7 @@ function renderSettings() {
 
       <div class="card">
         <h2 style="font-size:1.05rem;">Live AI coaching</h2>
-        <p class="muted small">Optional. Bring your own API key from any supported provider to turn on live, personalized coaching. Your key is stored only in this browser and is sent only to the provider you pick — never to a Forma server (there isn't one), and never with your Interior Life content.</p>
+        <p class="muted small">Optional. Bring your own API key from any supported provider to turn on live, personalized coaching. Your key is stored only in this browser and is sent only to the provider you pick — never to a Forma server (there isn't one), and never with your Spiritual Life content.</p>
         <div class="field">
           <label>Provider</label>
           <select id="provider">
@@ -4105,7 +4106,7 @@ function renderSettings() {
       <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
         <p class="muted small">Everything Forma stores about you lives on this device — no server, no account, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
-        <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to the AI provider you picked, using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
+        <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to the AI provider you picked, using your own key (never your Spiritual Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
         <div class="stack">
           <button class="btn ghost sm" id="export">Export my data (JSON)</button>
           <p class="muted small" style="margin:2px 0 0;">The export is plain-text JSON that includes your written reflections and coach conversations (but never your API key). Keep the file somewhere private.</p>
@@ -4138,7 +4139,7 @@ function renderSettings() {
       <div class="card">
         <div class="row">${uiIcon('people')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Share results with an employer</h2>
-            <p class="muted small" style="margin:2px 0 0;">Optional. Org sharing isn’t built yet — opt in now and your authorization, plus a dated copy of your Capacity Snapshot, is stored <strong>only on this device</strong> and never sent anywhere, until it ships. It would release only your snapshot (capacity scores + confidence) — <strong>never</strong> your reflections, coach chats, or Interior Life.</p>
+            <p class="muted small" style="margin:2px 0 0;">Optional. Org sharing isn’t built yet — opt in now and your authorization, plus a dated copy of your Capacity Snapshot, is stored <strong>only on this device</strong> and never sent anywhere, until it ships. It would release only your snapshot (capacity scores + confidence) — <strong>never</strong> your reflections, coach chats, or Spiritual Life.</p>
             <p class="muted small" style="margin:6px 0 0;"><strong>This is entirely your choice.</strong> Forma never requires it, no one can turn it on for you, and sharing or not has no effect on your use of Forma.</p>
           </div>
         </div>
@@ -4162,7 +4163,7 @@ function renderSettings() {
           <button class="opt ${res.consent ? 'selected' : ''}" id="researchtoggle" aria-pressed="${!!res.consent}" style="width:auto; padding:8px 16px; font-weight:700;">${res.consent ? 'On' : 'Off'}</button>
         </div>
         ${res.consent ? `
-        <p class="muted small" style="margin-top:10px;">You’ve shared <strong>${rsum.measured}</strong> anonymous result${rsum.measured === 1 ? '' : 's'} across ${rsum.days} day${rsum.days === 1 ? '' : 's'}. Each is a score and which option you chose, dated to the day — <strong>never</strong> your name, anything you wrote, or your Interior Life.</p>
+        <p class="muted small" style="margin-top:10px;">You’ve shared <strong>${rsum.measured}</strong> anonymous result${rsum.measured === 1 ? '' : 's'} across ${rsum.days} day${rsum.days === 1 ? '' : 's'}. Each is a score and which option you chose, dated to the day — <strong>never</strong> your name, anything you wrote, or your Spiritual Life.</p>
         ${rsum.domains.length ? `<table class="snaptable" style="margin-top:8px;"><tbody>${rsum.domains.map((d) => `<tr><td>${esc(getDomain(d.key) ? getDomain(d.key).name : d.key)}</td><td class="muted small" style="text-align:right;">${d.n} shared</td><td class="snapsc">${d.mean}</td></tr>`).join('')}</tbody></table>` : `<p class="muted small" style="margin-top:6px;">No results shared yet — finish a session and your de-identified scores will appear here.</p>`}
         ${(() => {
           // Test-retest CONSISTENCY of the person's own repeated scores — the reliability

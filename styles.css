@@ -96,12 +96,8 @@ body {
   text-align: center; gap: 8px; color: var(--ink-faint);
 }
 .boot-logo {
-  width: 64px; height: 64px; border-radius: 16px;
+  width: 80px; height: 80px;
   display: grid; place-items: center;
-  background: linear-gradient(135deg, #4c5fd5, #6f7fe6);
-  color: #fff; font-weight: 800; font-size: 2rem;
-  font-family: Georgia, 'Times New Roman', serif;
-  box-shadow: 0 6px 22px rgba(76, 95, 213, .28);
   animation: bootPulse 1.6s ease-in-out infinite;
 }
 .boot-name { font-weight: 800; font-size: 1.3rem; letter-spacing: .02em; color: var(--ink); margin-top: 6px; }
@@ -147,22 +143,19 @@ button { font-family: inherit; cursor: pointer; }
 .card.flush { padding: 0; overflow: hidden; }
 
 .brandmark { display:flex; align-items:center; gap:10px; margin-bottom: 18px; }
-.brandmark .logo {
-  width: 34px; height: 34px; border-radius: 10px; display:grid; place-items:center;
-  background: linear-gradient(135deg, var(--accent), #6f7fe6); color:#fff; font-weight:800;
-  box-shadow: var(--shadow);
-}
+/* The F+leaf mark is shown directly (no gradient tile) — the wordmark sits beside it. */
+.brandmark .logo { width: 38px; height: 38px; display:grid; place-items:center; }
 .brandmark .name { font-weight: 800; letter-spacing:.02em; font-size:1.05rem; }
 .brandmark .tag { color: var(--ink-faint); font-size:.8rem; margin-left:auto; }
-/* Brandmark eye, sized per surface; inherits the tile's currentColor (white on gradient). */
-.brandmark .logo .eyemark { width:22px; height:22px; }
-.boot-logo .eyemark { width:40px; height:40px; }
-.snaphead .logo .eyemark { width:25px; height:25px; }
+/* Brandmark, sized per surface (the F flips with the theme; the leaf stays green). */
+.brandmark .logo .fmark { width:38px; height:38px; }
+.boot-logo .fmark { width:72px; height:72px; }
+.snaphead .logo .fmark { width:42px; height:42px; }
 
 /* ---------- onboarding ---------- */
 .hero { text-align:center; padding: 24px 6px 8px; }
-.hero .glyph { font-size: 3rem; line-height: 0; color: var(--accent); }
-.hero .glyph.eyeglyph .eyemark { width: 3rem; height: 3rem; }
+.hero .glyph { font-size: 3rem; line-height: 0; }
+.hero .glyph.fmarkglyph .fmark { width: 4.2rem; height: 4.2rem; }
 .hero h1 { margin-top: .3em; }
 .hero p.lede { color: var(--ink-soft); font-size: 1.05rem; max-width: 30ch; margin: .2em auto 1.2em; }
 .pillrow { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom: 18px; }
@@ -352,7 +345,7 @@ button { font-family: inherit; cursor: pointer; }
 /* Capacity Snapshot (shareable credential) */
 .snapsheet { border:1px solid var(--line, #e6e4dd); }
 .snaphead { display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid var(--line, #e6e4dd); }
-.snaphead .logo { width:38px; height:38px; border-radius:9px; display:grid; place-items:center; background:var(--accent); color:#fff; font-weight:800; }
+.snaphead .logo { width:42px; height:42px; display:grid; place-items:center; }
 .snaptitle { font-weight:700; }
 /* Credential hero metrics get a financial-statement treatment: a bold top rule + an
    eyebrow label above the figure, tabular numerals, a hairline divider between them —

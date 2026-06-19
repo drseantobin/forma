@@ -84,7 +84,7 @@ export const CONSTRUCTS = [
     atrophy: 'We let algorithms tell us what to want and do; the inner compass goes quiet.',
     facets: [
       { name: 'Values & meaning', domains: ['values'] },
-      { name: 'Interior life (optional)', domains: ['interior'] },
+      { name: 'Spiritual life (optional)', domains: ['interior'] },
     ],
   },
 ];

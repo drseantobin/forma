@@ -7,7 +7,7 @@
 //   • DE-IDENTIFIED only — there is no name and no contact field in an event, ever.
 //     A single random installId ties one device's events together; that's the only
 //     identifier, and it exists only once consent is given.
-//   • The optional Interior Life / faith track is NEVER collected — a 'interior'
+//   • The optional Spiritual Life / faith track is NEVER collected — a 'interior'
 //     domain event is dropped whole, mirroring the snapshot's exclusion.
 //   • NO FREE TEXT, ever. Reflection / sentence-completion / vignette / coach text
 //     never enters an event. Only the numeric score, the short keyed option id

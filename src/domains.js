@@ -1,5 +1,5 @@
 // domains.js — the core formation domains Forma measures and trains (ten, plus
-// an optional Interior Life track).
+// an optional Spiritual Life track).
 //
 // These are the capacities named in the Forma working document: the distinctly
 // human faculties that become MORE valuable as AI does more of the cognitive
@@ -122,20 +122,20 @@ export const DOMAINS = [
   },
 ];
 
-// The optional, opt-in Interior Life / Spiritual Formation domain. Kept OUT of
+// The optional, opt-in Spiritual Life / Spiritual Formation domain. Kept OUT of
 // the core DOMAINS array so that, with the faith track off, every iteration over
 // the core set is unchanged. Grounded in the DSES / Fetzer BMMRS lineage
 // (see docs/measurement-architecture.md). Never shown to employers.
 export const INTERIOR_DOMAIN = {
   id: 'interior',
-  name: 'Interior Life',
+  name: 'Spiritual Life',
   short: 'Attentiveness to the spiritual',
   icon: '🕊️',
   color: '#8E7CC3',
   blurb:
     'The lived frequency of spiritual experience — gratitude, awe, a sense of connection and desire for closeness to God — and the practices that deepen it.',
   aiRationale:
-    'The same attention that resists the feed is the attention contemplative life requires. As simulated meaning spreads, a real interior life becomes both rarer and more grounding.',
+    'The same attention that resists the feed is the attention contemplative life requires. As simulated meaning spreads, a real spiritual life becomes both rarer and more grounding.',
   optional: true,
 };
 
@@ -176,7 +176,7 @@ export const REFLECTIVE_DOMAINS = ['persistence', 'ai_autonomy', 'presence', 'co
 
 const DOMAIN_BY_ID = Object.fromEntries([...DOMAINS, INTERIOR_DOMAIN].map((d) => [d.id, d]));
 
-// The domains active for a given user. The Interior Life track is opt-in.
+// The domains active for a given user. The Spiritual Life track is opt-in.
 export function activeDomainIds(faithTrack) {
   const core = DOMAINS.map((d) => d.id);
   return faithTrack ? [...core, INTERIOR_DOMAIN.id] : core;

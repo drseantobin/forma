@@ -2,7 +2,7 @@
 //
 // Privacy is the whole point: an employer view shows only AGGREGATED development
 // signals across a team — never an individual's raw data, and NEVER the optional
-// Interior Life track. There is no backend yet, so the dashboard runs on a
+// Spiritual Life track. There is no backend yet, so the dashboard runs on a
 // deterministic sample cohort, clearly labeled as a preview.
 
 import { DOMAINS, bandFor, BANDS } from './domains.js';
@@ -97,7 +97,7 @@ export function teamReportText(agg, highlights) {
     lines.push('');
     lines.push(`Not enough members to report. Forma shows team signals only at ${MIN_COHORT} or more, so no individual can be identified from an aggregate.`);
     lines.push('');
-    lines.push('Privacy: aggregate signals only — no individual scores, no raw data, and the optional Interior Life track is never included. A development signal for growth, never a tool to rank or surveil individuals.');
+    lines.push('Privacy: aggregate signals only — no individual scores, no raw data, and the optional Spiritual Life track is never included. A development signal for growth, never a tool to rank or surveil individuals.');
     return lines.join('\n');
   }
   lines.push('');
@@ -114,7 +114,7 @@ export function teamReportText(agg, highlights) {
     if (agg.perDomain[d.id] != null) lines.push(`  - ${d.name}: ${agg.perDomain[d.id]}`);
   });
   lines.push('');
-  lines.push('Privacy: aggregate signals only — no individual scores, no raw data, and the optional Interior Life track is never included. A development signal for growth, never a tool to rank or surveil individuals.');
+  lines.push('Privacy: aggregate signals only — no individual scores, no raw data, and the optional Spiritual Life track is never included. A development signal for growth, never a tool to rank or surveil individuals.');
   lines.push('Limits: these are self-generated from self-selected practice, not normed against a population — a development signal, NOT a predictor of job performance and not a basis for hiring, ranking, or selection.');
   return lines.join('\n');
 }

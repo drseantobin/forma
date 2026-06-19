@@ -5,7 +5,7 @@
 // honest summary they can print, save as PDF, or copy as text. It is generated
 // BY the person, FROM their own local data — Forma never holds or transmits it.
 //
-// Privacy guardrail: the optional Interior Life track is ALWAYS excluded here —
+// Privacy guardrail: the optional Spiritual Life track is ALWAYS excluded here —
 // a shareable/employer-facing credential must never expose someone's spiritual
 // data, regardless of whether they enabled that track for their own use.
 //
