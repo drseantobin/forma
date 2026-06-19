@@ -5022,7 +5022,7 @@ const PROMO_KEY = 'forma_promo_seen';
     () => `<p class="promo-line">The quieter question is who you become while it does.</p>`,
     () => `<div class="promo-mark">${formaMark}</div><div class="promo-name">Forma</div><p class="promo-tag">train what AI can’t replace</p>`,
     () => `<div class="promo-eyebrow">What it strengthens</div><div class="promo-pills">${caps}</div>`,
-    () => `<p class="promo-line" style="font-size:1.35rem;">A few minutes a day.</p><p class="promo-tag">Your own auditable record of who you’re becoming — measured, trained, never a diagnosis.</p>`,
+    () => `<p class="promo-line" style="font-size:1.35rem;">A few minutes a day.</p><p class="promo-tag">Your own auditable record — measured, trained, never a diagnosis.</p>`,
   ];
   const last = scenes.length - 1;
   const reduce = prefersReducedMotion();
