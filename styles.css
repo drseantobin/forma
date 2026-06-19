@@ -765,5 +765,16 @@ h1[tabindex]:focus, h2[tabindex]:focus { outline: none; }
 .promo-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; min-height: 38px; }
 .promo-skip { background: none; border: none; color: var(--ink-faint); font-size: .85rem; cursor: pointer; padding: 6px 2px; }
 .promo-skip:hover { color: var(--ink-soft); text-decoration: underline; }
-.promo-cta { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+.promo-cta { display: flex; gap: 10px; align-items: center; }
 .promo-card .btn.amber { padding: 11px 20px; }
+.promo-foot-sp { flex: 1; }
+/* "Play with sound" — the affordance to hear Sean's narration (autoplay-with-sound is
+   blocked by browsers, so it's an explicit, calm tap, not a barked CTA). */
+.promo-sound {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+  border-radius: 999px; padding: 7px 14px; font-size: .85rem; font-weight: 600; cursor: pointer;
+}
+.promo-sound:hover { color: var(--ink); border-color: var(--ink-faint); }
+.promo-sound[hidden] { display: none; }
+.promo-sound-ico { color: var(--accent); font-size: .8rem; line-height: 1; }

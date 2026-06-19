@@ -5298,11 +5298,14 @@ const PROMO_KEY = 'forma_promo_seen';
       <button class="promo-nav promo-next" id="promoNext" aria-label="Next">›</button>
       <div class="promo-stage" id="promoStage"></div>
       <div class="promo-foot">
+        <button class="promo-sound" id="promoSound"><span class="promo-sound-ico" aria-hidden="true">▶</span> Play with sound</button>
+        <span class="promo-foot-sp"></span>
         <button class="promo-skip" id="promoSkip">Skip intro</button>
         <span class="promo-cta" id="promoCta" hidden>
           <button class="btn amber" id="promoBegin">Begin →</button>
         </span>
       </div>
+      <audio id="promoAudio" src="./forma-promo-vo.mp3" preload="none"></audio>
     </div>`;
   document.body.appendChild(overlay);
 
@@ -5312,10 +5315,24 @@ const PROMO_KEY = 'forma_promo_seen';
   const skip = overlay.querySelector('#promoSkip');
   const prevBtn = overlay.querySelector('#promoPrev');
   const nextBtn = overlay.querySelector('#promoNext');
-  let i = -1, timer = null, manual = false;
+  // Narration (Sean's cloned-voice VO). Browsers block autoplay WITH sound, so the
+  // popup opens as the silent motion carousel + a "Play with sound" button; tapping it
+  // plays the VO and drives the scenes off the audio's own clock (perfect sync, no drift).
+  const audio = overlay.querySelector('#promoAudio');
+  const soundBtn = overlay.querySelector('#promoSound');
+  // Scene start times (seconds) within the ~47s VO — each scene is on screen while its
+  // line is spoken. Tuned to the Part 3 script's beats.
+  const CUES = [0, 10, 20, 29, 40];
+  const ICO_PLAY = '<span class="promo-sound-ico" aria-hidden="true">▶</span> Play with sound';
+  const ICO_PAUSE = '<span class="promo-sound-ico" aria-hidden="true">❙❙</span> Pause';
+  const ICO_REPLAY = '<span class="promo-sound-ico" aria-hidden="true">↻</span> Replay with sound';
+  let i = -1, timer = null, manual = false, audioMode = false;
+  const sceneForTime = (t) => { let s = 0; for (let k = 0; k < CUES.length; k++) if (t >= CUES[k]) s = k; return s; };
+  const pauseAudio = () => { try { audio.pause(); } catch (e) {} };
 
   function dismiss() {
     if (timer) { clearTimeout(timer); timer = null; }
+    pauseAudio();
     document.removeEventListener('keydown', onKey, true);
     try { localStorage.setItem(PROMO_KEY, '1'); } catch (e) {}
     overlay.remove();
@@ -5350,11 +5367,40 @@ const PROMO_KEY = 'forma_promo_seen';
 
   overlay.querySelector('#promoClose').onclick = dismiss;
   overlay.querySelector('#promoBegin').onclick = dismiss; // reveals the welcome CTA beneath
-  prevBtn.onclick = () => show(i - 1, true);
-  nextBtn.onclick = () => show(i + 1, true);
-  skip.onclick = () => show(last, true);
+  // Manual navigation pauses the narration so picture and voice never desync.
+  prevBtn.onclick = () => { pauseAudio(); show(i - 1, true); };
+  nextBtn.onclick = () => { pauseAudio(); show(i + 1, true); };
+  skip.onclick = () => { pauseAudio(); show(last, true); };
   overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); }); // backdrop
   document.addEventListener('keydown', onKey, true);
+
+  // Narration: start from the top (resetting the carousel), then let the audio's clock
+  // drive the scenes. Tapping again pauses/resumes; after it ends, the button replays.
+  function startNarration() {
+    manual = true;            // kill the silent auto-advance for good — audio drives now
+    audioMode = true;
+    if (timer) { clearTimeout(timer); timer = null; }
+    try { audio.currentTime = 0; } catch (e) {}
+    show(0, false);           // manual is already true, so no timer / no progress-fill
+    audio.play().catch(() => { /* blocked or missing file → stay in silent mode */ });
+  }
+  soundBtn.onclick = () => {
+    if (audio.paused) {
+      if (!audioMode || audio.ended || audio.currentTime === 0) startNarration();
+      else audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  };
+  audio.addEventListener('timeupdate', () => {
+    if (!audioMode) return;
+    const s = sceneForTime(audio.currentTime);
+    if (s !== i) show(s, false); // manual already pinned → pure scene swap, audio-timed
+  });
+  audio.addEventListener('play', () => { audioMode = true; manual = true; if (timer) { clearTimeout(timer); timer = null; } soundBtn.innerHTML = ICO_PAUSE; });
+  audio.addEventListener('pause', () => { if (!audio.ended) soundBtn.innerHTML = ICO_PLAY; });
+  audio.addEventListener('ended', () => { show(last, false); soundBtn.innerHTML = ICO_REPLAY; });
+  audio.addEventListener('error', () => { soundBtn.hidden = true; }); // no audio → silent promo only
 
   // Reduced motion → skip the timed sequence, land on the CTA scene immediately.
   show(reduce ? last : 0, false);
