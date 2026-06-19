@@ -1717,16 +1717,28 @@ export const SENTENCES = [
 // load-bearing effort scores HIGHEST; reflexive total surrender scores low;
 // knee-jerk total refusal is middling; using-everything-while-vaguely-guilty is
 // low (guilt isn't a choice). The rationale teaches the atrophy tradeoff.
+// TRADE-OFFS (ai_autonomy) — redesigned v264 (forma-validity + Sean). Each scenario now has FIVE
+// options that are all defensible to a thoughtful person; the differentiator is which trade-off
+// LOGIC you reason from, not wise-vs-foolish. Fixes the old tells: (1) the cartoon "surrender" /
+// "guilt" strawmen are replaced with the realistic efficiency/complacency traps a smart person
+// actually falls into; (2) the keyed-best is no longer always option 'b' — its array POSITION
+// VARIES across scenarios; (3) a compressed partial-credit band (~45–94, no zeros, no perfect 100),
+// with TWO genuinely-competing strong stances per item, so it scores reasoning, not opinion-recognition.
+// NOTE: this remains author-keyed partial credit (a richer mirror for thinking, not a verdict).
+// PLANNED next step (forma-validity): re-anchor the *scored* ai_autonomy signal on calibration +
+// over-claiming (metacognition — knowing what you actually know vs. leaning on AI), which is
+// faking-resistant, and let these scenarios become purely formative. Not yet wired.
 export const TRADEOFFS = [
   {
     id: 'trade-navigation', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
     scenario: 'Soon you could let AI handle all wayfinding — turn-by-turn for everything, forever. You’d never again need to know where you are or how you got there.',
-    prompt: 'What’s the wise trade?',
+    prompt: 'How do you actually think about this trade?',
     options: [
-      { id: 'a', text: 'Take it fully — never think about directions again.', score: 25, rationale: 'The convenience is real, but spatial memory is use-it-or-lose-it. Hand it over entirely and the felt sense of where you are quietly atrophies — you’ve traded a capacity for a crutch without deciding to.' },
-      { id: 'b', text: 'Use it freely for new or complex trips, but keep finding your own way in places you know.', score: 100, rationale: 'This is the move. You take the tool’s full value AND keep the muscle alive. Independence isn’t using AI less — it’s staying awake to which efforts you choose to keep.' },
-      { id: 'c', text: 'Refuse it on principle and navigate everything yourself.', score: 55, rationale: 'Honorable, and it preserves the skill — but it forfeits genuine value and usually isn’t sustainable. Independence is conscious choosing, not blanket abstaining.' },
-      { id: 'd', text: 'Use it for everything, but feel a little guilty about it.', score: 30, rationale: 'Guilt without a decision changes nothing — the capacity erodes either way. Awareness only protects you when it turns into an actual choice.' },
+      { id: 'a', text: 'Take it — the attention I save not tracking turns goes to things that matter more.', score: 52, rationale: 'A real reallocation argument, not a strawman — attention is finite. What it misses: orientation isn’t just a task, it’s how you stay placed in the world, and it fades without your noticing, so you never get to make this trade on purpose again.' },
+      { id: 'b', text: 'Off by default; I navigate places I know, and turn it on for genuinely unfamiliar trips.', score: 82, rationale: 'A coherent preservation stance — you protect the muscle and still reach for the tool when it earns its keep. Just watch “off by default” hardening into purity for its own sake; the point isn’t using it less, it’s choosing on purpose.' },
+      { id: 'c', text: 'Glance at the map first so I know roughly where I’m headed, then let it handle the turns.', score: 88, rationale: 'Quietly strong: you keep the orienting effort (building the mental model) and delegate the execution. Delegation by layer, not by avoidance.' },
+      { id: 'd', text: 'Use it for everything — I could still find my way if I had to.', score: 46, rationale: 'The most relatable trade, and the trap: “I could if I had to” is a belief, not a practice. The capacity is kept by use, not by the confidence that it’s still there.' },
+      { id: 'e', text: 'Use it freely, but treat which efforts I keep as a standing choice I revisit — not something the default decides.', score: 94, rationale: 'The core move isn’t a fixed rule, it’s staying the one who decides. Heavy use of the tool, full ownership of the choice — and you re-open the choice as your life changes.' },
     ],
   },
   {
@@ -1734,10 +1746,11 @@ export const TRADEOFFS = [
     scenario: 'AI can now draft everything you write — emails, reports, even the notes where you figure out what you think. It’s faster and often better than your first draft.',
     prompt: 'Where’s the line worth holding?',
     options: [
-      { id: 'a', text: 'Let it write everything — output is what matters.', score: 25, rationale: 'For low-stakes text, fine. But writing is also how you think; outsource all of it and you slowly lose the ability to work an idea out for yourself. The cost is invisible until you need it.' },
-      { id: 'b', text: 'Use it heavily to polish and pressure-test, but draft the thinking that matters yourself first.', score: 100, rationale: 'Exactly — keep the formative effort (working the idea out), delegate the finishing. You can use it constantly and still stay the one who actually thinks.' },
-      { id: 'c', text: 'Don’t use it for writing at all.', score: 55, rationale: 'Preserves the skill but leaves real leverage on the table. The goal isn’t purity; it’s knowing which effort is load-bearing and keeping that.' },
-      { id: 'd', text: 'Let it write everything but tell yourself you could do it if you had to.', score: 30, rationale: 'A story you tell yourself isn’t practice. The capacity is maintained by using it, not by believing you still have it.' },
+      { id: 'a', text: 'Let it write everything — output is what matters.', score: 48, rationale: 'Fine for low-stakes text. But writing is also how you think; outsource all of it and you slowly lose the ability to work an idea out for yourself. The cost is invisible until you need it.' },
+      { id: 'b', text: 'Use it to polish and pressure-test, but draft the thinking that matters yourself first.', score: 93, rationale: 'Keep the formative effort (working the idea out), delegate the finishing. You can use it constantly and still stay the one who actually thinks.' },
+      { id: 'c', text: 'Use it for routine writing; reserve the pieces where I’m working out what I believe for myself.', score: 86, rationale: 'Delegation by stakes — you protect the load-bearing writing and hand off the rest. The risk is that “routine” quietly expands; keep checking what you’ve filed under it.' },
+      { id: 'd', text: 'Let it draft, then I edit it heavily so it sounds like me.', score: 52, rationale: 'Increasingly normal, and the editor’s chair feels like authorship. But shaping the model’s words isn’t the same as finding your own — you’re reacting to a draft, not working the idea out.' },
+      { id: 'e', text: 'Don’t use it for writing at all — the effort is the point.', score: 70, rationale: 'A real principle, and the cost-is-the-point intuition is sound. It also forfeits genuine leverage; the goal isn’t purity, it’s guarding the writing that’s load-bearing and freeing the rest.' },
     ],
   },
   {
@@ -1745,10 +1758,11 @@ export const TRADEOFFS = [
     scenario: 'An AI that knows you well could make most of your daily decisions — what to eat, buy, read, prioritize — and on average get better outcomes than you do.',
     prompt: 'How much of deciding do you hand over?',
     options: [
-      { id: 'a', text: 'All of it — better outcomes are better outcomes.', score: 25, rationale: 'Deciding is a muscle and an identity. Optimize away every small choice and you may get better outcomes while slowly becoming a person who can no longer choose — and who no longer knows what they actually want.' },
-      { id: 'b', text: 'Let it handle trivial logistics, but keep making the choices that express who you are.', score: 100, rationale: 'Right line. Offload the decisions that don’t form you; guard the ones that do. Heavy use of the tool, full ownership of the self.' },
-      { id: 'c', text: 'Make every decision yourself, ignore its suggestions.', score: 55, rationale: 'Keeps your agency intact but wastes genuine help and attention you’d want for what matters. Independence is choosing where to delegate, not refusing to.' },
-      { id: 'd', text: 'Follow its suggestions but pretend they’re your own ideas.', score: 30, rationale: 'Borrowed agency dressed as your own is the most seductive trade — you feel autonomous while quietly handing it over. Naming it is the only thing that protects it.' },
+      { id: 'a', text: 'Most of it — better outcomes are better outcomes, and I’ve got more important things to spend choosing on.', score: 50, rationale: 'A genuine efficiency case. But deciding is a muscle and an identity; optimize away enough small choices and you may win outcomes while slowly becoming someone who can’t choose — and no longer knows what they actually want.' },
+      { id: 'b', text: 'Make every decision myself; treat its suggestions as noise.', score: 68, rationale: 'Keeps your agency intact, but wastes real help and the attention you’d want for what matters. Independence is choosing where to delegate, not refusing to.' },
+      { id: 'c', text: 'Let it handle trivial logistics, but keep making the choices that express who I am.', score: 90, rationale: 'Offload the decisions that don’t form you; guard the ones that do. Heavy use of the tool, full ownership of the self.' },
+      { id: 'd', text: 'Follow its suggestions most of the time — I tell myself I’m still the one deciding.', score: 46, rationale: 'Borrowed agency dressed as your own — you feel autonomous while quietly handing it over. Naming it honestly is the only thing that protects it.' },
+      { id: 'e', text: 'Let it lay out the options and trade-offs, but make the actual call myself — especially when it touches my values.', score: 88, rationale: 'Use it to think wider, keep the deciding. You delegate the analysis, never the choice — which is exactly where the self is formed.' },
     ],
   },
   {
@@ -1756,32 +1770,35 @@ export const TRADEOFFS = [
     scenario: 'You’ll soon never need to remember anything — every fact, name, and detail instantly retrievable. Why hold anything in your own head?',
     prompt: 'What’s worth still knowing by heart?',
     options: [
-      { id: 'a', text: 'Nothing — offload all of it, that’s what the tools are for.', score: 25, rationale: 'Retained knowledge is what lets you notice when an answer is wrong, connect ideas, and think in the moment. With nothing in your head, you can only ever look things up — never actually reason across them.' },
-      { id: 'b', text: 'Look up what’s lookup-able, but deliberately keep building deep knowledge in what matters to you.', score: 100, rationale: 'Yes. Externalize the trivia; internalize the things you want to think WITH. You can use retrieval constantly and still cultivate a furnished mind.' },
-      { id: 'c', text: 'Refuse to rely on it; memorize everything the old way.', score: 55, rationale: 'Admirable discipline, but not all knowledge is worth the shelf space. The skill is choosing what to hold, not holding everything.' },
-      { id: 'd', text: 'Offload everything, but feel uneasy that you’re forgetting how to think.', score: 30, rationale: 'The unease is accurate — and useless until it becomes a decision about what you’ll keep building yourself.' },
+      { id: 'a', text: 'Very little — offload it, that’s what the tools are for, and my head is freed up for better things.', score: 50, rationale: 'A reasonable-sounding reallocation. But retained knowledge is what lets you notice a wrong answer and reason across ideas; with nothing in your head you can only ever look things up, never think with them.' },
+      { id: 'b', text: 'Look up what’s lookup-able, but deliberately keep building deep knowledge in what matters to me.', score: 93, rationale: 'Externalize the trivia; internalize the things you want to think WITH. Constant retrieval and a furnished mind aren’t in tension.' },
+      { id: 'c', text: 'Memorize it the old way; don’t lean on retrieval.', score: 66, rationale: 'Admirable discipline, but not all knowledge earns the shelf space. The skill is choosing what to hold, not holding everything.' },
+      { id: 'd', text: 'Offload everything — I basically still “know” it because I can find it fast.', score: 45, rationale: 'Access isn’t understanding. Mistaking the search bar for your own mind is how the capacity quietly goes — you don’t notice until you need to reason without it.' },
+      { id: 'e', text: 'Keep the facts I actually reason with in my head; let the rest live in notes and tools.', score: 87, rationale: 'A working set you own plus an external store you query — the distinction that keeps you able to think, not just fetch.' },
     ],
   },
   {
     id: 'trade-calculation', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
     scenario: 'AI can handle every calculation and quantitative judgment you’ll ever face — budgets, estimates, probabilities — faster and more accurately than you.',
-    prompt: 'What’s the wise trade?',
+    prompt: 'How do you actually think about this trade?',
     options: [
-      { id: 'a', text: 'Hand it all over — never do mental math again.', score: 25, rationale: 'The accuracy is real, but a felt sense of number is how you catch a figure that’s obviously off. Offload it entirely and you can’t even smell an error — you can only ever trust the output.' },
-      { id: 'b', text: 'Let it crunch the heavy problems, but keep doing quick estimates yourself so you stay numerate.', score: 100, rationale: 'The move: take the tool’s power on the hard problems, keep the everyday estimation that keeps your number sense alive. You stay able to sanity-check what the machine hands you.' },
-      { id: 'c', text: 'Refuse it and do all your own arithmetic on principle.', score: 55, rationale: 'Keeps the skill sharp but forfeits real leverage on the genuinely hard problems. Independence is choosing where to delegate, not refusing to.' },
-      { id: 'd', text: 'Let it do everything, while assuming you could still estimate if you had to.', score: 30, rationale: 'Number sense fades without use; believing you’ve kept it isn’t keeping it. The check only protects you if you still actually run it sometimes.' },
+      { id: 'a', text: 'Hand it all over — it’s more accurate than me, and that’s the whole point of the tool.', score: 50, rationale: 'The accuracy is real. But a felt sense of number is how you catch a figure that’s obviously off; offload it entirely and you can’t smell an error — you can only ever trust the output.' },
+      { id: 'b', text: 'Do all my own arithmetic on principle.', score: 66, rationale: 'Keeps the sense sharp but forfeits real leverage on genuinely hard problems. Independence is choosing where to delegate, not refusing to.' },
+      { id: 'c', text: 'Let it crunch the heavy problems, but keep doing quick estimates so I stay numerate.', score: 90, rationale: 'The tool’s power on hard problems plus the everyday estimation that keeps your number sense alive — so you can still judge what it hands you.' },
+      { id: 'd', text: 'Let it do everything — I assume I could still estimate if I had to.', score: 46, rationale: 'Number sense fades without use; believing you’ve kept it isn’t keeping it. The check protects you only if you still actually run it sometimes.' },
+      { id: 'e', text: 'Always sanity-check its answer against a rough estimate of my own before I trust it.', score: 92, rationale: 'Heavy use plus a live check — you stay able to catch the error the machine confidently makes. The estimate is the thing that keeps you in the loop.' },
     ],
   },
   {
     id: 'trade-relationships', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
     scenario: 'AI can draft your hard personal messages, remember everyone’s details, and suggest exactly what to say to the people you love — smoothing every interaction.',
-    prompt: 'Where’s the line worth holding?',
+    prompt: 'Where do you draw the line?',
     options: [
-      { id: 'a', text: 'Let it handle your personal communication — the relationships run smoother.', score: 25, rationale: 'Smoother, but the friction you’re removing is partly the relationship itself — finding your own words is how care gets expressed. Outsource it and people start relating to the model, not to you.' },
-      { id: 'b', text: 'Use it to prepare for genuinely hard conversations, but say the words that matter in your own voice.', score: 100, rationale: 'Right line: let it help you think and steady your nerves, then show up as yourself. The bonding part — being truly present in your own words — stays yours.' },
-      { id: 'c', text: 'Never let it near anything personal.', score: 55, rationale: 'Protects authenticity but turns down real help with the conversations that scare us. The goal isn’t purity; it’s guarding what’s load-bearing.' },
-      { id: 'd', text: 'Let it write your messages but sign them as if they’re yours.', score: 20, rationale: 'The most seductive trade: it feels like connection while quietly hollowing it. The people you love deserve the actual you, even when you’re clumsy.' },
+      { id: 'a', text: 'Use it to prepare for the hard ones — get my thoughts straight, steady my nerves — then say the words myself.', score: 94, rationale: 'It helps you think and calms the fear, then you show up as yourself. The bonding part — being genuinely present in your own clumsy words — stays yours.' },
+      { id: 'b', text: 'Let it handle my personal messages — the relationships run smoother.', score: 48, rationale: 'Smoother, but the friction you’re removing is partly the relationship itself; finding your own words is how care gets expressed. Outsource it and people relate to the model, not to you.' },
+      { id: 'c', text: 'Let it remember details and surface things to follow up on, but never generate what I actually say.', score: 86, rationale: 'Outsource the logistics of caring, keep the expression of it. Worth noticing that even “what to follow up on” can quietly become the model deciding what you attend to.' },
+      { id: 'd', text: 'Let it draft, then I tweak it so it sounds like me.', score: 50, rationale: 'Tempting and increasingly normal — but the other person is relating to the draft you approved, not to you reaching for what to say. Editing isn’t the same as meaning it.' },
+      { id: 'e', text: 'Keep it out of anything personal — those words should cost me something.', score: 70, rationale: 'A real principle, and the cost-is-the-point intuition is sound. It also turns down genuine help with the conversations that scare us most; the goal is guarding what’s load-bearing, not blanket refusal.' },
     ],
   },
   {
@@ -1789,21 +1806,23 @@ export const TRADEOFFS = [
     scenario: 'Any fact, explanation, or how-to is instantly available from AI. Why hold knowledge in your own head at all when retrieval is free?',
     prompt: 'What’s worth still learning yourself?',
     options: [
-      { id: 'a', text: 'Stop learning — just look everything up when you need it.', score: 25, rationale: 'Retrieved knowledge isn’t understanding. With nothing in your head you can’t connect ideas, spot what’s wrong, or think in the moment — you can only ever fetch.' },
-      { id: 'b', text: 'Look up the trivial, but genuinely learn the things you want to think WITH.', score: 100, rationale: 'Exactly: offload reference facts, but build real understanding in the areas you actually reason in. Internalized knowledge is what lets you judge the answers you fetch.' },
-      { id: 'c', text: 'Refuse to look anything up — memorize it all the old way.', score: 55, rationale: 'Honorable, but it wastes a real tool and the attention you’d want for deeper learning. Wisdom is knowing which knowledge to own and which to retrieve.' },
-      { id: 'd', text: 'Look everything up, but feel you basically “know” it because you can find it.', score: 30, rationale: 'Access isn’t understanding. Mistaking the search bar for your own mind is how the capacity quietly disappears.' },
+      { id: 'a', text: 'Not much — just look things up when I need them; that’s faster than learning them.', score: 48, rationale: 'Retrieved knowledge isn’t understanding. With little in your head you can’t connect ideas, spot what’s wrong, or think in the moment — you can only ever fetch.' },
+      { id: 'b', text: 'Look up the trivial, but genuinely learn the things I want to think WITH.', score: 93, rationale: 'Offload reference facts, build real understanding where you actually reason. Internalized knowledge is what lets you judge the answers you fetch.' },
+      { id: 'c', text: 'Refuse to look things up — learn it all the old way.', score: 66, rationale: 'Honorable, but it wastes a real tool and the attention you’d want for deeper learning. Wisdom is knowing which knowledge to own and which to retrieve.' },
+      { id: 'd', text: 'Look everything up — I basically “know” it because I can find it.', score: 45, rationale: 'Access isn’t understanding. Mistaking the search bar for your own mind is how the capacity quietly disappears.' },
+      { id: 'e', text: 'Learn enough of a field’s structure to know what to search for and tell a good answer from a bad one.', score: 88, rationale: 'A scaffold you own plus retrieval for the details — the literacy that actually makes the tool safe to lean on.' },
     ],
   },
   {
     id: 'trade-creativity', type: 'tradeoff', domain: 'ai_autonomy', title: 'The Trade',
     scenario: 'AI can generate ideas, drafts, designs, and solutions on demand — often more polished than your own first attempts.',
-    prompt: 'What’s the wise trade?',
+    prompt: 'How do you actually think about this trade?',
     options: [
-      { id: 'a', text: 'Let it generate everything — the output is better and faster.', score: 25, rationale: 'For throwaway work, fine. But making things is how you develop taste and a voice; hand over all of it and you become an editor of the machine’s ideas, not a source of your own.' },
-      { id: 'b', text: 'Use it to explore and pressure-test, but originate the ideas that matter to you yourself.', score: 100, rationale: 'The balance: let it widen your options and sharpen drafts while you keep doing the generative work that forms your taste. Heavy use of the tool, ownership of the voice.' },
-      { id: 'c', text: 'Refuse to use it for any creative work.', score: 55, rationale: 'Keeps your voice unmixed but forfeits a genuine collaborator. The point isn’t avoiding the tool; it’s staying the source.' },
-      { id: 'd', text: 'Let it create everything, then tweak the output so it feels like yours.', score: 30, rationale: 'Polishing someone else’s ideas isn’t having your own. The muscle of originating atrophies, dressed up as authorship.' },
+      { id: 'a', text: 'Let it generate everything — the output is better and faster than what I’d make.', score: 50, rationale: 'Fine for throwaway work. But making things is how you develop taste and a voice; hand over all of it and you become an editor of the machine’s ideas, not a source of your own.' },
+      { id: 'b', text: 'Refuse to use it for any creative work.', score: 68, rationale: 'Keeps your voice unmixed but forfeits a genuine collaborator. The point isn’t avoiding the tool; it’s staying the source.' },
+      { id: 'c', text: 'Use it to explore and pressure-test, but originate the ideas that matter to me myself.', score: 92, rationale: 'Let it widen your options and sharpen drafts while you keep doing the generative work that forms your taste. Heavy use of the tool, ownership of the voice.' },
+      { id: 'd', text: 'Let it create, then I tweak the output so it feels like mine.', score: 48, rationale: 'Polishing someone else’s ideas isn’t having your own. The muscle of originating atrophies, dressed up as authorship.' },
+      { id: 'e', text: 'Start from my own rough idea, use it to push the idea further, but keep the core direction mine.', score: 88, rationale: 'Your seed, its amplification — the originating spark stays yours even as the tool extends it.' },
     ],
   },
 ];
