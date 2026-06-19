@@ -5269,19 +5269,19 @@ render();
     || !!(state.diag && Array.isArray(state.diag.messages) && state.diag.messages.length > 0);
   if (onboarded || inProgress) return;
 
-  // Calm pacing: each scene holds ~6.5s before auto-advancing. The moment the
+  // Calm pacing: each scene holds ~8s before auto-advancing. The moment the
   // person takes manual control (an arrow / a key), auto-advance stops for good
   // so it never fights them — they drive from there.
-  const SCENE_MS = 6500;
+  const SCENE_MS = 8000;
   const caps = DOMAINS.slice(0, 7).map((d) => `<span class="pill">${d.icon} ${esc(d.name)}</span>`).join('');
   // Each scene is a builder → innerHTML for the stage. The last scene is the CTA
   // and does NOT auto-advance; it waits for the person to choose.
   const scenes = [
     () => `<div class="promo-eyebrow">Forma</div><p class="promo-line">AI keeps getting better at the work.</p>`,
-    () => `<p class="promo-line">The quieter question is who you become while it does.</p>`,
+    () => `<p class="promo-line">But who do you become while it does?</p>`,
     () => `<div class="promo-mark">${formaMark}</div><div class="promo-name">Forma</div><p class="promo-tag">train what AI can’t replace</p>`,
-    () => `<div class="promo-eyebrow">What it strengthens</div><div class="promo-pills">${caps}</div>`,
-    () => `<p class="promo-line" style="font-size:1.35rem;">A few minutes a day.</p><p class="promo-tag">Your own auditable record — measured, trained, never a diagnosis.</p>`,
+    () => `<div class="promo-eyebrow">What Forma trains</div><div class="promo-pills">${caps}</div>`,
+    () => `<p class="promo-line" style="font-size:1.35rem;">A few minutes a day.</p><p class="promo-tag">Measured. Trained. Never a diagnosis.</p>`,
   ];
   const last = scenes.length - 1;
   const reduce = prefersReducedMotion();
