@@ -10,9 +10,10 @@
 // optional live narrative (planNarrative) adds a coach's framing when a key
 // is present.
 
-import { DOMAINS, getDomain, activeDomainIds } from './domains.js';
+import { DOMAINS, getDomain, activeDomainIds, bandFor } from './domains.js';
 import { todayStr, daysBetween } from './progress.js';
 import { complete, hasKey } from './coach.js';
+import { confidence, indexConfidence } from './reliability.js';
 
 const ORDER = DOMAINS.map((d) => d.id);
 
@@ -100,13 +101,31 @@ export function generatePlan(profile, opts = {}) {
 
   const themeName = getDomain(theme).name;
   const themeScore = scores[theme];
+  // Honest framing (forma-validity v247): NEVER assert a single self-administered score as a precise
+  // fact ("at 42") or a superlative cross-capacity verdict ("biggest opening"). Two separate hedges
+  // for two separate claims: the BAND wording is gated on THIS scale's confidence (provisional at 1
+  // measure); the RANKING wording (why this capacity is the theme) is gated on indexConfidence().thin
+  // — because the "weakest" comparison trusts ALL scales, and can be dominated by the noisiest
+  // least-measured one. "Most room to grow" is earned ONLY when the theme is established AND the
+  // comparison field isn't thin. Otherwise we "start here", framed as a choice, not a verdict.
+  const band = themeScore != null ? bandFor(themeScore) : null;
+  const themeEstablished = confidence(profile, theme).level === 'established';
+  const rankingThin = indexConfidence(profile).thin;
+  let targetText;
+  if (themeScore == null) {
+    targetText = `Build a baseline on ${themeName} this week — a few measurements and we'll see where there's room to grow.`;
+  } else if (!themeEstablished) {
+    targetText = `This week starts with ${themeName}. An early read places it in the ${band.label} range — too little measurement to call it firmly yet, so we're treating it as a place to grow rather than a verdict. A good capacity to give your attention this week.`;
+  } else if (rankingThin) {
+    targetText = `This week starts with ${themeName} — your measurements place it in the ${band.label} range, a capacity with real room to grow. With only some of your other scales measured so far, we're starting here rather than calling it your weakest; a good place to focus this week.`;
+  } else {
+    targetText = `This week starts with ${themeName} — across your measured capacities it currently has the most room to grow, sitting in the ${band.label} range. A good place to focus this week.`;
+  }
   return {
     weekStart: start,
     generatedAt: now.toISOString(),
     theme,
-    targetText: themeScore != null
-      ? `Lift your ${themeName} scale this week — at ${themeScore}, it's your biggest opening.`
-      : `Build a baseline on ${themeName} this week.`,
+    targetText,
     days,
   };
 }
