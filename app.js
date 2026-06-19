@@ -4716,6 +4716,31 @@ function renderSettings() {
         ` : ''}
       </div>
 
+      ${(() => {
+        // Support Forma — pay-what-you-can PATRONAGE, never a paywall. Forma is free; nothing is
+        // ever locked behind a gift. Dignified + tucked at the bottom of Settings (never a nag).
+        // No in-app payments: this links OUT to a giving page Sean owns. SEAN: paste your giving
+        // URL here (Open Collective recommended — its public ledger fits "show where it goes")
+        // to turn the Support button live. Empty string = a calm "opens soon" state.
+        const GIVE_URL = '';
+        const goes = [
+          'keeps Forma honest and independent — no ads, no investors pulling strings',
+          'funds the research that proves the measures actually work',
+          'keeps it free and open to anyone who needs it',
+          'builds what’s next, with the people it’s for',
+        ];
+        return `<div class="card">
+        <h2 style="font-size:1.05rem;">Support Forma</h2>
+        <p class="muted small" style="margin:2px 0 10px;">Forma is built among the people it’s for — and kept honest by the people who believe in it, not by advertisers or investors. It’s free, and it always will be. If it’s helped you, you can help keep it that way.</p>
+        <p class="small" style="margin:0 0 4px;"><strong>Where your gift goes</strong></p>
+        <ul class="muted small" style="margin:0 0 12px; padding-left:18px; line-height:1.6;">${goes.map((g) => `<li>${g}</li>`).join('')}</ul>
+        ${GIVE_URL
+          ? `<a class="btn" href="${esc(GIVE_URL)}" target="_blank" rel="noopener noreferrer">Support Forma →</a>
+        <p class="muted small center" style="margin:10px 0 0;">Give once or monthly — whatever you can. Completely optional; nothing in Forma is ever locked behind a gift, and we show you where every dollar goes.</p>`
+          : `<p class="muted small" style="margin:0;">A transparent home for giving is opening soon. Nothing in Forma is ever locked behind a gift — this is patronage, freely given, with a public ledger so you can see exactly where it goes.</p>`}
+      </div>`;
+      })()}
+
       <p class="muted small center">Forma · the capacities a machine can’t keep for you.</p>
     </div>`;
 
