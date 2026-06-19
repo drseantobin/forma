@@ -28,7 +28,7 @@ export const GROWTH_GUIDE = {
     { title: 'Read on paper, undistracted', how: 'For demanding texts, read a physical or single-window copy with notifications off.', why: 'Deeper processing supports comprehension; skimming and interruption undercut it (general guidance).' },
   ],
   persistence: [
-    { title: 'Stay one minute longer', how: 'When you feel the urge to quit a hard task, commit to one more small bout before stopping.', why: 'Graded exposure to discomfort builds distress tolerance, as in frustration-tolerance protocols.' },
+    { title: 'Make an if-then plan', how: "Decide in advance: 'If I hit the urge to quit at X, then I will do Y for two more minutes.' Pick the cue and the action now, before the moment.", why: 'Pre-deciding the cue→action link — an implementation intention — reliably improves follow-through across many studies (Gollwitzer & Sheeran).' },
     { title: "Name the urge, don't obey it", how: "Notice 'I want to quit' as a passing feeling, label it, and keep your hand on the task.", why: 'Acceptance reduces avoidance; the urge is treated as tolerable, not a command.' },
     { title: 'Shrink the next step', how: 'Break the wall into the smallest doable action, and do only that.', why: 'Lowering the action threshold sustains engagement past the quit point (general guidance).' },
   ],
