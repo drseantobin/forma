@@ -74,7 +74,9 @@ export function coachGreeting(profile) {
   const streak = profile && profile.streak && profile.streak.current;
 
   let signal;
-  if (best) signal = `Your ${domainName(best.id)} is up ${best.delta} since you started — that's real, not noise.`;
+  // Honest about a rise: delta>2 clears the measurement-noise floor, but NOT task-familiarity /
+  // practice effects — so name the rise warmly without claiming proven growth (mirrors v238/v239).
+  if (best) signal = `Your ${domainName(best.id)} is up ${best.delta} since you started. Some of that's the task getting familiar — keep the habit and we'll see if it holds.`;
   else if (streak && streak >= 3) signal = `That's ${streak} days in a row now. The showing-up is the formation.`;
   else if (ids.length) {
     const low = ids.slice().sort((a, b) => scores[a] - scores[b])[0];
