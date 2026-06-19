@@ -500,6 +500,12 @@ button { font-family: inherit; cursor: pointer; }
 .spacer { flex:1; }
 .stack > * + * { margin-top: var(--s3); }
 
+/* Grow-this-in-daily-life teaching card (test → train → TEACH). */
+.growcard .growitem { padding:10px 0; border-top:1px solid var(--line); }
+.growcard .growitem:first-of-type { border-top:none; padding-top:2px; }
+.growtitle { font-weight:700; font-size:.95rem; }
+.growwhy { font-size:.78rem; color:var(--ink-faint); margin-top:3px; font-style:italic; }
+
 /* shared eyebrow label */
 .eyebrow { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700; }
 /* Shared view header: eyebrow + title (+ optional lede / right slot) — one authored

@@ -18,6 +18,7 @@ import { bandAscension, ascensionLine, streakMilestone, nextStreakMark } from '.
 import { confidenceTag, confidence, milestoneEligible, indexConfidence, scaleFreshness, constructConfidence } from './src/reliability.js';
 import { basisFor, INSTRUMENT_BASIS } from './src/methods.js';
 import { CONSTRUCTS, constructProfile } from './src/constructs.js';
+import { growthFor } from './src/growth.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
 import * as Research from './src/research.js';
@@ -970,6 +971,25 @@ function startGuidedSession(moduleId = null) {
   state.route = 'session';
   render();
   window.scrollTo(0, 0);
+}
+
+// The TEACH/DIRECT card — a few evidence-based ways to grow this capacity in daily life,
+// shown after a session (test → train → TEACH) so a result becomes direction. Honest:
+// general formation guidance, framed as habits that build the capacity over time.
+function growthCard(domainId) {
+  const items = growthFor(domainId);
+  if (!items) return '';
+  const d = getDomain(domainId);
+  return `<div class="card growcard">
+      <div class="eyebrow">Grow this in daily life</div>
+      <div class="row" style="margin:2px 0;"><strong>${esc(d ? d.name : 'this capacity')}</strong></div>
+      <p class="muted small" style="margin:0 0 10px;">Small, evidence-based habits that build this over time — formation, not a quick fix.</p>
+      ${items.map((g) => `<div class="growitem">
+        <div class="growtitle">${esc(g.title)}</div>
+        <div class="muted small" style="margin-top:2px;">${esc(g.how)}</div>
+        <div class="growwhy">${esc(g.why)}</div>
+      </div>`).join('')}
+    </div>`;
 }
 
 function startTodaysSession() {
@@ -2917,6 +2937,7 @@ async function completeSession() {
       <div class="card" id="insight" aria-live="polite">
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
       </div>
+      ${growthCard(s.exercise.domain)}
       <button class="btn ghost" id="talkthrough" style="margin-bottom:10px;">${coachGlyph} Talk this through with the coach →</button>
       ${tomorrowNudge}
       <button class="btn amber" id="home">Done →</button>
