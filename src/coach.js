@@ -22,6 +22,7 @@ import {
 } from './insights.js';
 import { domainTrend } from './progress.js';
 import { providerFor } from './llm.js';
+import { GROWTH_GUIDE, growthFor } from './growth.js';
 
 export const DEFAULT_MODEL = 'claude-opus-4-8';
 
@@ -213,6 +214,22 @@ export function profileSummary(profile) {
   if (profile.streak?.current) lines.push(`Current streak: ${profile.streak.current} day(s).`);
   const openGoals = (profile.goals || []).filter((g) => !g.done);
   if (openGoals.length) lines.push(`Active goals: ${openGoals.map((g) => g.text).join(' | ')}`);
+  lines.push('');
+  lines.push(growthReference());
+  return lines.join('\n');
+}
+
+// A compact, evidence-based growth-levers reference so the coach can DIRECT growth with
+// concrete grounded options on whatever capacity the person raises — offered as honest
+// habits that build the capacity over time, NEVER as a fix or a prescription. Interior is
+// excluded (the faith track never enters any API context). Titles only, to stay tight.
+function growthReference() {
+  const lines = ['Evidence-based growth levers you may OFFER as concrete options (habits that build the capacity over time — never a quick fix; the person chooses what is theirs):'];
+  for (const d of DOMAINS) {
+    if (d.id === 'interior') continue;
+    const g = GROWTH_GUIDE[d.id];
+    if (g && g.length) lines.push(`  - ${d.name}: ${g.map((x) => x.title).join('; ')}`);
+  }
   return lines.join('\n');
 }
 
@@ -406,16 +423,20 @@ export function offlineCoachReply(userText, profile) {
   const named = domainFromText(t);
   if (named && scores[named.id] != null) {
     const low = named.name.toLowerCase();
+    const g = named.id !== 'interior' ? growthFor(named.id) : null;
+    const lever = g ? `\n\nAnd when you want a concrete place to start, one evidence-based way to grow it: **${g[0].title}** — ${g[0].how}` : '';
     return `Let's start with your ${low}. Forget the number for a second — `
       + `when has it gone *better* than usual, even a little? `
-      + `What was different about that day — what were you already doing that helped? We build from that, not from willpower.`;
+      + `What was different about that day — what were you already doing that helped? We build from that, not from willpower.${lever}`;
   }
 
   // 2) "What should I work on?" → the most room to grow, but their choice leads.
   if (/\b(work on|where (do|should) i (start|begin)|where to start|focus on|what next|what should i)\b/.test(t)) {
     const lowest = lowestScoredDomain(scores);
     if (lowest) {
-      return `On the numbers, ${domainName(lowest)} has the most room right now. But the better question is which one you actually *want* to grow — formation sticks when it's yours to choose, not assigned. Which one pulls at you, and what's one small step you could take this week?`;
+      const g = lowest !== 'interior' ? growthFor(lowest) : null;
+      const lever = g ? ` If you want a concrete, evidence-based option for it: **${g[0].title}** — ${g[0].how}` : '';
+      return `On the numbers, ${domainName(lowest)} has the most room right now. But the better question is which one you actually *want* to grow — formation sticks when it's yours to choose, not assigned.${lever} Which one pulls at you, and what's one small step you could take this week?`;
     }
   }
 
