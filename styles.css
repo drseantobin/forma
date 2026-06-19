@@ -533,7 +533,13 @@ button { font-family: inherit; cursor: pointer; }
 h1[tabindex]:focus, h2[tabindex]:focus { outline: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 :focus:not(:focus-visible) { outline: none; }
-.btn:focus-visible, .opt:focus-visible, .chip:focus-visible, .tab:focus-visible {
+/* One refined focus ring for EVERY keyboard-reachable control — the custom tappables
+   (capacity rows, the appearance segments, goal checks, matrix options) get the same
+   soft double-ring as buttons, instead of the plain default outline. Consistent, calm,
+   and clearly visible in both themes. */
+.btn:focus-visible, .opt:focus-visible, .chip:focus-visible, .tab:focus-visible,
+.domain-row.tappable:focus-visible, .seg:focus-visible, .goalcheck:focus-visible,
+.matopt:focus-visible {
   outline: none; box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 4px var(--accent);
 }
 
