@@ -201,9 +201,16 @@ export function profileSummary(profile) {
     const s = scores[d.id];
     if (s == null) continue;
     const t = domainTrend(profile.history || [], d.id);
-    const trend = t.first != null && t.delta !== 0 ? ` (${t.delta > 0 ? '+' : ''}${t.delta} since start)` : '';
+    // Only surface a trend the engine considers real (direction up/down past ±2) — never a
+    // within-noise ±1 wobble, so the coach isn't handed noise to call "improvement".
+    const trend = t.first != null && t.direction !== 'flat' ? ` (${t.delta > 0 ? '+' : ''}${t.delta} since start)` : '';
     lines.push(`  - ${d.name}: ${s} [${bandFor(s).label}]${trend}`);
   }
+  // Anti-overclaim guardrail for the live coach: score movements are the person's own
+  // readings, not validated proof, and an early rise on a repeated task can be growing
+  // task-familiarity. The coach may encourage the habit; it must NOT claim the capacity is
+  // proven to be improving (mirrors scoredValidated=false + the no-fake-trend rule).
+  lines.push('(Score movements are this person’s own readings over weeks — NOT validated proof training works; an early rise on a repeated task can be task-familiarity. Encourage the habit; never claim the capacity is proven to be improving.)');
   const recent = (profile.sessions || []).filter((s) => s.domain !== 'interior').slice(-5);
   if (recent.length) {
     lines.push('Recent sessions:');
