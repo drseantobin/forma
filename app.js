@@ -787,12 +787,14 @@ function renderHome() {
           <span class="spacer"></span>
           ${doneToday ? '<span class="trendpill up">done ✓</span>' : ''}
         </div>
-        <div class="domain-row" style="margin-bottom:14px;">
+        <div class="domain-row tappable" data-domain="${focus}" role="button" tabindex="0" aria-label="${esc(fd.name)} — how to grow it" style="margin-bottom:14px;">
           <span class="ico">${fd.icon}</span>
           <div class="meta"><div class="dn">${esc(fd.name)}</div>
             <div class="muted small">${esc(fd.short)}</div></div>
+          <span class="chev" aria-hidden="true">›</span>
         </div>
         <button class="btn amber" id="startsession">${doneToday ? 'Practice again →' : 'Go to today’s session →'}</button>
+        <p class="muted small center" style="margin:10px 0 0;">Tap the capacity above to learn how to grow it.</p>
       </div>
 
       <div class="card">
