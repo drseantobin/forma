@@ -505,6 +505,7 @@ button { font-family: inherit; cursor: pointer; }
 .growcard .growitem:first-of-type { border-top:none; padding-top:2px; }
 .growtitle { font-weight:700; font-size:.95rem; }
 .growwhy { font-size:.78rem; color:var(--ink-faint); margin-top:3px; font-style:italic; }
+.growcommit.committed { color: var(--green-ink); border-color: var(--green); background: var(--green-soft); }
 
 /* shared eyebrow label */
 .eyebrow { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700; }

@@ -989,8 +989,27 @@ function growthCard(domainId, opts = {}) {
         <div class="growtitle">${esc(g.title)}</div>
         <div class="muted small" style="margin-top:2px;">${esc(g.how)}</div>
         <div class="growwhy">${esc(g.why)}</div>
+        <button class="btn ghost sm growcommit" data-gd="${esc(domainId)}" data-gt="${esc(g.title)}" style="width:auto; margin-top:8px;">+ Make it a commitment</button>
       </div>`).join('')}
     </div>`;
+}
+
+// Turn a growth habit into a self-chosen, tracked Commitment (the DIRECT step: teaching
+// becomes action the coach reads + you check off on Home). Idempotent; reflects existing.
+function wireGrowthCommit() {
+  app.querySelectorAll('.growcommit').forEach((b) => {
+    const dom = b.getAttribute('data-gd');
+    const text = b.getAttribute('data-gt');
+    const has = (state.profile.goals || []).some((g) => g.text === text && !g.done);
+    if (has) { b.textContent = 'In your commitments ✓'; b.disabled = true; b.classList.add('committed'); return; }
+    b.onclick = () => {
+      state.profile = Profile.addGoal(state.profile, dom, text);
+      save();
+      b.textContent = 'Added to commitments ✓';
+      b.disabled = true;
+      b.classList.add('committed');
+    };
+  });
 }
 
 function startTodaysSession() {
@@ -1179,6 +1198,7 @@ function renderDomainDetail() {
     </div>`;
   document.getElementById('back').onclick = () => go('progress');
   document.getElementById('train').onclick = () => startDomainSession(id);
+  wireGrowthCommit();
 }
 
 // The "Today" landing — a calm runway before the session, not a cold start.
@@ -2983,6 +3003,7 @@ async function completeSession() {
       <button class="btn amber" id="home">Done →</button>
     </div>`;
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };
+  wireGrowthCommit();
   document.getElementById('talkthrough').onclick = () => {
     const ctx = {
       kind: 'session',
