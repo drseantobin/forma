@@ -38,9 +38,9 @@ export const GROWTH_GUIDE = {
     { title: 'Pre-state your confidence', how: 'Before checking, say how sure you are; later compare it to how often you were right.', why: 'Calibration feedback narrows the confidence–accuracy gap over time.' },
   ],
   ai_autonomy: [
-    { title: 'Attempt before you ask', how: 'Draft your own answer first, then use AI to check, extend, or critique it.', why: 'Doing the effort yourself protects the schema-building that makes you capable.' },
-    { title: 'Delegate by decision', how: 'Choose which efforts to keep doing yourself and which to hand off — on purpose, not by default.', why: 'Default offloading is linked to weaker critical thinking; deliberate choice protects it.' },
-    { title: 'Prompt for reasoning, not answers', how: 'Ask AI to show steps, alternatives, and counterarguments — then judge them yourself.', why: 'Structured prompting lowers offloading and raises reflective engagement.' },
+    { title: 'Attempt before you ask', how: 'Draft your own answer first, then use AI to check, extend, or critique it.', why: 'The bet: doing the effort yourself is what keeps the capability yours — a formation frame, not a measured trait.' },
+    { title: 'Delegate by decision', how: 'Choose which efforts to keep doing yourself and which to hand off — on purpose, not by default.', why: 'Heavy default offloading correlates with weaker critical thinking (correlational, not proven causal); choosing deliberately is the formation bet.' },
+    { title: 'Prompt for reasoning, not answers', how: 'Ask AI to show steps, alternatives, and counterarguments — then judge them yourself.', why: 'Prompting for reasoning keeps you reflecting rather than just consuming answers (general guidance).' },
   ],
   presence: [
     { title: 'Listen without fixing', how: 'When someone shares a struggle, reflect what you hear before offering any solution.', why: "Resisting the 'righting reflex' deepens rapport (Motivational Interviewing)." },
@@ -53,7 +53,7 @@ export const GROWTH_GUIDE = {
     { title: 'Reflect, then respond', how: "Paraphrase what you heard ('so you're saying…') before adding your own point.", why: 'Reflective listening confirms understanding and de-escalates (general guidance).' },
   ],
   emotion_regulation: [
-    { title: 'Reframe before reacting', how: 'When emotion spikes, ask what other way there is to see the situation before you respond.', why: 'Cognitive reappraisal lowers distress with lasting effect; suppression does not (Gross).' },
+    { title: 'Reframe before reacting', how: 'When emotion spikes, ask what other way there is to see the situation before you respond.', why: 'Cognitive reappraisal tends to lower distress more adaptively than suppressing it (Gross).' },
     { title: 'Label what you feel', how: "Put the emotion into specific words ('I feel anxious and rushed') rather than just feeling it.", why: "Affect labeling dampens reactivity — 'name it to tame it' (Lieberman)." },
     { title: 'Slow the breath down', how: 'Lengthen your exhale and breathe slowly for a minute or two when activated.', why: 'Slow-paced breathing raises parasympathetic tone and reduces arousal (general guidance).' },
   ],
@@ -65,7 +65,7 @@ export const GROWTH_GUIDE = {
   interior: [
     { title: 'Keep a daily silence', how: 'Hold a few minutes of intentional contemplative silence or prayer at a set time each day.', why: 'Regular contemplative practice supports attention and well-being; consistency matters more than length.' },
     { title: 'Note three good things', how: 'Each night, write three things that went well and why they mattered.', why: "'Three Good Things' produces durable well-being gains in trials (Seligman)." },
-    { title: 'Take an awe walk', how: 'Walk somewhere vast or beautiful and deliberately attend to what inspires wonder.', why: 'Awe walks increased gratitude and compassion and reduced distress (Sturm, 2020).' },
+    { title: 'Take an awe walk', how: 'Walk somewhere vast or beautiful and deliberately attend to what inspires wonder.', why: 'Awe walks raised gratitude and compassion and lowered distress in a trial with older adults (Sturm, 2020).' },
   ],
 };
 
