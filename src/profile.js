@@ -99,11 +99,13 @@ export function applySession(profile, exercise, response, opts = {}) {
   // AI-readiness domains an employer scrutinizes most, while confidence (which counts
   // sessions) rises — the number looks MORE trustworthy as it degrades into recall.
   // Scope = every keyed-answer type (scoreDecision family + matrix + crt + reading's keyed
-  // inference questions — a re-served passage is re-answered from memory, not comprehension).
-  // Open-ended types are correctly excluded: reflection/contemplation/stay are unkeyed, and
-  // vignette/sentence are AI-scored on free text, so a repeat is still a real response.
+  // inference questions + maze's keyed cloze blanks — a re-served passage is re-answered from
+  // memory, not comprehension). Open-ended types are correctly excluded: reflection/contemplation/
+  // stay are unkeyed, and vignette/sentence are AI-scored on free text, so a repeat is still a real
+  // response. Generated types (nback/series/span/mathfluency/vigilance/pursuit) carry a fresh id per
+  // serve, so every item is genuinely new and they need no gate.
   // (profile.sessions does not yet include this session, so .some() tests prior history.)
-  const RECALL_PRONE = new Set(['crt', 'decision', 'tradeoff', 'stem', 'comm', 'attend', 'steu', 'matrix', 'reading']);
+  const RECALL_PRONE = new Set(['crt', 'decision', 'tradeoff', 'stem', 'comm', 'attend', 'steu', 'matrix', 'reading', 'maze']);
   const isSingleUseReplay = RECALL_PRONE.has(exercise.type)
     && (p.sessions || []).some((s) => s.exerciseId === exercise.id);
   const measured = rawScore != null && !isSingleUseReplay;

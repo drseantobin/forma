@@ -673,3 +673,66 @@ h1[tabindex]:focus, h2[tabindex]:focus { outline: none; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------- Welcome promo (first-visit, dismiss-once) ----------------
+   A calm, ~20s motion intro for brand-new visitors. Lives above everything,
+   shows once, and never returns after dismissal (localStorage forma_promo_seen).
+   Emphatically NOT a hype reel — gentle cross-fades, the real tagline, the
+   real capacities. Anti-gamification: no confetti, no countdown pressure. */
+.promo-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  animation: promoIn .4s ease both;
+}
+@keyframes promoIn { from { opacity: 0; } to { opacity: 1; } }
+.promo-card {
+  position: relative;
+  width: 100%; max-width: 460px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 24px; box-shadow: 0 24px 60px -20px rgba(0,0,0,.35);
+  padding: 40px 32px 28px; overflow: hidden;
+}
+.promo-close {
+  position: absolute; top: 12px; right: 12px;
+  width: 34px; height: 34px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--ink-faint);
+  font-size: 1.3rem; line-height: 1; cursor: pointer;
+}
+.promo-close:hover { background: var(--accent-soft); color: var(--ink); }
+/* Thin scene-progress rail along the top of the card */
+.promo-rail { position: absolute; top: 0; left: 0; right: 0; height: 3px; display: flex; gap: 3px; padding: 0 3px; }
+.promo-rail span { flex: 1; height: 3px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.promo-rail span.done { background: var(--accent); }
+.promo-rail span.now::after {
+  content: ""; display: block; height: 100%; width: 0; background: var(--accent);
+  animation: promoFill var(--promo-dur, 3800ms) linear forwards;
+}
+@keyframes promoFill { to { width: 100%; } }
+/* The stage holds one scene at a time; min-height keeps the card from jumping */
+.promo-stage { min-height: 232px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.promo-stage.fade { animation: promoScene .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes promoScene { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.promo-eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 14px; }
+.promo-line { font-size: 1.5rem; line-height: 1.3; font-weight: 600; color: var(--ink); max-width: 24ch; }
+.promo-tag { font-size: 1.05rem; color: var(--ink-soft); margin-top: 10px; }
+.promo-mark { width: 84px; height: 84px; margin: 0 auto 6px; background: #f6f5f1; border-radius: 18px; padding: 12px; }
+.promo-mark img { width: 100%; height: 100%; object-fit: contain; }
+.promo-name { font-size: 2rem; font-weight: 700; letter-spacing: -.01em; color: var(--ink); margin-top: 8px; }
+.promo-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 30ch; margin-top: 4px; }
+.promo-pills .pill { animation: promoPill .5s cubic-bezier(.2,.8,.2,1) both; }
+.promo-pills .pill:nth-child(1){animation-delay:.04s}.promo-pills .pill:nth-child(2){animation-delay:.12s}
+.promo-pills .pill:nth-child(3){animation-delay:.20s}.promo-pills .pill:nth-child(4){animation-delay:.28s}
+.promo-pills .pill:nth-child(5){animation-delay:.36s}.promo-pills .pill:nth-child(6){animation-delay:.44s}
+.promo-pills .pill:nth-child(7){animation-delay:.52s}.promo-pills .pill:nth-child(8){animation-delay:.60s}
+.promo-pills .pill:nth-child(n+9){animation-delay:.68s}
+@keyframes promoPill { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* Bottom controls */
+.promo-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; min-height: 38px; }
+.promo-skip { background: none; border: none; color: var(--ink-faint); font-size: .85rem; cursor: pointer; padding: 6px 2px; }
+.promo-skip:hover { color: var(--ink-soft); text-decoration: underline; }
+.promo-cta { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+.promo-card .btn.amber { padding: 11px 20px; }
