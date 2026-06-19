@@ -1001,16 +1001,64 @@ function growthCard(domainId, opts = {}) {
 function wireGrowthCommit() {
   app.querySelectorAll('.growcommit').forEach((b) => {
     const dom = b.getAttribute('data-gd');
-    const text = b.getAttribute('data-gt');
-    const has = (state.profile.goals || []).some((g) => g.text === text && !g.done);
-    const settle = (label) => { b.textContent = label; b.setAttribute('aria-label', `“${text}” — ${label.replace(' ✓', '')}`); b.disabled = true; b.classList.add('committed'); };
+    const title = b.getAttribute('data-gt');
+    const settle = (label) => { b.textContent = label; b.setAttribute('aria-label', `“${title}” — ${label.replace(' ✓', '')}`); b.disabled = true; b.classList.add('committed'); };
+    // Already committed — match the bare title OR a plan composed from it (see composeCommitment).
+    const has = (state.profile.goals || []).some((g) => !g.done && commitmentMatches(g.text, title));
     if (has) { settle('In your commitments ✓'); return; }
-    b.onclick = () => {
-      state.profile = Profile.addGoal(state.profile, dom, text);
-      save();
-      settle('Added to commitments ✓');
-    };
+    b.onclick = () => openCommitPlan(b, dom, title, settle);
   });
+}
+
+// An optional implementation-intention scaffold for a commitment (Gollwitzer & Sheeran 2006,
+// d≈.65): a plan tied to a concrete cue ("when X, I'll Y") tends to be acted on more than a
+// vague intention. OPTIONAL by design — forcing a plan onto a low-commitment goal just adds
+// friction for no gain (Gollwitzer & Oettingen 2019). The response clause stays the existing
+// POSITIVE habit title, which structurally avoids the "if-then-NOT" backfire (Adriaanse 2011).
+// General behavior-change guidance, never a guarantee — the copy claims ONLY that cued plans
+// "tend to stick better", no effect size, no streak pressure.
+const PLAN_SUFFIX = (title) => `I’ll: ${title}.`;
+function commitmentMatches(goalText, title) {
+  return goalText === title || (typeof goalText === 'string' && goalText.endsWith(PLAN_SUFFIX(title)));
+}
+function composeCommitment(cue, title) {
+  const c = (cue || '').trim().replace(/[\s.,;]+$/, '');
+  if (!c) return title; // skipped/empty → bare intention, exactly as before (no regression)
+  const lead = /^(after|before|when|whenever|once|each|every)\b/i.test(c)
+    ? c.charAt(0).toUpperCase() + c.slice(1)
+    : `When ${c}`;
+  return `${lead}, ${PLAN_SUFFIX(title)}`;
+}
+// Inline cue capture: tapping "+ Make it a commitment" opens ONE optional "when will you do
+// this?" field (Save plan / Skip — just track it), then stores the composed plan via addGoal.
+function openCommitPlan(btn, dom, title, settle) {
+  if (btn.nextElementSibling && btn.nextElementSibling.classList.contains('commit-plan-form')) return;
+  btn.style.display = 'none';
+  const form = document.createElement('div');
+  form.className = 'commit-plan-form';
+  form.innerHTML = `
+    <label class="commit-plan">
+      <span class="muted small">When will you do this? <span class="commit-opt">(optional)</span></span>
+      <input class="cue-input" type="text" maxlength="60" placeholder="after I pour my morning coffee…" aria-label="When will you do this? Optional." />
+    </label>
+    <p class="commit-help muted small">Plans tied to a moment you already have tend to stick better than vague intentions.</p>
+    <div class="row commit-actions">
+      <button class="btn sm cue-save" type="button">Save plan</button>
+      <button class="btn ghost sm cue-skip" type="button">Skip — just track it</button>
+    </div>`;
+  btn.insertAdjacentElement('afterend', form);
+  const input = form.querySelector('.cue-input');
+  if (input.focus) input.focus();
+  const finish = (text) => {
+    state.profile = Profile.addGoal(state.profile, dom, text);
+    save();
+    form.remove();
+    btn.style.display = '';
+    settle('Added to commitments ✓');
+  };
+  form.querySelector('.cue-save').onclick = () => finish(composeCommitment(input.value, title));
+  form.querySelector('.cue-skip').onclick = () => finish(title);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); finish(composeCommitment(input.value, title)); } });
 }
 
 function startTodaysSession() {

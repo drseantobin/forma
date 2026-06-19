@@ -401,6 +401,16 @@ button { font-family: inherit; cursor: pointer; }
 /* Trajectory cold-start: the instrument's frame, faint, so the shape is legible. */
 .trajempty { margin-top:8px; }
 .trajghost { display:block; }
+/* Implementation-intention cue: one optional "when will you do this?" field that turns a bare
+   commitment into a concrete plan. Calm, optional, never pressured — matches the form fields. */
+.commit-plan-form { margin:8px 0 4px; padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius-sm); background:transparent; }
+.commit-plan { display:block; }
+.commit-plan > span:first-child { display:block; margin-bottom:6px; }
+.commit-plan .commit-opt { color:var(--ink-faint); }
+.commit-plan .cue-input { width:100%; border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; font-size:1rem; font-family:inherit; color:var(--ink); background:var(--card); }
+.commit-help { margin:8px 0 10px; }
+.commit-actions { gap:8px; }
+.commit-actions .btn { width:auto; }
 .goaladd summary { list-style:none; cursor:pointer; }
 .goaladd summary::-webkit-details-marker { display:none; }
 .goaladd-body input[type="text"] { width:100%; }
