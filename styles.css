@@ -297,6 +297,7 @@ button { font-family: inherit; cursor: pointer; }
 .chiprow { display:flex; flex-wrap:wrap; gap:8px; }
 .chip { border:1.5px solid var(--line); background:var(--card); border-radius:999px; padding:8px 14px; font-weight:600; }
 .chip.used { opacity:.4; }
+.chip.starter { cursor:pointer; border-color:var(--accent-soft); color:var(--accent); font-size:.85rem; }
 .chip.sel { border-color: var(--amber); background: var(--amber-soft); color:var(--amber-ink); }
 .slot-row { display:flex; flex-wrap:wrap; gap:8px; min-height:46px; padding:8px; border:1.5px dashed var(--line); border-radius:12px; margin-bottom:12px; }
 .slot { background: var(--green-soft); color: var(--green-ink); border:0; font:inherit; cursor:pointer; border-radius:999px; padding:8px 14px; font-weight:700; }

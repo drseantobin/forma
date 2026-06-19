@@ -4004,6 +4004,15 @@ function renderCoach() {
   const live = Coach.hasKey(p);
   const provName = Coach.providerName(p);
   const log = p.coachLog || [];
+  // Directive starter prompts on a cold open — turn a blank box into guided entry into a
+  // growth-focused conversation. One is personalized to the person's focus capacity.
+  const focus = Planner.focusForToday(p) || recommendFocus(p);
+  const fname = getDomain(focus) ? getDomain(focus).name.toLowerCase() : null;
+  const starters = log.length ? [] : [
+    'Where should I focus right now?',
+    fname ? `How do I grow my ${fname}?` : 'How do I grow a capacity?',
+    'What’s one small step I could take this week?',
+  ];
   app.innerHTML = `
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">Coach</h1><span class="spacer"></span>
@@ -4012,6 +4021,7 @@ function renderCoach() {
       <div class="chat" id="chat" role="log" aria-live="polite">
         ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">${esc(Coach.coachGreeting(p))}</div>`}
       </div>
+      ${starters.length ? `<div id="starters" class="chiprow" style="margin:2px 0 10px;">${starters.map((s) => `<button class="chip starter" data-p="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
       <div class="composer">
         <button class="btn amber" id="cmic" aria-label="Dictate your message" style="padding:12px 14px;">${micGlyph}</button>
         <input id="ci" placeholder="Ask your coach…" autocomplete="off" aria-label="Message your coach" />
@@ -4029,6 +4039,7 @@ function renderCoach() {
     const text = ci.value.trim();
     if (!text || busy) return;
     busy = true;
+    const st = document.getElementById('starters'); if (st) st.remove();
     ci.value = '';
     ci.disabled = true; sendBtn.disabled = true;
     p.coachLog = p.coachLog || [];
@@ -4051,6 +4062,9 @@ function renderCoach() {
     if (document.getElementById('ci')) document.getElementById('ci').focus();
   };
   sendBtn.onclick = send;
+  app.querySelectorAll('.starter').forEach((b) => {
+    b.onclick = () => { ci.value = b.getAttribute('data-p'); send(); };
+  });
   ci.onkeydown = (e) => { if (e.key === 'Enter') send(); };
 }
 
