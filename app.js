@@ -4060,8 +4060,6 @@ function renderMethods() {
         <div class="eyebrow" style="margin-top:8px;">${c.facets.map((f) => esc(f.name)).join(' · ')}</div>
       </div>`).join('')}
 
-      <h2 style="font-size:1.05rem; margin:18px 0 8px;">The paradigm behind each measure</h2>
-      ${rows}
       <h2 style="font-size:1.05rem; margin:18px 0 8px;">Self-knowledge instruments</h2>
       <p class="muted small" style="margin:0 0 10px;">Optional checks in the Tools tab, each adapted from an established research paradigm — the same honesty: a mirror you can see the basis of, never a verdict.</p>
       ${INSTRUMENT_BASIS.map((b) => `<div class="card" style="margin-bottom:10px;">
@@ -4070,6 +4068,9 @@ function renderMethods() {
         <div class="eyebrow" style="margin-top:8px;">${esc(b.paradigm)}</div>
         <p class="muted small" style="margin-top:6px;">${esc(b.detail)}</p>
       </div>`).join('')}
+
+      <h2 style="font-size:1.05rem; margin:18px 0 8px;">The paradigm behind each measure</h2>
+      ${rows}
       <p class="muted small center" style="margin-top:6px;">Measurement for formation — never a clinical diagnosis.</p>
     </div>`;
   document.getElementById('back').onclick = () => go('settings');
