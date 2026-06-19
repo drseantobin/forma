@@ -5254,19 +5254,20 @@ const _deep = startRoute(typeof location !== 'undefined' ? location.search : '')
 if (_deep) state.route = _deep;
 render();
 
-// ---------------- Welcome promo (first-visit, dismiss-once) ----------------
-// A calm, ~20s motion intro for brand-new visitors. Shows once, then never
-// again after dismissal (localStorage forma_promo_seen). It lives OUTSIDE #app
-// (which render() re-paints wholesale) so a view swap can't disturb it, and it
-// reveals the real welcome screen beneath on dismiss. On-brand: gentle
-// cross-fades, the real tagline + real capacities, no hype, no countdown.
-const PROMO_KEY = 'forma_promo_seen';
+// ---------------- Welcome promo (shows until they start) ----------------
+// A calm motion intro for people who HAVEN'T started yet — it comes up on EVERY visit
+// until they begin (start onboarding / build a baseline). Once they've started or
+// onboarded, it never shows again. (Sean's call: keep inviting the unconverted, stop
+// the moment they engage — so it's intentionally NOT dismiss-once anymore.) It lives
+// OUTSIDE #app (which render() re-paints wholesale) so a view swap can't disturb it,
+// and it reveals the real welcome screen beneath on dismiss.
 (function maybeShowPromo() {
-  let seen = false;
-  try { seen = !!localStorage.getItem(PROMO_KEY); } catch (e) { return; /* no storage → don't risk re-popping */ }
-  if (seen) return;
-  // Returning/already-onboarded people aren't "new" — mark seen and never show.
-  if (state.profile && state.profile.baseline) { try { localStorage.setItem(PROMO_KEY, '1'); } catch (e) {} return; }
+  // "Started" = finished onboarding (baseline) OR mid-onboarding with real progress
+  // (resumed quick-check step, or an in-flight coach conversation). Any of these → no promo.
+  const onboarded = !!(state.profile && state.profile.baseline);
+  const inProgress = !!(state.onboard && (state.onboard.step > 0 || state.onboard.mode === 'conversation'))
+    || !!(state.diag && Array.isArray(state.diag.messages) && state.diag.messages.length > 0);
+  if (onboarded || inProgress) return;
 
   // Calm pacing: each scene holds ~6.5s before auto-advancing. The moment the
   // person takes manual control (an arrow / a key), auto-advance stops for good
@@ -5334,9 +5335,9 @@ const PROMO_KEY = 'forma_promo_seen';
     if (timer) { clearTimeout(timer); timer = null; }
     pauseAudio();
     document.removeEventListener('keydown', onKey, true);
-    try { localStorage.setItem(PROMO_KEY, '1'); } catch (e) {}
     overlay.remove();
-    // Reveal the welcome screen beneath, focused for keyboard/AT users.
+    // Reveal the welcome screen beneath, focused for keyboard/AT users. The promo
+    // is NOT marked seen — it returns on the next visit until they actually start.
     try { app.focus(); } catch (e) {}
   }
   // n = scene index (clamped); byUser = true when the person navigated, which
