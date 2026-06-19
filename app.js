@@ -1218,8 +1218,9 @@ function renderDomainDetail() {
       </div>
 
       <div class="card">
-        <div class="eyebrow">Why this matters</div>
-        <p style="margin:6px 0 0; line-height:1.55;">${esc(d.aiRationale)}</p>
+        <div class="eyebrow">About this capacity</div>
+        <p style="margin:6px 0 0; line-height:1.55;">${esc(d.blurb)}</p>
+        <p style="margin:10px 0 0; line-height:1.55;"><strong>Why it matters now.</strong> ${esc(d.aiRationale)}</p>
       </div>
 
       ${basis ? `<div class="card">
