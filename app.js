@@ -189,7 +189,13 @@ function ensurePlan() {
   const p = state.profile;
   if (!p || !p.baseline) return;
   if (Planner.planIsStale(p.plan, todayStr())) {
+    // A genuine weekly ROLLOVER (an existing plan aged out) with open commitments is the natural
+    // once-a-week moment to close the loop — flag a calm, dismissible Weekly Review. NOT on first
+    // plan creation (nothing to review yet), and only when there's actually a commitment to weigh.
+    const rollover = !!p.plan;
+    const hasCommitments = (p.goals || []).some((g) => !g.done);
     p.plan = Planner.generatePlan(p);
+    if (rollover && hasCommitments) p._reviewDue = true;
     save();
   }
 }
@@ -241,6 +247,7 @@ function renderRoute() {
     case 'session': return renderSession();
     case 'progress': return renderProgress();
     case 'plan': return renderPlan();
+    case 'review': return renderReview();
     case 'team': return renderTeam();
     case 'methods': return renderMethods();
     case 'snapshot': return renderSnapshot();
@@ -820,6 +827,8 @@ function renderHome() {
   if (sg) sg.onclick = () => startGuidedSession();
   const wp = document.getElementById('toplan');
   if (wp) wp.onclick = () => go('plan');
+  const tr = document.getElementById('toreview');
+  if (tr) tr.onclick = () => go('review');
   const nb = document.getElementById('nudgebackup');
   if (nb) nb.onclick = () => { downloadBackup(); render(); };
   const nl = document.getElementById('nudgelater');
@@ -893,6 +902,10 @@ function weekStripCard(p) {
         <span class="muted small">focus: ${esc(getDomain(p.plan.theme).name)}</span>
       </div>
       <div class="row" style="gap:6px;">${cells}</div>
+      ${p._reviewDue ? `<div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--line);">
+        <p class="small" style="margin:0 0 8px;">A new week's plan is ready. Take a moment to review last week's commitments — keep, adjust, or retire each.</p>
+        <button class="btn sm" id="toreview" style="width:auto;">Review commitments →</button>
+      </div>` : ''}
       <button class="btn ghost sm" id="toplan" style="margin-top:12px;">See this week's plan →</button>
     </div>`;
 }
@@ -3419,6 +3432,87 @@ function renderPlan() {
   Planner.planNarrative(p, plan).then(({ text, live }) => {
     const el = document.getElementById('plannote');
     if (el) el.innerHTML = `<div class="${live ? 'insight live' : ''}" style="border:none;padding:0;white-space:pre-wrap;">${esc(text)}</div>`;
+  });
+}
+
+// The FAR end of the formation loop: a calm, once-a-week review that brings each commitment back
+// for a deliberate KEEP / ADJUST / RETIRE decision, paired with — but never attributed to — the
+// capacity's own trajectory. Surfaced only at a weekly plan rollover (ensurePlan) and only when
+// there are commitments. Dismissible, never a daily nag, never a grade. Closes the loop and
+// bridges the two islands (the weekly plan ↔ the real-life commitments).
+function renderReview() {
+  const p = state.profile;
+  state._reviewDue = false; // entering the review satisfies the prompt (seen = done); it won't nag again this week
+  save();
+  const today = todayStr();
+  const last7 = Array.from({ length: 7 }, (_, i) => Planner.addDays(today, -i));
+  const open = (p.goals || []).filter((g) => !g.done);
+
+  // Honest trajectory context — names the direction, explicitly NEVER claims the commitment caused it.
+  const trajLine = (domain) => {
+    const t = domainTrend(p.history || [], domain);
+    const name = getDomain(domain) ? getDomain(domain).name : 'this capacity';
+    if (!t || t.first == null || t.direction === 'flat') return `Your ${esc(name)} scale has held about steady.`;
+    if (t.direction === 'up') return `Your ${esc(name)} scale has edged up lately — worth keeping the habit to see if it holds.`;
+    return `Your ${esc(name)} scale has dipped lately — a gentle reason to stay with it, not a verdict.`;
+  };
+
+  const rows = open.map((g) => {
+    const d = getDomain(g.domain);
+    const checkins = Array.isArray(g.checkins) ? g.checkins : [];
+    const kept = checkins.filter((c) => last7.includes(c)).length;
+    const keptLine = kept > 0
+      ? `Kept ${kept}× in the last 7 days.`
+      : `Not marked kept this week — no problem. Adjust the cue, or retire it without guilt.`;
+    return `
+      <div class="card reviewrow" data-rev="${esc(g.id)}">
+        <div class="row" style="align-items:flex-start;">
+          <span class="ico" aria-hidden="true" style="font-size:1.2rem;">${d ? d.icon : '•'}</span>
+          <div style="flex:1;">
+            <div class="goaltext"><strong>${esc(g.text)}</strong></div>
+            <p class="muted small" style="margin:4px 0 0;">${keptLine}</p>
+            <p class="muted small" style="margin:4px 0 0;">${trajLine(g.domain)}</p>
+          </div>
+        </div>
+        <div class="row reviewacts" style="gap:8px; margin-top:10px;">
+          <button class="btn ghost sm" data-rev-keep="${esc(g.id)}" style="width:auto;">Keep it</button>
+          <button class="btn ghost sm" data-rev-adjust="${esc(g.id)}" style="width:auto;">Adjust it</button>
+          <button class="btn ghost sm" data-rev-retire="${esc(g.id)}" style="width:auto;">Retire it</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="fade-in">
+      ${viewHead('This week', 'Weekly review', 'A calm, once-a-week look at the commitments you set. Keep, adjust, or retire each — your call.', `<button class="btn ghost sm" id="back" style="width:auto;">← Home</button>`)}
+      <div class="card" style="border-left:4px solid var(--accent);">
+        <p class="small" style="margin:0;">Scores move for many reasons — a commitment is never proven to cause a change. This is a moment to choose what to carry into the week, not a grade.</p>
+      </div>
+      ${open.length ? rows : `<div class="card"><p class="muted small" style="margin:0;">No open commitments to review right now — you can set one anytime from Home.</p></div>`}
+      <button class="btn" id="reviewdone" style="margin-top:6px;">Done — start the week →</button>
+    </div>`;
+
+  document.getElementById('back').onclick = () => go('home');
+  document.getElementById('reviewdone').onclick = () => go('home');
+  // Keep = the null action, made deliberate: settle the row, change nothing (the commitment stays).
+  app.querySelectorAll('[data-rev-keep]').forEach((b) => {
+    b.onclick = () => {
+      const row = b.closest('.reviewrow');
+      const acts = row && row.querySelector('.reviewacts');
+      if (acts) acts.innerHTML = '<span class="muted small">Keeping this — carried into the week ✓</span>';
+    };
+  });
+  // Adjust = edit it in place on Home (reuses the existing inline goal-edit; no duplicate UI).
+  app.querySelectorAll('[data-rev-adjust]').forEach((b) => {
+    b.onclick = () => { state._editGoal = b.dataset.revAdjust; go('home'); };
+  });
+  // Retire = remove it (reuses Profile.removeGoal); re-render the review without it.
+  app.querySelectorAll('[data-rev-retire]').forEach((b) => {
+    b.onclick = () => {
+      state.profile = Profile.removeGoal(state.profile, b.dataset.revRetire);
+      save(); render();
+      announce('Commitment retired.');
+    };
   });
 }
 
