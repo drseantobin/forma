@@ -324,7 +324,11 @@ export async function dailyInsight(session, profile) {
 // error, while a false positive only surfaces a gentle, compassionate pointer to
 // real human help. Still kept precise enough that ordinary frustration ("this is
 // killing me", "I give up on this puzzle") does NOT trip it.
-const CRISIS_PATTERN = /\b(kill(ing)? myself|suicid|end (my|it) (life|all)|tak(e|ing) my (own )?life|want to die|wanna die|want (it|this) (all )?to end|don'?t want to (live|be here|exist|wake up|go on)|wish I (was|were|wasn'?t) (dead|here|alive)|wish I (wouldn'?t|didn'?t) wake up|(hurt|harm)(ing)? myself|self[-\s]?harm(ing|ed)?|cutting again|cut(ting)? (myself|my (wrist|arm|thigh|leg|skin)s?)|slit (my )?wrists?|no reason to live|nothing (left )?to live for|better off (dead|without me)|no point (in )?(living|going on|being here)|give up on life|can'?t go on)\b/i;
+// NOTE: stems that continue into longer words (suicid→suicide/suicidal, overdos→overdose/
+// overdosing) MUST sit OUTSIDE the trailing \b — a \b right after "suicid" demands a boundary
+// before the next letter, which never exists, so "suicide"/"suicidal" silently slipped through
+// (the single highest-stakes false negative; fixed v258). They get a leading-only boundary.
+const CRISIS_PATTERN = /\b(suicid|overdos)|\b(kill(ing)? myself|hang myself|end(ing)? (my|it) (life|all)|tak(e|ing) my (own )?life|tak(e|ing) all my pills|want to die|wanna die|just want to die|wish I (could )?(just )?die|want (it|this|things) (all )?to end|want it (all )?to be over|don'?t want to (live|be here|be alive|exist|wake up|go on)|not want to (live|be alive|wake up)|wish I (was|were|wasn'?t) (dead|here|alive)|wish I (could )?(just )?disappear|wish I (wouldn'?t|didn'?t) wake up|wish I (was|were)n'?t born|wish I was never born|(hurt|harm)(ing)? myself|self[-\s]?harm(ing|ed)?|cutting again|cut(ting)? (myself|my (wrist|arm|thigh|leg|skin)s?)|slit (my )?wrists?|no reason to live|nothing (left )?to live for|(isn'?t|not|aren'?t) worth living|better off (dead|without me)|would be better off (if I (was|were) )?(gone|dead)|no point (in )?(living|going on|being here)|give up on life|can'?t go on)\b/i;
 
 export function looksLikeDistress(text) {
   return CRISIS_PATTERN.test(text || '');
