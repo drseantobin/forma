@@ -136,10 +136,11 @@ function go(route) {
     clearTimeout(state.session._timer); // guided uses a setTimeout step clock
     state.session._timer = null;
   }
-  // Leaving a guided practice mid-run: stop the breathing controller.
+  // Leaving a guided practice mid-run: stop the breathing controller (and any spoken guidance).
   if (route !== 'session' && state.session && state.session._breathStop) {
     state.session._breathStop();
     state.session._breathStop = null;
+    stopSpeak();
   }
   // Leaving a contemplation/guided practice: release the audio context too.
   if (route !== 'session' && state.session && state.session._tones) {
@@ -207,6 +208,41 @@ function ensurePlan() {
 let _activeMic = null;
 function stopActiveMic() {
   if (_activeMic) { try { _activeMic.stop(); } catch (e) { /* noop */ } _activeMic = null; }
+}
+
+// --- Spoken guidance (TTS): a calm voice reads the practice steps, for the "voice" sound
+// mode. Uses the browser's on-device SpeechSynthesis; prefers a calm female English voice.
+// Separate from the Web-Audio breath waves. getVoices() can load async, so we prime + relisten.
+let _calmVoice = null, _voicesPrimed = false;
+function pickCalmVoice() {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+  const vs = window.speechSynthesis.getVoices() || [];
+  if (!vs.length) return null;
+  const pref = ['Samantha', 'Google UK English Female', 'Microsoft Zira', 'Microsoft Aria', 'Karen', 'Moira', 'Tessa', 'Fiona', 'Victoria', 'Serena'];
+  for (const name of pref) { const v = vs.find((x) => x.name === name); if (v) return v; }
+  const fem = vs.find((v) => /^en/i.test(v.lang) && /female|woman|samantha|zira|aria|karen|moira|tessa|fiona|victoria|serena/i.test(v.name));
+  return fem || vs.find((v) => /^en/i.test(v.lang)) || vs[0] || null;
+}
+function primeVoices() {
+  if (_voicesPrimed || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  _voicesPrimed = true;
+  _calmVoice = pickCalmVoice();
+  try { window.speechSynthesis.onvoiceschanged = () => { _calmVoice = pickCalmVoice(); }; } catch (e) { /* noop */ }
+}
+function speakText(text) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text) return;
+  try {
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = _calmVoice || (_calmVoice = pickCalmVoice());
+    if (v) u.voice = v;
+    u.rate = 0.82; u.pitch = 1.0; u.volume = 0.95; // calm, unhurried
+    synth.speak(u);
+  } catch (e) { /* noop */ }
+}
+function stopSpeak() {
+  try { if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) { /* noop */ }
 }
 
 function render() {
@@ -3126,8 +3162,17 @@ function renderGuided() {
           <h2 style="font-size:1.15rem; margin:6px 0 8px;">${esc(m.name)}</h2>
           <p>${esc(m.lead)}</p>
           <p class="muted small" style="margin-top:8px;">${esc(m.before)}</p>
-          ${m.eyesOpen ? '<p class="muted small">Keep your eyes open for this one — it’s about coming back to where you are.</p>' : '<p class="muted small">You can close your eyes; the chime will guide you.</p>'}
+          ${m.eyesOpen ? '<p class="muted small">Keep your eyes open for this one — it’s about coming back to where you are.</p>' : '<p class="muted small">You can close your eyes; the sound will guide you.</p>'}
         </div>
+        ${(() => {
+          const mode = (state.profile.settings && state.profile.settings.practiceSound) || 'waves';
+          const opt = (id, label) => `<button class="chip${mode === id ? ' sel' : ''}" data-sound="${id}" aria-pressed="${mode === id}">${label}</button>`;
+          return `<div class="card soundsel">
+          <div class="eyebrow">Sound</div>
+          <div class="chip-row" style="margin:8px 0 6px;">${opt('off', 'Silent')}${opt('waves', 'Breath waves')}${opt('voice', 'Spoken guidance')}</div>
+          <p class="muted small" style="margin:0;">Breath waves rise and fall and move gently left ↔ right — <strong>best with headphones</strong>. Spoken guidance reads each step aloud in a calm voice.</p>
+        </div>`;
+        })()}
         ${m.scale ? `
           <p class="muted small" style="margin-top:4px;">${esc(m.scale.label)}</p>
           <div class="slider-row">
@@ -3145,9 +3190,19 @@ function renderGuided() {
       r.before = Number(slider.value);
       slider.oninput = () => { r.before = Number(slider.value); const v = document.getElementById('gbeforeval'); if (v) v.textContent = `${slider.value}/10`; };
     }
+    app.querySelectorAll('[data-sound]').forEach((b) => b.onclick = () => {
+      state.profile.settings.practiceSound = b.dataset.sound;
+      save();
+      render(); // re-render the intro to reflect the new selection (slider value persists on r)
+    });
     document.getElementById('gbegin').onclick = () => {
-      s._tones = createTones();
-      if (s._tones) { s._tones.unlock(); s._tones.start(); }
+      const mode = (state.profile.settings && state.profile.settings.practiceSound) || 'waves';
+      s.soundMode = mode;
+      if (mode !== 'off') {
+        s._tones = createTones();
+        if (s._tones) { s._tones.unlock(); s._tones.start(); }
+      }
+      if (mode === 'voice') primeVoices();
       s.stepIdx = 0;
       s.phase = 'guided-run';
       render();
@@ -3183,7 +3238,8 @@ function renderGuided() {
   const inhale = () => {
     if (breathStopped) return;
     if (breathLbl) breathLbl.textContent = 'Breathe in';
-    if (s._tones) s._tones.tick();
+    // A rising wave washing LEFT on the inhale (bilateral); the wave IS the breath cue now.
+    if (s._tones && s.soundMode !== 'off') s._tones.breathWave('in', breath.inhale);
     setOrb(1, breath.inhale);
     breathTimer = setTimeout(breath.hold > 0 ? hold : exhale, breath.inhale * 1000);
   };
@@ -3195,6 +3251,8 @@ function renderGuided() {
   const exhale = () => {
     if (breathStopped) return;
     if (breathLbl) breathLbl.textContent = 'Breathe out';
+    // A falling wave washing RIGHT on the exhale (bilateral).
+    if (s._tones && s.soundMode !== 'off') s._tones.breathWave('out', breath.exhale);
     setOrb(0.55, breath.exhale);
     breathTimer = setTimeout(inhale, breath.exhale * 1000);
   };
@@ -3212,7 +3270,10 @@ function renderGuided() {
     s.stepIdx = i;
     const step = m.steps[i];
     if (stepEl) stepEl.textContent = step.text;
-    if (i > 0 && s._tones) s._tones.interval();
+    // Voice mode: a calm voice reads the step aloud. Otherwise (waves), the breath wash
+    // carries it with no beep; on a step change in waves mode, a single soft marker.
+    if (s.soundMode === 'voice') speakText(step.text);
+    else if (i > 0 && s._tones && s.soundMode !== 'off') s._tones.interval();
     if (step.freezeBreath) {
       stopBreath();
       if (orb) orb.classList.add('held');
@@ -3226,6 +3287,7 @@ function renderGuided() {
   };
   const toGuidedReflect = (completed) => {
     stopGuidedTimers(s);
+    stopSpeak();
     if (s._tones) { s._tones.done(); const t = s._tones; s._tones = null; setTimeout(() => t.close(), 2500); }
     r.completed = !!completed;
     s.phase = 'guided-reflect';
