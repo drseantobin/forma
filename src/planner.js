@@ -160,7 +160,9 @@ export function focusForToday(profile, today = todayStr()) {
 
 const PLAN_SYSTEM = `You are Forma's Formation Planner, writing a short, warm framing for the week's plan. 2-3 sentences. Name the week's focus capacity and why it matters for this person, and one encouraging, concrete note about how to approach the week. Formation framing only — no clinical language, no hype, no "journey"/"lean into"/"powerful".
 
-If the person has an open commitment for the focus capacity, you may acknowledge it warmly as something they are already practicing in daily life, as a SEPARATE thought from anything about their score or "opening." Treat the habit as the formation in itself. Never state or imply that the commitment will move, raise, or improve their score, and never present it as the way to close the week's gap. The number and the habit are independent — keep them in separate sentences.`;
+If the person has an open commitment for the focus capacity, you may acknowledge it warmly as something they are already practicing in daily life, as a SEPARATE thought from anything about their score or "opening." Treat the habit as the formation in itself. Never state or imply that the commitment will move, raise, or improve their score, and never present it as the way to close the week's gap. The number and the habit are independent — keep them in separate sentences.
+
+Never cite a raw numeric score or imply false precision — a person's score is a single self-administered reading, not an exact fact. Speak only in the band words you're given (Emerging / Developing / Strong / Thriving), never a number. Only call the focus capacity their "weakest", their "biggest opening", or the one with "the most room to grow" if you are explicitly told the ranking is well-measured; otherwise frame it simply as where the week starts — a place to grow, not a ranked verdict.`;
 
 // Optional live narrative; falls back to the rule-based target text.
 export async function planNarrative(profile, plan) {
@@ -179,13 +181,23 @@ export async function planNarrative(profile, plan) {
   try {
     const themeName = getDomain(plan.theme).name;
     const summary = plan.days.map((d) => `${d.date}: ${d.title} (intensity ${d.intensity})`).join('; ');
+    // Honesty (forma-validity v248): NEVER hand the model raw scores — it can't fabricate "your
+    // weakest at 42" if it never sees the number. Give it the BAND word + an explicit flag for
+    // whether a cross-capacity ranking is earned (theme well-measured AND the field not thin),
+    // mirroring the offline targetText gating (v247). PLAN_SYSTEM enforces band-only + ranking gate.
+    const themeScore = (profile.domainScores || {})[plan.theme];
+    const band = themeScore != null ? bandFor(themeScore) : null;
+    const rankingEarned = confidence(profile, plan.theme).level === 'established' && !indexConfidence(profile).thin;
+    const standing = band
+      ? `Their ${themeName} currently sits in the ${band.label} range${rankingEarned ? ', and across their measured capacities it has the most room to grow' : ' — an early read, too few measurements to rank it against their other capacities yet'}.`
+      : `They haven't measured ${themeName} yet — this week is about establishing a baseline.`;
     // Pass the commitment as keyed-construct context, NOT next to the schedule — so the model
     // can't weave it into the plan-as-cause (forma-validity v246).
     const commitLine = commitmentText ? ` Their open commitment for ${themeName}: "${commitmentText}".` : '';
     const text = await complete(profile, {
       system: PLAN_SYSTEM,
       maxTokens: 240,
-      messages: [{ role: 'user', content: `This week's focus capacity is ${themeName}. The 7-day plan: ${summary}. Their current scales: ${JSON.stringify(profile.domainScores)}.${commitLine} Write the framing.` }],
+      messages: [{ role: 'user', content: `This week's focus capacity is ${themeName}. ${standing} The 7-day plan: ${summary}.${commitLine} Write the framing.` }],
     });
     return { text: text || fallback, live: !!text };
   } catch {
