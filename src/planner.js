@@ -139,19 +139,34 @@ export function focusForToday(profile, today = todayStr()) {
   return null;
 }
 
-const PLAN_SYSTEM = `You are Forma's Formation Planner, writing a short, warm framing for the week's plan. 2-3 sentences. Name the week's focus capacity and why it matters for this person, and one encouraging, concrete note about how to approach the week. Formation framing only — no clinical language, no hype, no "journey"/"lean into"/"powerful".`;
+const PLAN_SYSTEM = `You are Forma's Formation Planner, writing a short, warm framing for the week's plan. 2-3 sentences. Name the week's focus capacity and why it matters for this person, and one encouraging, concrete note about how to approach the week. Formation framing only — no clinical language, no hype, no "journey"/"lean into"/"powerful".
+
+If the person has an open commitment for the focus capacity, you may acknowledge it warmly as something they are already practicing in daily life, as a SEPARATE thought from anything about their score or "opening." Treat the habit as the formation in itself. Never state or imply that the commitment will move, raise, or improve their score, and never present it as the way to close the week's gap. The number and the habit are independent — keep them in separate sentences.`;
 
 // Optional live narrative; falls back to the rule-based target text.
 export async function planNarrative(profile, plan) {
-  const fallback = plan.targetText;
+  // Bridge the islands: if the person already has an open commitment FOR the focus capacity, name
+  // it — so the weekly framing references their real-life formation, not just in-app sessions.
+  // Honesty (forma-validity v246): keep it a SEPARATE thought from the score-framed targetText. The
+  // "Separately:" break + "regardless of what the scale does" is load-bearing — it re-points the
+  // habit at the CAPACITY, not at "lifting the scale", so it never reads as the cause of a score
+  // move. Name ONE commitment (a tally would reintroduce a quantified-progress frame); empty → none.
+  const themeCommit = (profile.goals || []).find((g) => g && !g.done && g.domain === plan.theme && String(g.text || '').trim());
+  const commitmentText = themeCommit ? String(themeCommit.text).trim() : '';
+  const fallback = commitmentText
+    ? `${plan.targetText} Separately: in daily life you're already practicing this capacity — “${commitmentText}”. That practice is the real formation here; keep it going this week, regardless of what the scale does.`
+    : plan.targetText;
   if (!hasKey(profile)) return { text: fallback, live: false };
   try {
     const themeName = getDomain(plan.theme).name;
     const summary = plan.days.map((d) => `${d.date}: ${d.title} (intensity ${d.intensity})`).join('; ');
+    // Pass the commitment as keyed-construct context, NOT next to the schedule — so the model
+    // can't weave it into the plan-as-cause (forma-validity v246).
+    const commitLine = commitmentText ? ` Their open commitment for ${themeName}: "${commitmentText}".` : '';
     const text = await complete(profile, {
       system: PLAN_SYSTEM,
       maxTokens: 240,
-      messages: [{ role: 'user', content: `This week's focus capacity is ${themeName}. The 7-day plan: ${summary}. Their current scales: ${JSON.stringify(profile.domainScores)}. Write the framing.` }],
+      messages: [{ role: 'user', content: `This week's focus capacity is ${themeName}. The 7-day plan: ${summary}. Their current scales: ${JSON.stringify(profile.domainScores)}.${commitLine} Write the framing.` }],
     });
     return { text: text || fallback, live: !!text };
   } catch {
