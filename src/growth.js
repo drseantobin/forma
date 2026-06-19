@@ -48,7 +48,7 @@ export const GROWTH_GUIDE = {
     { title: 'One conversation, no phone', how: 'Put the phone away and give a person your undivided attention for the length of one talk.', why: 'A visible phone alone lowers perceived closeness and conversation quality (general guidance).' },
   ],
   communication: [
-    { title: 'Name the feeling first', how: 'Before responding, label the emotion the other person seems to be expressing.', why: 'Reading emotion accurately is trainable and underpins an attuned response.' },
+    { title: 'Name the feeling first', how: 'Before responding, label the emotion the other person seems to be expressing.', why: 'Naming the emotion you perceive — even silently — slows the reflexive reply and turns your attention to their feeling before you react.' },
     { title: "Ask, don't assume", how: "Instead of guessing what someone feels, check it directly — 'It sounds like that landed hard; is that right?' — and let them correct you.", why: "Across 25 experiments, imagining another's viewpoint did not improve how accurately people read them — but getting their perspective directly did (Eyal, Steffel & Epley, 2018); feedback about a person's actual feelings sharpens accuracy over time (Ickes)." },
     { title: 'Reflect, then respond', how: "Paraphrase what you heard ('so you're saying…') before adding your own point.", why: 'Reflective listening confirms understanding and de-escalates (general guidance).' },
   ],
