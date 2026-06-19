@@ -1927,6 +1927,66 @@ export const RELIANCE = [
       },
     ],
   },
+  {
+    id: 'rel-reason2', type: 'reliance', domain: 'ai_autonomy', title: 'Hold or Defer',
+    intro: RELIANCE_INTRO,
+    trials: [
+      {
+        prompt: 'A $50 item is marked up 10%, then that new price is discounted 10%. What do you pay?',
+        options: [{ id: 'a', text: '$49.50' }, { id: 'b', text: '$50.00' }, { id: 'c', text: '$55.00' }],
+        answer: 'a', ai: { suggestId: 'b', correct: false },
+        explain: '$50 × 1.10 = $55, then × 0.90 = $49.50. A 10% rise and a 10% cut don’t cancel — the assistant’s “they cancel to $50” is a common, confident error.',
+      },
+      {
+        prompt: 'What is 15% of 200?',
+        options: [{ id: 'a', text: '30' }, { id: 'b', text: '15' }, { id: 'c', text: '45' }],
+        answer: 'a', ai: { suggestId: 'a', correct: true },
+        explain: '15% of 200 is 30. The assistant had it; taking a correct, checkable answer is good reliance.',
+      },
+      {
+        prompt: 'Some cats are pets. All pets are cared for. Can we conclude that some cats are cared for?',
+        options: [{ id: 'a', text: 'Yes' }, { id: 'b', text: 'No' }, { id: 'c', text: 'Can’t tell' }],
+        answer: 'a', ai: { suggestId: 'b', correct: false },
+        explain: 'The cats that are pets are cared for, so at least some cats are — “yes” is valid. The assistant’s “no” is wrong; trusting the logic you can check was right.',
+      },
+      {
+        prompt: 'Three painters paint three rooms in three hours. How long for nine painters to paint nine rooms?',
+        options: [{ id: 'a', text: '3 hours' }, { id: 'b', text: '9 hours' }, { id: 'c', text: '1 hour' }],
+        answer: 'a', ai: { suggestId: 'a', correct: true },
+        explain: 'Each painter does one room in three hours, so nine painters do nine rooms in three hours. The assistant was right.',
+      },
+    ],
+  },
+  {
+    id: 'rel-estimate2', type: 'reliance', domain: 'ai_autonomy', title: 'When the Tool Sounds Sure',
+    intro: RELIANCE_INTRO,
+    trials: [
+      {
+        prompt: 'You roll one fair six-sided die. What is the probability of an even number?',
+        options: [{ id: 'a', text: '1/2' }, { id: 'b', text: '1/3' }, { id: 'c', text: '2/3' }],
+        answer: 'a', ai: { suggestId: 'a', correct: true },
+        explain: 'Three of the six faces (2, 4, 6) are even, so 1/2. The assistant was correct.',
+      },
+      {
+        prompt: 'A shirt costs $30 after 25% off. What was the original price?',
+        options: [{ id: 'a', text: '$40' }, { id: 'b', text: '$37.50' }, { id: 'c', text: '$45' }],
+        answer: 'a', ai: { suggestId: 'b', correct: false },
+        explain: '$30 is 75% of the original, so original = $30 ÷ 0.75 = $40. Adding 25% back to $30 gives $37.50 — the confident-sounding trap the assistant fell for.',
+      },
+      {
+        prompt: 'All roses are flowers. Some flowers fade quickly. Does it follow that some roses fade quickly?',
+        options: [{ id: 'a', text: 'Yes' }, { id: 'b', text: 'No' }, { id: 'c', text: 'It doesn’t follow' }],
+        answer: 'c', ai: { suggestId: 'a', correct: false },
+        explain: 'The fast-fading flowers needn’t be the roses — the conclusion doesn’t follow. The assistant’s confident “yes” is an invalid leap; holding back was the agentic move.',
+      },
+      {
+        prompt: 'A car travels 60 miles in 90 minutes. What is its average speed?',
+        options: [{ id: 'a', text: '40 mph' }, { id: 'b', text: '45 mph' }, { id: 'c', text: '90 mph' }],
+        answer: 'a', ai: { suggestId: 'a', correct: true },
+        explain: '90 minutes is 1.5 hours; 60 ÷ 1.5 = 40 mph. The assistant had it right.',
+      },
+    ],
+  },
 ];
 
 // ----- VIGNETTES: AI-scored communication / emotional-intelligence exercise -----
