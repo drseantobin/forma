@@ -502,6 +502,13 @@ button { font-family: inherit; cursor: pointer; }
 
 /* shared eyebrow label */
 .eyebrow { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700; }
+/* Shared view header: eyebrow + title (+ optional lede / right slot) — one authored
+   rhythm for every primary tab, instead of bare hand-rolled <h1> rows. */
+.viewhead { margin: 2px 0 18px; }
+.viewhead .row { align-items: baseline; }
+.viewhead .eyebrow { display:block; margin-bottom: 4px; }
+.viewhead h1 { margin: 0; }
+.viewhead .lede { color: var(--ink-soft); font-size: .95rem; line-height:1.5; margin: 8px 0 0; max-width: 46ch; }
 
 /* matrix reasoning grid + options */
 .matgrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-width:240px; margin:10px auto; }

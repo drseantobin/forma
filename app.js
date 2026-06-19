@@ -59,6 +59,15 @@ if (state.profile && state.profile.settings && state.profile.settings.faithTrack
 function save() { Profile.saveProfile(state.profile); }
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
+// Shared view header for primary tabs: an eyebrow + title (+ optional lede and a
+// right-aligned slot for a back/secondary control). One authored rhythm everywhere,
+// replacing bare hand-rolled <h1> rows. rightHtml is trusted markup (caller-built).
+function viewHead(eyebrow, title, lede, rightHtml) {
+  return `<header class="viewhead"><div class="row"><div>
+      <span class="eyebrow">${esc(eyebrow)}</span>
+      <h1>${esc(title)}</h1></div><span class="spacer"></span>${rightHtml || ''}</div>${lede ? `<p class="lede">${esc(lede)}</p>` : ''}</header>`;
+}
+
 // Appearance theme: 'system' (follow the OS), 'light', or 'dark'. Persisted in
 // localStorage and applied to <html data-theme> — read by a tiny <head> script before
 // first paint (no flash). The CSS already covers all three: [data-theme] forces a theme;
@@ -3024,7 +3033,7 @@ function renderProgress() {
   const idxPts = (p.indexHistory || []).map((x) => x.formationIndex);
   app.innerHTML = `
     <div class="fade-in">
-      <h1>Progress</h1>
+      ${viewHead('Your formation over time', 'Progress', '')}
       <div class="card">
         <div class="row"><strong>Formation Index</strong><span class="spacer"></span><span class="kbig">${fi}</span></div>
         ${(() => {
@@ -3968,8 +3977,9 @@ function appendBubble({ role, content, typing, assertive }) {
 function renderTools() {
   app.innerHTML = `
     <div class="fade-in">
-      <h1>Tools</h1>
-      <p class="muted small" style="margin:-4px 0 16px;">Optional self-knowledge checks — each a calm mirror for a habit, adapted from an established research paradigm. Do them anytime; they're separate from your daily session.</p>
+      ${viewHead('Self-knowledge', 'Tools', "Optional mirrors and practices — each adapted from an established research paradigm. Separate from your daily session; do them anytime.")}
+
+      <div class="eyebrow" style="margin:4px 0 10px;">Mirrors — see how your mind is working</div>
 
       <div class="card">
         <div class="row">${uiIcon('mirror')}
@@ -3986,6 +3996,8 @@ function renderTools() {
           <button class="btn ghost sm" id="tocalibration" style="width:auto;">Begin →</button>
         </div>
       </div>
+
+      <div class="eyebrow" style="margin:18px 0 10px;">Practices — train attention &amp; comprehension</div>
 
       <div class="card">
         <div class="row">${uiIcon('breath')}
@@ -4022,7 +4034,7 @@ function renderSettings() {
   const rel = p.release || {};
   app.innerHTML = `
     <div class="fade-in">
-      <h1>Settings</h1>
+      ${viewHead('Your account & data', 'Settings', '')}
 
       <div class="card">
         <h2 style="font-size:1.05rem;">Your name</h2>
