@@ -65,7 +65,7 @@ export const GROWTH_GUIDE = {
   interior: [
     { title: 'Keep a daily silence', how: 'Hold a few minutes of intentional contemplative silence or prayer at a set time each day.', why: 'Regular contemplative practice supports attention and well-being; consistency matters more than length.' },
     { title: 'Note three good things', how: 'Each night, write three things that went well and why they mattered.', why: "'Three Good Things' produces durable well-being gains in trials (Seligman)." },
-    { title: 'Take an awe walk', how: 'Walk somewhere vast or beautiful and deliberately attend to what inspires wonder.', why: 'Awe walks raised gratitude and compassion and lowered distress in a trial with older adults (Sturm, 2020).' },
+    { title: 'Practice the presence', how: 'In the middle of an ordinary task — washing up, walking, waiting — turn to God for a moment, as if He were right here with you.', why: 'Brother Lawrence’s “practice of the presence of God”: brief, frequent returns to God in ordinary work, not only set-apart prayer.' },
   ],
 };
 

@@ -1229,6 +1229,28 @@ export const ACT_MODULES = [
     ],
     after: 'Hold onto the plan.',
   },
+  {
+    id: 'examen',
+    domain: 'interior',
+    process: 'The Daily Examen (Ignatian)',
+    name: 'The Examen',
+    lead: 'A short, prayerful look back over your day, in the Ignatian tradition — noticing where you met grace, and what tomorrow asks. Private to you, never scored.',
+    basis: 'The Ignatian Daily Examen (St. Ignatius of Loyola), opening in the awareness of God’s presence drawn from Brother Lawrence (The Practice of the Presence of God), with the noticing of consolation and desolation from Ignatian discernment of spirits. Grounded in the standard modern formulation (IgnatianSpirituality.com / the Jesuit Conference) and the warmth of contemporary guides like Hallow.',
+    breath: { inhale: 4, hold: 0, exhale: 6 },
+    eyesOpen: false,
+    before: 'A few quiet minutes to look back over your day with God — not to judge it, but to see it.',
+    // Written capture (the prayer is the practice): value = a grace noticed; action = tomorrow's
+    // small resolve (saved as a gentle, private interior intention via completeGuided). No 0-10 scale.
+    capture: { value: 'Where did you most sense grace today? (a word or a line, just for you)', action: 'One small way you want to show up tomorrow:' },
+    steps: [
+      { text: 'Take a breath, and settle. God is already here, closer than your own breath. Rest in that for a moment.', sec: 18 },
+      { text: 'Look back over today and let one good thing rise — a face, a moment, a small mercy. Give thanks for it.', sec: 20 },
+      { text: 'Walk gently back through your day. Where did you feel most alive, drawn toward the good? Where did you feel pulled away — drained, or closed off?', sec: 22 },
+      { text: 'Choose one moment that stands out. Speak to God about it honestly — gratitude, sorrow, or a need. Ask for what you need.', sec: 20 },
+      { text: 'Look toward tomorrow. Name one small way you want to show up, and ask for the grace to live it.', sec: 18 },
+    ],
+    after: 'Close however you like — many end with the Our Father.',
+  },
 ];
 
 export const ACT_MODULE_BY_ID = Object.fromEntries(ACT_MODULES.map((m) => [m.id, m]));
@@ -1290,7 +1312,7 @@ export function makeGuided(profile = {}, moduleId = null) {
   return {
     id: `guided-${m.id}`,
     type: 'guided',
-    domain: 'emotion_regulation',
+    domain: m.domain || 'emotion_regulation', // most ACT modules live with inner-weather; the Examen is 'interior' (private track)
     title: m.name,
     practice: true,
     moduleId: m.id,

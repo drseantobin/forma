@@ -1432,6 +1432,7 @@ function renderDomainDetail() {
   const GUIDED_FOR_DOMAIN = {
     emotion_regulation: { module: 'acceptance', caption: 'A short, breath-guided practice for working <em>with</em> a hard feeling — making room for it rather than fighting it. A way to practice this in the moment. Optional, unscored, and never part of your measure.' },
     values: { module: 'values', caption: 'A short, breath-guided practice for reconnecting with what you want to stand for — ending in one small step. A way to practice this in the moment. Optional, unscored, and never part of your measure.' },
+    interior: { module: 'examen', caption: 'The Daily Examen — a short, prayerful look back over your day, in the Ignatian tradition (with Brother Lawrence’s awareness of presence). Private to you, unscored, and never part of your measure.' },
   };
   const guidedOpt = GUIDED_FOR_DOMAIN[id];
   const practiceCard = guidedOpt ? `
