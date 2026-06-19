@@ -3174,7 +3174,11 @@ function completeGuided() {
   };
   document.getElementById('gdone').onclick = () => { state.session = null; go('home'); };
   document.getElementById('gtalk').onclick = () => {
-    const ctx = { kind: 'session', domain: 'emotion_regulation', exerciseLabel: `the “${m.name}” practice` };
+    // Derive the coach domain from the actual practice — NOT a constant. The Examen's ex.domain is
+    // 'interior' (set in buildGuided), so this routes it through coach.js's interior privacy gate
+    // (sessionOpener returns live:false for domain==='interior'). Hardcoding 'emotion_regulation'
+    // here let a faith/Spiritual-Life reflection reach the live API — a privacy breach (v265 fix).
+    const ctx = { kind: 'session', domain: ex.domain || 'emotion_regulation', exerciseLabel: `the “${m.name}” practice` };
     state.session = null;
     talkThrough(ctx);
   };
@@ -4994,6 +4998,96 @@ if (state.profile && state.profile.baseline) {
 const _deep = startRoute(typeof location !== 'undefined' ? location.search : '');
 if (_deep) state.route = _deep;
 render();
+
+// ---------------- Welcome promo (first-visit, dismiss-once) ----------------
+// A calm, ~20s motion intro for brand-new visitors. Shows once, then never
+// again after dismissal (localStorage forma_promo_seen). It lives OUTSIDE #app
+// (which render() re-paints wholesale) so a view swap can't disturb it, and it
+// reveals the real welcome screen beneath on dismiss. On-brand: gentle
+// cross-fades, the real tagline + real capacities, no hype, no countdown.
+const PROMO_KEY = 'forma_promo_seen';
+(function maybeShowPromo() {
+  let seen = false;
+  try { seen = !!localStorage.getItem(PROMO_KEY); } catch (e) { return; /* no storage → don't risk re-popping */ }
+  if (seen) return;
+  // Returning/already-onboarded people aren't "new" — mark seen and never show.
+  if (state.profile && state.profile.baseline) { try { localStorage.setItem(PROMO_KEY, '1'); } catch (e) {} return; }
+
+  const SCENE_MS = 4000;
+  const caps = DOMAINS.slice(0, 7).map((d) => `<span class="pill">${d.icon} ${esc(d.name)}</span>`).join('');
+  // Each scene is a builder → innerHTML for the stage. The last scene is the CTA
+  // and does NOT auto-advance; it waits for the person to choose.
+  const scenes = [
+    () => `<div class="promo-eyebrow">Forma</div><p class="promo-line">AI keeps getting better at the work.</p>`,
+    () => `<p class="promo-line">The quieter question is who you become while it does.</p>`,
+    () => `<div class="promo-mark">${formaMark}</div><div class="promo-name">Forma</div><p class="promo-tag">train what AI can’t replace</p>`,
+    () => `<div class="promo-eyebrow">What it strengthens</div><div class="promo-pills">${caps}</div>`,
+    () => `<p class="promo-line" style="font-size:1.35rem;">A few minutes a day.</p><p class="promo-tag">Your own auditable record of who you’re becoming — measured, trained, never a diagnosis.</p>`,
+  ];
+  const last = scenes.length - 1;
+  const reduce = prefersReducedMotion();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'promo-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Welcome to Forma');
+  overlay.innerHTML = `
+    <div class="promo-card">
+      <div class="promo-rail" aria-hidden="true">${scenes.map(() => '<span></span>').join('')}</div>
+      <button class="promo-close" id="promoClose" aria-label="Close">×</button>
+      <div class="promo-stage" id="promoStage"></div>
+      <div class="promo-foot">
+        <button class="promo-skip" id="promoSkip">Skip intro</button>
+        <span class="promo-cta" id="promoCta" hidden>
+          <button class="btn amber" id="promoBegin">Begin →</button>
+        </span>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const stage = overlay.querySelector('#promoStage');
+  const rail = [...overlay.querySelectorAll('.promo-rail span')];
+  const cta = overlay.querySelector('#promoCta');
+  const skip = overlay.querySelector('#promoSkip');
+  let i = -1, timer = null;
+
+  function dismiss() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    document.removeEventListener('keydown', onKey, true);
+    try { localStorage.setItem(PROMO_KEY, '1'); } catch (e) {}
+    overlay.remove();
+    // Reveal the welcome screen beneath, focused for keyboard/AT users.
+    try { app.focus(); } catch (e) {}
+  }
+  function show(n) {
+    i = n;
+    const onLast = i >= last;
+    // Retrigger the fade by toggling the class off→on.
+    stage.classList.remove('fade'); void stage.offsetWidth;
+    stage.style.setProperty('--promo-dur', SCENE_MS + 'ms');
+    stage.innerHTML = scenes[i]();
+    stage.classList.add('fade');
+    rail.forEach((s, idx) => { s.classList.toggle('done', idx < i); s.classList.toggle('now', idx === i && !onLast && !reduce); });
+    cta.hidden = !onLast;
+    skip.hidden = onLast;
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (!onLast && !reduce) timer = setTimeout(() => show(i + 1), SCENE_MS);
+  }
+  function onKey(e) {
+    if (e.key === 'Escape') { e.preventDefault(); dismiss(); }
+    else if ((e.key === 'ArrowRight' || e.key === ' ') && i < last) { e.preventDefault(); show(i + 1); }
+  }
+
+  overlay.querySelector('#promoClose').onclick = dismiss;
+  overlay.querySelector('#promoBegin').onclick = dismiss; // reveals the welcome CTA beneath
+  skip.onclick = () => show(last);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); }); // backdrop
+  document.addEventListener('keydown', onKey, true);
+
+  // Reduced motion → skip the timed sequence, land on the CTA scene immediately.
+  show(reduce ? last : 0);
+})();
 
 // Local data-safety: ask the browser to PERSIST our storage so it won't silently
 // evict the profile under disk pressure. Best-effort, non-blocking, guarded for
