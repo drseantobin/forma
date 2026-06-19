@@ -154,10 +154,15 @@ button { font-family: inherit; cursor: pointer; }
 }
 .brandmark .name { font-weight: 800; letter-spacing:.02em; font-size:1.05rem; }
 .brandmark .tag { color: var(--ink-faint); font-size:.8rem; margin-left:auto; }
+/* Brandmark eye, sized per surface; inherits the tile's currentColor (white on gradient). */
+.brandmark .logo .eyemark { width:22px; height:22px; }
+.boot-logo .eyemark { width:40px; height:40px; }
+.snaphead .logo .eyemark { width:25px; height:25px; }
 
 /* ---------- onboarding ---------- */
 .hero { text-align:center; padding: 24px 6px 8px; }
-.hero .glyph { font-size: 3rem; }
+.hero .glyph { font-size: 3rem; line-height: 0; color: var(--accent); }
+.hero .glyph.eyeglyph .eyemark { width: 3rem; height: 3rem; }
 .hero h1 { margin-top: .3em; }
 .hero p.lede { color: var(--ink-soft); font-size: 1.05rem; max-width: 30ch; margin: .2em auto 1.2em; }
 .pillrow { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom: 18px; }

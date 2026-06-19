@@ -266,7 +266,7 @@ function renderOnboarding() {
     app.innerHTML = `
       <div class="welcome-stagger">
         <div class="hero">
-          <div class="glyph">✦</div>
+          <div class="glyph eyeglyph">${eyeMark}</div>
           <h1>Forma</h1>
           <p class="lede">AI keeps getting better at the work. The quieter question is who you become while it does.</p>
           <p class="muted small" style="max-width:32rem; margin:12px auto 0; line-height:1.5;">Forma measures and trains the human capacities that grow more valuable as the machines take the rest — attention, judgment, deep reading, presence, the patience to stay with what's hard. A few minutes a day.</p>
@@ -413,7 +413,7 @@ async function renderBaselineResult() {
   const p = state.profile;
   app.innerHTML = `
     <div class="fade-in">
-      <div class="brandmark"><div class="logo">F</div><div class="name">Forma</div><div class="tag">Your starting line</div></div>
+      <div class="brandmark"><div class="logo">${eyeMark}</div><div class="name">Forma</div><div class="tag">Your starting line</div></div>
       ${radarCard(p.domainScores)}
       <div class="card" id="interp">
         <div class="row"><span class="spinner"></span> <span class="muted">Reading your profile…</span></div>
@@ -516,7 +516,7 @@ function renderConversationalOnboarding() {
   const canBuild = d.ready || turns >= Diagnostic.MAX_DIAGNOSTIC_TURNS;
   app.innerHTML = `
     <div class="fade-in">
-      <div class="brandmark"><div class="logo">F</div><div class="name">Forma</div><div class="tag">Getting to know you</div></div>
+      <div class="brandmark"><div class="logo">${eyeMark}</div><div class="name">Forma</div><div class="tag">Getting to know you</div></div>
       <div class="chat" id="dchat">
         <div class="bubble coach">${esc(Diagnostic.OPENING)}</div>
         ${d.messages.map((m) => `<div class="bubble ${m.role === 'user' ? 'me' : 'coach'}">${esc(m.content)}</div>`).join('')}
@@ -642,6 +642,12 @@ function welcomeBackCard(p) {
 // emoji either. Sized in em (.binline) so it tracks the button text.
 const coachGlyph = '<svg class="binline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9l-4 3.5V7a1 1 0 0 1 1-1Z"/></svg>';
 
+// Forma's brandmark — an eye / lens: perception, attention, the examined life (the very
+// capacities Forma forms). Its iris is a RING, echoing the Formation Index ring, so the
+// mark and the product's core instrument rhyme. Inherits currentColor: white on the
+// gradient tiles, accent on the welcome screen. One stroke weight, calm, instrument-grade.
+const eyeMark = '<svg class="eyemark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.6 12C6.1 6.9 17.9 6.9 21.4 12 17.9 17.1 6.1 17.1 2.6 12Z"/><circle cx="12" cy="12" r="3.3"/><circle cx="12" cy="12" r=".9" fill="currentColor" stroke="none"/></svg>';
+
 // ---------------- home ----------------
 // A thin progress ring around the Formation Index — gives the one number the whole
 // app exists to deliver real visual gravity (an instrument readout, à la Oura/WHOOP)
@@ -697,7 +703,7 @@ function renderHome() {
 
   app.innerHTML = `
     <div class="fade-in">
-      <div class="brandmark"><div class="logo">F</div><div class="name">Forma</div>
+      <div class="brandmark"><div class="logo">${eyeMark}</div><div class="name">Forma</div>
         <div class="tag">${greeting()}${p.settings.name ? ', ' + esc(p.settings.name) : ''}</div></div>
 
       <div class="card index-hero">
@@ -3170,7 +3176,7 @@ function renderSnapshot() {
 
       <div class="card snapsheet">
         <div class="snaphead">
-          <div class="logo" aria-hidden="true">F</div>
+          <div class="logo" aria-hidden="true">${eyeMark}</div>
           <div>
             <div class="snaptitle">Forma · Capacity Snapshot</div>
             <div class="muted small">${snap.name ? esc(snap.name) + ' · ' : ''}${snap.sessionCount} session${snap.sessionCount === 1 ? '' : 's'}${snap.since ? ` over ${snap.days} days` : ''}${snap.generated ? ` · generated ${esc(snap.generated)}` : ''}</div>
