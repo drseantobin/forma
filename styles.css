@@ -275,6 +275,8 @@ button { font-family: inherit; cursor: pointer; }
 /* Dictation mic / stop glyph — centered in icon-only mic buttons; a literal space sets it
    off from a label on the "Speak" / "Stop recording" toggle. */
 .micico { width:1.2em; height:1.2em; vertical-align:-.22em; }
+/* Section / feature-card icon (Settings + Progress) — accent-tinted, calm anchor. */
+.secico { width:1.35rem; height:1.35rem; color:var(--accent); flex:none; }
 .ico .dico { width:1.4em; height:1.4em; vertical-align:middle; }
 .domain-row .ico .dico { width:1.45rem; height:1.45rem; color:var(--ink-soft); }
 

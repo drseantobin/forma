@@ -305,7 +305,7 @@ function renderOnboarding() {
             <button class="btn sm" id="savekeyinline">Save key & start the conversation</button>
           </div>` : ''}
         <div class="card" style="margin-top:12px; background:var(--green-soft); border-color:transparent;">
-          <div class="eyebrow" style="color:var(--green);">🔒 Private by design</div>
+          <div class="eyebrow" style="color:var(--green);">${uiIcon('lock','binline')} Private by design</div>
           <p class="muted small" style="margin-top:4px;">Everything Forma learns about you stays on this device. Nothing is uploaded unless you choose to — by sharing anonymous results to improve Forma, or bringing your own key for the coach.</p>
         </div>
       </div>`;
@@ -653,6 +653,26 @@ const eyeMark = '<svg class="eyemark" viewBox="0 0 24 24" fill="none" stroke="cu
 // the app's interaction surfaces. aria-hidden — every mic button carries its own aria-label.
 const micGlyph = '<svg class="micico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';
 const stopGlyph = '<svg class="micico" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5"/></svg>';
+
+// Section / feature-card icons (Settings + Progress) — the same inline-SVG stroke system,
+// replacing the last hardcoded chrome emoji (document, flask, building, mirror, target,
+// breath, book, people, lock). Default accent-tinted; aria-hidden (each card has a heading).
+const UI_ICON = {
+  doc: '<path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v4h4"/><path d="M9 12.5h6M9 16h6"/>',
+  science: '<path d="M9.5 3h5"/><path d="M10.5 3v6l-5 8.5A1 1 0 0 0 6.4 19h11.2a1 1 0 0 0 .9-1.5L13.5 9V3"/><path d="M7.7 14h8.6"/>',
+  building: '<rect x="5" y="3" width="14" height="18" rx="1.2"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2"/><path d="M10 21v-3.5h4V21"/>',
+  mirror: '<ellipse cx="12" cy="9" rx="5.5" ry="6.5"/><path d="M12 15.5V21M9.5 21h5"/>',
+  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
+  breath: '<circle cx="9.5" cy="13" r="5"/><circle cx="16.5" cy="8" r="2.6"/>',
+  book: '<path d="M12 6.5C9.5 5 6.5 5 4 5.6V18c2.5-.6 5.5-.6 8 1 2.5-1.6 5.5-1.6 8-1V5.6C17.5 5 14.5 5 12 6.5Z"/><path d="M12 6.5V19"/>',
+  people: '<circle cx="9" cy="8.5" r="2.6"/><circle cx="16.5" cy="9.5" r="2"/><path d="M4 18c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/><path d="M14.5 15.5c.6-1.3 2-2 3.5-2 2 0 3.5 1.3 3.5 3.2"/>',
+  lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+};
+function uiIcon(name, cls) {
+  const p = UI_ICON[name];
+  if (!p) return '';
+  return `<svg class="${cls || 'secico'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+}
 
 // ---------------- home ----------------
 // A thin progress ring around the Formation Index — gives the one number the whole
@@ -3056,7 +3076,7 @@ function renderProgress() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">📄</span>
+        <div class="row">${uiIcon('doc')}
           <div style="flex:1;"><strong>Capacity Snapshot</strong>
             <p class="muted small" style="margin:2px 0 0;">One clean page of your profile — print, save as PDF, or copy to share with a coach or employer.</p></div>
           <button class="btn ghost sm" id="tosnapshot" style="width:auto;">Open →</button>
@@ -4013,7 +4033,7 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">🔬</span>
+        <div class="row">${uiIcon('science')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">The science behind your measures</h2>
             <p class="muted small" style="margin:2px 0 0;">The research-backed paradigm each capacity’s exercises adapt — measurement you can see the basis of.</p></div>
           <button class="btn ghost sm" id="tomethods" style="width:auto;">View →</button>
@@ -4021,7 +4041,7 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">🏢</span>
+        <div class="row">${uiIcon('building')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">For employers</h2>
             <p class="muted small" style="margin:2px 0 0;">A preview of the team dashboard — aggregated development signals, never individual raw data.</p></div>
           <button class="btn ghost sm" id="toteam" style="width:auto;">Preview →</button>
@@ -4029,7 +4049,7 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">🪞</span>
+        <div class="row">${uiIcon('mirror')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Epistemic check</h2>
             <p class="muted small" style="margin:2px 0 0;">A two-minute mirror for a habit we all share — recognizing things we don’t actually know. Some items are made up on purpose.</p></div>
           <button class="btn ghost sm" id="toepistemic" style="width:auto;">Begin →</button>
@@ -4037,7 +4057,7 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">🎯</span>
+        <div class="row">${uiIcon('target')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Calibration</h2>
             <p class="muted small" style="margin:2px 0 0;">A few questions where you answer and say how sure you are — a mirror for whether your confidence tracks what you actually know.</p></div>
           <button class="btn ghost sm" id="tocalibration" style="width:auto;">Begin →</button>
@@ -4045,7 +4065,7 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">🫧</span>
+        <div class="row">${uiIcon('breath')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Breath counting</h2>
             <p class="muted small" style="margin:2px 0 0;">A few quiet minutes counting your own breaths — a mirror for attention and for noticing when the mind has wandered.</p></div>
           <button class="btn ghost sm" id="tobreath" style="width:auto;">Begin →</button>
@@ -4053,7 +4073,7 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">📖</span>
+        <div class="row">${uiIcon('book')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Deep reading</h2>
             <p class="muted small" style="margin:2px 0 0;">Read a short passage, then tell true restatements from clever near-misses — a measure of how accurately you take in what you read.</p></div>
           <button class="btn ghost sm" id="tosvt" style="width:auto;">Begin →</button>
@@ -4094,7 +4114,7 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">🤝</span>
+        <div class="row">${uiIcon('people')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Share results with an employer</h2>
             <p class="muted small" style="margin:2px 0 0;">Optional. Org sharing isn’t built yet — opt in now and your authorization, plus a dated copy of your Capacity Snapshot, is stored <strong>only on this device</strong> and never sent anywhere, until it ships. It would release only your snapshot (capacity scores + confidence) — <strong>never</strong> your reflections, coach chats, or Interior Life.</p>
             <p class="muted small" style="margin:6px 0 0;"><strong>This is entirely your choice.</strong> Forma never requires it, no one can turn it on for you, and sharing or not has no effect on your use of Forma.</p>
@@ -4114,7 +4134,7 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">🔬</span>
+        <div class="row">${uiIcon('science')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Anonymous research</h2>
             <p class="muted small" style="margin:2px 0 0;">${res.consent ? 'On — you’re sharing anonymous results to help improve Forma and ground its validity.' : 'Off — nothing is collected. You can help improve Forma by sharing de-identified results.'}</p></div>
           <button class="opt ${res.consent ? 'selected' : ''}" id="researchtoggle" aria-pressed="${!!res.consent}" style="width:auto; padding:8px 16px; font-weight:700;">${res.consent ? 'On' : 'Off'}</button>
