@@ -189,6 +189,22 @@ export function sharpenCommitment(text) {
 }
 
 // Compact, model-readable summary of the person's current state.
+// Recent WRITTEN reflections (the value named, action chosen, note/text written), the SHARED
+// source for both the live coach context and the offline coach's recall. Two hard guardrails,
+// enforced here so they can't drift: interior/faith content is NEVER included (the Examen etc.
+// stay on-device), and any field that reads as distress is dropped (the crisis path handles that,
+// not the coach). Returns the most recent `limit` entries that have any surviving content.
+export function recentReflections(profile, limit = 6) {
+  const out = [];
+  const pick = (v) => (v && String(v).trim() && !looksLikeDistress(v)) ? String(v).trim() : '';
+  for (const s of ((profile && profile.sessions) || []).filter((x) => x.domain !== 'interior')) {
+    const r = s.response || {};
+    const entry = { date: s.date, domain: s.domain, value: pick(r.value), action: pick(r.action), note: pick(r.note), text: pick(r.text) };
+    if (entry.value || entry.action || entry.note || entry.text) out.push(entry);
+  }
+  return out.slice(-limit);
+}
+
 export function profileSummary(profile) {
   const lines = [];
   const name = profile.settings?.name;
@@ -222,26 +238,21 @@ export function profileSummary(profile) {
       lines.push(`  - ${s.date}: ${domainName(s.domain)} (${s.type}) scored ${s.rawScore}`);
     }
   }
-  // Recent WRITTEN reflections — what the person actually SAID in their practices (a value they
-  // named, a step they chose, a note they wrote), so the coach can refer back to it instead of
-  // "I don't have that." Two hard guardrails preserved: (1) interior/faith content is excluded
-  // here too (same wall as scores/sessions above); (2) anything that reads as distress is NOT
-  // sent to the API — the crisis-escalation path, not the coach, handles that. On-device data,
-  // surfaced only to the person's OWN keyed model.
+  // Recent WRITTEN reflections — what the person actually SAID in their practices, so the coach
+  // can refer back to it instead of "I don't have that." Guardrails (interior excluded, distress
+  // excluded) live in recentReflections(), the single shared source for this + the offline recall.
   const clip = (str) => { const x = String(str).trim(); return x.length > 200 ? x.slice(0, 197) + '…' : x; };
-  const reflections = [];
-  for (const s of (profile.sessions || []).filter((x) => x.domain !== 'interior').slice(-10)) {
-    const r = s.response || {};
-    const bits = [];
-    if (r.value && r.value.trim() && !looksLikeDistress(r.value)) bits.push(`named “${clip(r.value)}”`);
-    if (r.action && r.action.trim() && !looksLikeDistress(r.action)) bits.push(`chose to: ${clip(r.action)}`);
-    if (r.note && r.note.trim() && !looksLikeDistress(r.note)) bits.push(`noted: ${clip(r.note)}`);
-    if (r.text && r.text.trim() && !looksLikeDistress(r.text)) bits.push(`reflected: ${clip(r.text)}`);
-    if (bits.length) reflections.push(`  - ${s.date} (${domainName(s.domain)}): ${bits.join('; ')}`);
-  }
-  if (reflections.length) {
+  const refl = recentReflections(profile, 6);
+  if (refl.length) {
     lines.push('Recent reflections in their own words (refer back to these naturally when relevant):');
-    reflections.slice(-6).forEach((l) => lines.push(l));
+    for (const r of refl) {
+      const bits = [];
+      if (r.value) bits.push(`named “${clip(r.value)}”`);
+      if (r.action) bits.push(`chose to: ${clip(r.action)}`);
+      if (r.note) bits.push(`noted: ${clip(r.note)}`);
+      if (r.text) bits.push(`reflected: ${clip(r.text)}`);
+      if (bits.length) lines.push(`  - ${r.date} (${domainName(r.domain)}): ${bits.join('; ')}`);
+    }
   }
   if (profile.streak?.current) lines.push(`Current streak: ${profile.streak.current} day(s).`);
   const openGoals = (profile.goals || []).filter((g) => !g.done);
@@ -450,6 +461,33 @@ function lowestScoredDomain(scores) {
 export function offlineCoachReply(userText, profile) {
   const t = (userText || '').toLowerCase();
   const scores = (profile && profile.domainScores) || {};
+
+  // 0) RECALL — "what did I say/write/name about X", "remind me what I said". Even offline, the
+  // coach should be able to read back the person's OWN recorded reflections (the value they named,
+  // the step they chose), so it doesn't answer "I don't have that" when the data is on-device.
+  if (/\b(what (did|do) i (say|said|write|wrote|name|named|put|mean)|did i (say|write|mention|name)|remind me what i (said|wrote|named|chose)|what i (said|wrote|named)|earlier i (said|wrote|named)|what did i.*(stand for|live for|value))\b/.test(t)) {
+    const refs = recentReflections(profile, 12);
+    if (refs.length) {
+      const STOP = new Set(['what', 'about', 'earlier', 'said', 'say', 'write', 'wrote', 'name', 'named', 'mean', 'that', 'this', 'with', 'from', 'your', 'mine', 'have', 'just', 'like', 'really', 'think', 'thing', 'stuff', 'remind', 'tell', 'again', 'before', 'when', 'where', 'which', 'were', 'would', 'could', 'there']);
+      const words = t.split(/[^a-z0-9’']+/).filter((w) => w.length >= 4 && !STOP.has(w));
+      const matches = (r) => {
+        const hay = `${r.value} ${r.action} ${r.note} ${r.text}`.toLowerCase();
+        return words.some((w) => hay.includes(w));
+      };
+      const hit = refs.slice().reverse().find(matches) || refs[refs.length - 1];
+      const bits = [];
+      if (hit.value) bits.push(`you named **${hit.value}**`);
+      if (hit.action) bits.push(`you chose to: ${hit.action}`);
+      if (hit.note) bits.push(`you wrote: “${hit.note}”`);
+      if (hit.text) bits.push(`you reflected: “${hit.text}”`);
+      if (bits.length) {
+        return `Looking back at your practices — on ${hit.date}, in ${domainName(hit.domain)}, ${bits.join('; ')}. `
+          + `Does that match what you were reaching for? And is it still true for you now, or has it shifted?`;
+      }
+    }
+    return `I can only see what you've recorded in your practices, and I don't have a written note that matches that yet — so I won't guess. `
+      + `If you tell me what it was, we can pick it back up: what were you trying to get back to?`;
+  }
 
   // 1) They named a capacity → open solution-focused, NOT with the number. Leading
   // with "X is sitting at 34 — emerging" hands the score back as a verdict, which
