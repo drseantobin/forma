@@ -570,6 +570,10 @@ function parseVignette(text) {
 }
 
 export async function scoreVignette(vignette, transcript, profile) {
+  // Safety guardrail (v259): a free-text answer can carry a crisis disclosure. Escalate BEFORE any
+  // API call or scoring — never transmit distress to the model, never score a disclosure (mirrors
+  // coachReply + the diagnostic onboarding). Checked before the key gate, so it protects keyless users too.
+  if (looksLikeDistress(transcript)) return { score: null, feedback: ESCALATION_MESSAGE, escalated: true };
   if (!hasKey(profile)) return null; // this exercise requires the live coach
   // Validity guard: when the model is unavailable or unparseable we return
   // feedback but NO score (null) — a fabricated constant would inject fake data
@@ -594,6 +598,10 @@ const SENTENCES_SYSTEM = `You are scoring a Forma self-reflection exercise: a pe
 Return ONLY a JSON object: {"score": <0-100>, "feedback": "<2-3 sentences, second person, warm and plain: one thing their answers quietly reveal that's worth seeing, and one gentle invitation to look further. No clinical language, no scores in the prose, no preamble.>"}`;
 
 export async function scoreSentences(stems, completions, profile) {
+  // Safety guardrail (v259): sentence-completion is a projective exercise designed to surface honest
+  // inner feelings — a completion can be a crisis disclosure. Escalate BEFORE any API call or scoring,
+  // and before the key gate (protects keyless users too) — never transmit/score a disclosure.
+  if (looksLikeDistress((completions || []).join('\n'))) return { score: null, feedback: ESCALATION_MESSAGE, escalated: true };
   if (!hasKey(profile)) return null;
   // Validity guard: feedback but NO score (null) on failure — see scoreVignette.
   const soft = { score: null, feedback: "Even half-finishing these honestly is worth something — self-knowledge starts with the willingness to look. Next time, try the first true thing that comes, before you tidy it up." };
