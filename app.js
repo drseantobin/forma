@@ -3455,8 +3455,10 @@ function renderPlan() {
 // bridges the two islands (the weekly plan ↔ the real-life commitments).
 function renderReview() {
   const p = state.profile;
-  state._reviewDue = false; // entering the review satisfies the prompt (seen = done); it won't nag again this week
-  save();
+  p._reviewDue = false; // entering the review satisfies the prompt (seen = done); it won't nag again this week.
+  save();                // NB: the flag lives on the PROFILE (set at ensurePlan, read in weekStripCard) and
+                         // save() only persists state.profile — clearing state._reviewDue here was a no-op
+                         // that left the banner nagging all week (fixed v254).
   const today = todayStr();
   const last7 = Array.from({ length: 7 }, (_, i) => Planner.addDays(today, -i));
   const open = (p.goals || []).filter((g) => !g.done);
