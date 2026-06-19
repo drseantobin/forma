@@ -212,12 +212,18 @@ function render() {
   if (!onboarded) {
     // Before the baseline exists: Coach and Settings are usable; every other
     // tab brings you into the short setup (which is "home" until it's done).
-    if (state.route === 'coach') return renderCoach();
-    if (state.route === 'settings') return renderSettings();
-    return renderOnboarding();
+    if (state.route === 'coach') renderCoach();
+    else if (state.route === 'settings') renderSettings();
+    else renderOnboarding();
+    drawRing(); return;
   }
   ensurePlan();
+  renderRoute();
+  // Animate any ring this route mounted (home/team Index) from empty → value.
+  drawRing();
+}
 
+function renderRoute() {
   switch (state.route) {
     case 'home': return renderHome();
     case 'session': return renderSession();
@@ -639,15 +645,37 @@ function welcomeBackCard(p) {
 function indexRing(value, opts = {}) {
   const v = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
   const C = 339.292; // circumference = 2·π·54
-  const off = (C * (1 - v / 100)).toFixed(2); // full arc at 0, closed at 100
+  const off = (C * (1 - v / 100)).toFixed(2); // final offset: full arc at 0, closed at 100
   const label = opts.label || 'Formation Index';
+  // The arc MOUNTS EMPTY (offset = full circumference) and carries its target in
+  // data-arc-to; drawRing() applies the target on the next frame so the CSS transition
+  // fires and the arc draws IN — the instrument "settling to a reading" (synced with the
+  // count-up). opts.color tints the arc (e.g. the band color on a scored reveal);
+  // opts.numId + opts.start let a caller count the numeral up from a start value.
+  const arcStroke = opts.color ? ` style="stroke:${opts.color}"` : '';
+  const numId = opts.numId ? ` id="${opts.numId}"` : '';
+  const shown = opts.start != null ? opts.start : v;
   return `<div class="index-ring" role="img" aria-label="${esc(label)}: ${v} out of 100">
       <svg class="index-ring-svg" viewBox="0 0 120 120" aria-hidden="true">
         <circle class="ring-track" cx="60" cy="60" r="54"></circle>
-        <circle class="ring-arc" cx="60" cy="60" r="54" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${off}"></circle>
+        <circle class="ring-arc" cx="60" cy="60" r="54"${arcStroke} stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${C.toFixed(2)}" data-arc-to="${off}"></circle>
       </svg>
-      <div class="index-num kbig" aria-hidden="true">${v}</div>
+      <div class="index-num kbig"${numId} aria-hidden="true">${shown}</div>
     </div>`;
+}
+
+// Drive every freshly-mounted ring arc from empty → its target offset, so the CSS
+// transition animates the draw-in. Double-rAF guarantees the browser paints the empty
+// state first; reduced-motion jumps straight to the target. Idempotent + safe to call
+// after any render (only acts on arcs still carrying data-arc-to).
+function drawRing(root) {
+  const scope = root || document;
+  scope.querySelectorAll('.ring-arc[data-arc-to]').forEach((arc) => {
+    const to = arc.getAttribute('data-arc-to');
+    arc.removeAttribute('data-arc-to');
+    if (prefersReducedMotion()) { arc.style.strokeDashoffset = to; return; }
+    requestAnimationFrame(() => requestAnimationFrame(() => { arc.style.strokeDashoffset = to; }));
+  });
 }
 
 function renderHome() {
@@ -2832,7 +2860,7 @@ async function completeSession() {
         <div id="srscore" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         ${unscored
           ? `<div class="lbl" style="margin-top:6px;">${esc(getDomain(s.exercise.domain).name)} · reflection saved</div>`
-          : `<div class="big score-pop" id="bigscore" aria-hidden="true" style="color:${band.color}">0</div>
+          : `${indexRing(rawScore, { label: getDomain(s.exercise.domain).name, color: band.color, numId: 'bigscore', start: 0 })}
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>`}
       </div>
       ${milestoneBanner}
@@ -2855,7 +2883,8 @@ async function completeSession() {
     state.session = null;
     talkThrough(ctx);
   };
-  if (!unscored) countUp(document.getElementById('bigscore'), rawScore);
+  if (!unscored) countUp(document.getElementById('bigscore'), rawScore, 900);
+  drawRing(); // draw the reveal arc in, synced with the count-up
   // Announce the result to screen readers: the count-up number is aria-hidden
   // (its 0→N churn shouldn't be spoken) and a live region rendered EMPTY is only
   // announced when JS changes it — so set the settled phrase here, post-render,
