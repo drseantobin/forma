@@ -648,6 +648,12 @@ const coachGlyph = '<svg class="binline" viewBox="0 0 24 24" fill="none" stroke=
 // gradient tiles, accent on the welcome screen. One stroke weight, calm, instrument-grade.
 const eyeMark = '<svg class="eyemark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.6 12C6.1 6.9 17.9 6.9 21.4 12 17.9 17.1 6.1 17.1 2.6 12Z"/><circle cx="12" cy="12" r="3.3"/><circle cx="12" cy="12" r=".9" fill="currentColor" stroke="none"/></svg>';
 
+// Dictation glyphs — same inline-SVG stroke system as the rest. micGlyph = a mic;
+// stopGlyph = a filled stop square (mid-recording). They replace the last mic/stop emoji in
+// the app's interaction surfaces. aria-hidden — every mic button carries its own aria-label.
+const micGlyph = '<svg class="micico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';
+const stopGlyph = '<svg class="micico" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5"/></svg>';
+
 // ---------------- home ----------------
 // A thin progress ring around the Formation Index — gives the one number the whole
 // app exists to deliver real visual gravity (an instrument readout, à la Oura/WHOOP)
@@ -2110,7 +2116,7 @@ function renderSentence() {
           <div class="likert-q" style="font-size:1rem;">${esc(st)} …</div>
           <div class="microw">
             <input class="reflect-area sentinput" data-i="${i}" style="min-height:auto; height:auto; padding:10px; font-size:1rem;" value="${esc(s.response.completions[i])}" placeholder="…" />
-            <button class="btn ghost mic-inline amber" data-mic="${i}" aria-label="Dictate this answer by voice">🎤</button>
+            <button class="btn ghost mic-inline amber" data-mic="${i}" aria-label="Dictate this answer by voice">${micGlyph}</button>
           </div>
         </div>`).join('')}
       ${micPrivacyNote()}
@@ -2224,7 +2230,7 @@ function attachMicButton(btn, input) {
   let rec = null;
   let recording = false;
   let committed = input.value; // text fixed before/between phrases
-  // Accessible name: the button's content is only an emoji that toggles to '■'
+  // Accessible name: the button's content is only an icon that toggles to a stop glyph
   // mid-recording, so a screen reader would otherwise announce nothing usable.
   // Respect any idle label already on the button (e.g. "Dictate your message"
   // on the coach mic); default for the rest. Keep it stable through the toggle.
@@ -2234,7 +2240,7 @@ function attachMicButton(btn, input) {
   input.addEventListener('input', () => { if (!recording) committed = input.value; });
   const setUI = (on) => {
     recording = on;
-    btn.textContent = on ? '■' : '🎤';
+    btn.innerHTML = on ? stopGlyph : micGlyph;
     btn.setAttribute('aria-label', on ? 'Stop dictation' : idleLabel);
     btn.classList.toggle('green', on);
     btn.classList.toggle('amber', !on);
@@ -2283,7 +2289,7 @@ function renderVignette() {
       <p class="muted small">${supported ? 'Speak your answer or type it — either way your words land in the box, and you can edit before sending. Voice uses your browser’s dictation, so in some browsers (e.g. Chrome) the audio is sent to its speech service; type to keep it fully on your device.' : 'Type your response below.'}</p>
       ${supported ? `
         <div class="center" style="margin:8px 0 2px;">
-          <button class="btn ${s.recording ? 'green' : 'amber'}" id="mic" style="width:auto;">${s.recording ? '■ Stop recording' : '🎤 Speak'}</button>
+          <button class="btn ${s.recording ? 'green' : 'amber'}" id="mic" style="width:auto;">${s.recording ? stopGlyph + ' Stop recording' : micGlyph + ' Speak'}</button>
         </div>
         ${s.recording ? '<p class="muted small center">Listening… speak naturally, then tap Stop.</p>' : ''}
       ` : ''}
@@ -2306,7 +2312,7 @@ function renderVignette() {
       onError: () => { s.recording = false; stopMic(s); render(); },
       onEnd: () => {
         // iOS often auto-ends; reflect that in the button without nuking text.
-        if (s.recording) { s.recording = false; const m = document.getElementById('mic'); if (m) { m.classList.remove('green'); m.classList.add('amber'); m.textContent = '🎤 Speak'; } }
+        if (s.recording) { s.recording = false; const m = document.getElementById('mic'); if (m) { m.classList.remove('green'); m.classList.add('amber'); m.innerHTML = micGlyph + ' Speak'; } }
       },
     });
     // If the recognizer can't start, the text box is already there to type into.
@@ -2479,7 +2485,7 @@ function renderContemplationReflect() {
       <p class="likert-q" style="font-size:1.05rem; margin-top:14px;">Where did your mind go? What was it like — and did anything pull you out?</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
         <textarea class="reflect-area" id="cnote" placeholder="A few honest words. Type or speak.">${esc(r.note || '')}</textarea>
-        <button class="btn amber" id="cnotemic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
+        <button class="btn amber" id="cnotemic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">${micGlyph}</button>
       </div>
       ${micPrivacyNote()}
 
@@ -2686,18 +2692,18 @@ function renderGuidedReflect() {
         <p class="likert-q" style="font-size:1.05rem; margin-top:12px;">${esc(m.capture.value)}</p>
         <div class="row" style="gap:8px; align-items:flex-start;">
           <textarea class="reflect-area" id="gvalue" style="min-height:60px;" placeholder="A word or short phrase…">${esc(r.value || '')}</textarea>
-          <button class="btn amber" id="gvaluemic" aria-label="Dictate your answer" style="width:auto; padding:12px 14px;">🎤</button>
+          <button class="btn amber" id="gvaluemic" aria-label="Dictate your answer" style="width:auto; padding:12px 14px;">${micGlyph}</button>
         </div>
         <p class="likert-q" style="font-size:1.05rem; margin-top:12px;">${esc(m.capture.action)}</p>
         <div class="row" style="gap:8px; align-items:flex-start;">
           <textarea class="reflect-area" id="gaction" style="min-height:60px;" placeholder="One small, doable step…">${esc(r.action || '')}</textarea>
-          <button class="btn amber" id="gactionmic" aria-label="Dictate your step" style="width:auto; padding:12px 14px;">🎤</button>
+          <button class="btn amber" id="gactionmic" aria-label="Dictate your step" style="width:auto; padding:12px 14px;">${micGlyph}</button>
         </div>
       ` : ''}
       <p class="muted small" style="margin-top:14px;">Anything you want to note? (optional)</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
         <textarea class="reflect-area" id="gnote" style="min-height:60px;" placeholder="Write or speak a few words. Stays on your device.">${esc(r.note || '')}</textarea>
-        <button class="btn amber" id="gnotemic" aria-label="Dictate your note" style="width:auto; padding:12px 14px;">🎤</button>
+        <button class="btn amber" id="gnotemic" aria-label="Dictate your note" style="width:auto; padding:12px 14px;">${micGlyph}</button>
       </div>
       <button class="btn" id="gfin" ${canFinish ? '' : 'disabled'} style="margin-top:14px;">Finish practice</button>
     </div>`;
@@ -2790,7 +2796,7 @@ function renderReflection() {
       <p class="likert-q" style="font-size:1.05rem;">${esc(ex.prompt)}</p>
       <div class="row" style="gap:8px; align-items:flex-start;">
         <textarea class="reflect-area" id="ref" placeholder="Write or speak a few honest sentences.">${esc(s.response.text || '')}</textarea>
-        <button class="btn amber" id="refmic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">🎤</button>
+        <button class="btn amber" id="refmic" aria-label="Dictate your reflection" style="width:auto; padding:12px 14px; align-self:flex-start;">${micGlyph}</button>
       </div>
       ${micPrivacyNote()}
       <p class="muted small" style="margin-top:14px;">${esc(ex.selfRatingLabel)}</p>
@@ -3856,7 +3862,7 @@ function renderCoach() {
         ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">${esc(Coach.coachGreeting(p))}</div>`}
       </div>
       <div class="composer">
-        <button class="btn amber" id="cmic" aria-label="Dictate your message" style="padding:12px 14px;">🎤</button>
+        <button class="btn amber" id="cmic" aria-label="Dictate your message" style="padding:12px 14px;">${micGlyph}</button>
         <input id="ci" placeholder="Ask your coach…" autocomplete="off" aria-label="Message your coach" />
         <button class="btn" id="send">Send</button>
       </div>

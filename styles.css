@@ -272,6 +272,9 @@ button { font-family: inherit; cursor: pointer; }
 .dico { width:1.15em; height:1.15em; vertical-align:-.16em; flex:none; }
 /* Inline glyph inside a button/label (e.g. the coach-talk buttons) — tracks text size. */
 .binline { width:1.05em; height:1.05em; vertical-align:-.15em; margin-right:.4em; }
+/* Dictation mic / stop glyph — centered in icon-only mic buttons; a literal space sets it
+   off from a label on the "Speak" / "Stop recording" toggle. */
+.micico { width:1.2em; height:1.2em; vertical-align:-.22em; }
 .ico .dico { width:1.4em; height:1.4em; vertical-align:middle; }
 .domain-row .ico .dico { width:1.45rem; height:1.45rem; color:var(--ink-soft); }
 
