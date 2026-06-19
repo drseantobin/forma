@@ -1207,6 +1207,28 @@ export const ACT_MODULES = [
     ],
     after: 'Hold onto that.',
   },
+  {
+    id: 'woop',
+    process: 'Mental contrasting (WOOP)',
+    name: 'Turn a wish into a plan',
+    lead: 'For when you want to follow through on something but keep slipping. You’ll picture what you want — and the obstacle in the way — then turn it into one concrete if-then plan.',
+    basis: 'Adapts Oettingen’s WOOP / mental-contrasting-with-implementation-intentions (Oettingen, 2014; Gollwitzer & Sheeran, 2006) — among the few self-regulation methods with replicated behaviour-change effects in randomized trials.',
+    breath: { inhale: 4, hold: 0, exhale: 6 },
+    eyesOpen: false,
+    before: 'Bring to mind one thing you genuinely want to follow through on — small and doable, today or this week.',
+    // Written capture (the contrasting + the plan are the active ingredients), not a 0-10 scale.
+    // value = the obstacle (named honestly); action = the if-then plan (saved as a committed step).
+    capture: { value: 'The obstacle: the thing in you most likely to get in the way — a feeling, a habit, a thought. Name it honestly.', action: 'Your plan — finish this: “If [that obstacle] shows up, then I will ___.”' },
+    steps: [
+      { text: 'Name the WISH — one thing you want to follow through on. Hold it in mind.', sec: 16 },
+      { text: 'Picture the best OUTCOME — what it would feel like to actually do it. Let yourself really see it.', sec: 20 },
+      { text: 'Now the OBSTACLE — what in you tends to get in the way? The urge, the mood, the excuse. Picture it honestly.', sec: 20 },
+      { text: 'Hold both at once: the outcome you want, and the obstacle that’s real. That contrast is the point.', sec: 16 },
+      { text: 'Make the PLAN: “If [the obstacle] happens, then I will [what you’ll do instead].” Decide it now, in advance.', sec: 20 },
+      { text: 'You don’t have to feel ready. You have a plan for the moment it’s hard — that’s what carries you.', sec: 14 },
+    ],
+    after: 'Hold onto the plan.',
+  },
 ];
 
 export const ACT_MODULE_BY_ID = Object.fromEntries(ACT_MODULES.map((m) => [m.id, m]));
@@ -1219,6 +1241,7 @@ const ACT_THEME_KEYWORDS = {
   acceptance: ['anxious', 'anxiety', 'afraid', 'scared', 'angry', 'furious', 'frustrat', 'overwhelm', 'panic', 'stress', 'can’t stand', 'cant stand', 'hate feeling', 'dread', 'nervous', 'tense', 'grief', 'sad', 'hurts'],
   present: ['distract', 'scattered', 'can’t focus', 'cant focus', 'racing', 'restless', 'too much going', 'all over', 'can’t settle', 'cant settle', 'frazzled', 'wired', 'spinning'],
   values: ['pointless', 'what’s the point', 'whats the point', 'no point', 'don’t care', 'dont care', 'feel lost', 'no motivation', 'why bother', 'going through the motions', 'empty', 'meaningless', 'adrift', 'aimless', 'numb'],
+  woop: ['procrastinat', 'keep putting off', 'putting it off', 'can’t follow through', 'cant follow through', 'never follow through', 'never finish', 'don’t finish', 'dont finish', 'keep slipping', 'no willpower', 'no self-control', 'won’t stick', 'wont stick', 'can’t stick to', 'cant stick to', 'keep failing to', 'keep meaning to', 'avoid doing'],
 };
 
 // Choose the ACT module that best fits this person right now — on-device, from
@@ -1247,7 +1270,7 @@ export function chooseActModule(profile = {}) {
   const byDomain = [
     { id: 'present', score: scores.attention },
     { id: 'acceptance', score: scores.emotion_regulation },
-    { id: 'acceptance', score: scores.persistence },
+    { id: 'woop', score: scores.persistence },
     { id: 'values', score: scores.values },
   ].filter((x) => typeof x.score === 'number');
   if (byDomain.length) {
