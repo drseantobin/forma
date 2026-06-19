@@ -983,10 +983,10 @@ function growthCard(domainId, opts = {}) {
   const items = growthFor(domainId);
   if (!items) return '';
   const d = getDomain(domainId);
-  return `<div class="card growcard">
-      <div class="eyebrow">Grow this in daily life</div>
-      ${opts.hideName ? '' : `<div class="row" style="margin:2px 0;"><strong>${esc(d ? d.name : 'this capacity')}</strong></div>`}
-      <p class="muted small" style="margin:${opts.hideName ? '6px' : '0'} 0 10px;">Small, evidence-based habits that build this over time — formation, not a quick fix.</p>
+  return `<div class="card growcard${opts.nested ? ' nested' : ''}">
+      ${opts.nested ? '' : `<div class="eyebrow">Grow this in daily life</div>`}
+      ${opts.hideName || opts.nested ? '' : `<div class="row" style="margin:2px 0;"><strong>${esc(d ? d.name : 'this capacity')}</strong></div>`}
+      ${opts.nested ? '' : `<p class="muted small" style="margin:${opts.hideName ? '6px' : '0'} 0 10px;">Small, evidence-based habits that build this over time — formation, not a quick fix.</p>`}
       ${items.map((g) => `<div class="growitem">
         <div class="growtitle">${esc(g.title)}</div>
         <div class="muted small" style="margin-top:2px;">${esc(g.how)}</div>
@@ -1215,14 +1215,13 @@ function renderDomainDetail() {
       <div class="card" style="border-left:4px solid ${band ? band.color : 'var(--accent)'};">
         <div class="eyebrow">Your next step</div>
         <p style="margin:6px 0 0; line-height:1.5;">${esc(nextStepFor(score, t))}</p>
+        ${growthCard(id, { hideName: true, nested: true })}
       </div>
 
       <div class="card">
         <div class="eyebrow">Why this matters</div>
         <p style="margin:6px 0 0; line-height:1.55;">${esc(d.aiRationale)}</p>
       </div>
-
-      ${growthCard(id, { hideName: true })}
 
       ${basis ? `<div class="card">
         <div class="eyebrow">How Forma measures it</div>
@@ -2908,8 +2907,9 @@ function completeGuided() {
 
   const commit = document.getElementById('gcommit');
   if (commit) commit.onclick = () => {
-    state.profile.goals = state.profile.goals || [];
-    state.profile.goals.push({ text: savedAction, done: false, createdAt: Date.now() });
+    // Use addGoal so the commitment is well-formed (id + domain + checkins[]) — a raw push
+    // left those undefined, breaking the check-in/edit/delete buttons keyed by g.id.
+    state.profile = Profile.addGoal(state.profile, ex.domain || 'emotion_regulation', savedAction);
     save();
     commit.style.display = 'none';
     const tag = document.getElementById('gcommitted'); if (tag) tag.style.display = '';

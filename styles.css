@@ -507,6 +507,9 @@ button { font-family: inherit; cursor: pointer; }
 .growtitle { font-weight:700; font-size:.95rem; }
 .growwhy { font-size:.78rem; color:var(--ink-faint); margin-top:3px; font-style:italic; }
 .growcommit.committed { color: var(--green-ink); border-color: var(--green); background: var(--green-soft); }
+/* Nested inside another card (the capacity-detail "Your next step") — no second card chrome. */
+.growcard.nested { background:transparent; border:none; box-shadow:none; border-radius:0; padding:0; margin:12px 0 0; }
+.growcard.nested .growitem:first-of-type { border-top:1px solid var(--line); padding-top:12px; }
 
 /* shared eyebrow label */
 .eyebrow { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700; }
