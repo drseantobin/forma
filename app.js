@@ -3254,6 +3254,7 @@ function renderPlan() {
           <strong style="font-size:1.1rem;">${esc(getDomain(plan.theme).name)}</strong></div>
         <div id="plannote" class="muted" style="margin-top:8px;"><span class="spinner" style="width:14px;height:14px;"></span> <span class="small">writing your week…</span></div>
       </div>
+      ${growthCard(plan.theme, { hideName: true })}
       ${rows}
       <button class="btn ghost sm" id="regen" style="margin-top:6px;">Regenerate this week's plan</button>
       <p class="muted small center" style="margin-top:8px;">Your plan refreshes automatically each week, adapting to how your scales have moved.</p>
@@ -3263,6 +3264,7 @@ function renderPlan() {
   document.getElementById('regen').onclick = () => { p.plan = Planner.generatePlan(p); save(); render(); };
   const startBtn = app.querySelector('[data-start]');
   if (startBtn) startBtn.onclick = () => go('session');
+  wireGrowthCommit();
 
   Planner.planNarrative(p, plan).then(({ text, live }) => {
     const el = document.getElementById('plannote');
