@@ -249,6 +249,7 @@ export function disableFaithTrack(profile) {
   delete p.domainScores.interior;
   if (p.baseline && p.baseline.domainScores) delete p.baseline.domainScores.interior;
   if (p.bandPeak) delete p.bandPeak.interior;
+  delete p.interiorLens; // the private reflective lens is interior data too — clear it on opt-out
   return p;
 }
 
@@ -286,6 +287,24 @@ export function editGoal(profile, goalId, text) {
   const g = p.goals.find((x) => x.id === goalId);
   const t = String(text || '').trim();
   if (g && t) g.text = t.slice(0, 120);
+  return p;
+}
+
+// The Spiritual-identity LENS (v265) — a PRIVATE, non-scored reflective map of where a person
+// notices themselves across three faith components (Belief / Practice / Belonging), each by a
+// NON-RANKED status (settled / exploring / inherited / drifting). Grounded in Marcia's identity
+// STATUS-by-component framing (Halevy 2025), deliberately NOT a Fowler-style stage/altitude ladder.
+// Honesty: this is a mirror, NEVER a score — it stays on the device in the profile, walled like the
+// rest of the interior track (never an API / coach / snapshot / employer surface), because Forma
+// does not presume to "stage" anyone's soul. Setting an empty/invalid status clears that component.
+export const LENS_COMPONENTS = ['belief', 'practice', 'belonging'];
+export const LENS_STATUSES = ['settled', 'exploring', 'inherited', 'drifting'];
+export function setInteriorLens(profile, component, status) {
+  const p = clone(profile);
+  if (!LENS_COMPONENTS.includes(component)) return p;
+  p.interiorLens = (p.interiorLens && typeof p.interiorLens === 'object' && !Array.isArray(p.interiorLens)) ? { ...p.interiorLens } : {};
+  if (LENS_STATUSES.includes(status)) p.interiorLens[component] = status;
+  else delete p.interiorLens[component];
   return p;
 }
 

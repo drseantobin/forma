@@ -249,6 +249,7 @@ function renderRoute() {
     case 'progress': return renderProgress();
     case 'plan': return renderPlan();
     case 'review': return renderReview();
+    case 'lens': return renderInteriorLens();
     case 'team': return renderTeam();
     case 'methods': return renderMethods();
     case 'snapshot': return renderSnapshot();
@@ -1441,6 +1442,13 @@ function renderDomainDetail() {
         <p class="muted small" style="margin:6px 0 10px; line-height:1.5;">${guidedOpt.caption}</p>
         <button class="btn ghost" id="guidedpractice">Try a guided practice →</button>
       </div>` : '';
+  // Spiritual Life only: a private, non-scored reflective lens (a mirror, not a grade).
+  const lensEntry = id === 'interior' ? `
+      <div class="card">
+        <div class="eyebrow">Where you are</div>
+        <p class="muted small" style="margin:6px 0 10px; line-height:1.5;">A private, unranked reflection on your faith across belief, practice, and belonging — a mirror, not a grade. Forma doesn’t stage your soul.</p>
+        <button class="btn ghost" id="tolens">Reflect: where you are →</button>
+      </div>` : '';
   app.innerHTML = `
     <div class="fade-in">
       ${viewHead('Capacity', d.name, d.short, `<button class="btn ghost sm" id="back" style="width:auto;">← ${fromLabel}</button>`)}
@@ -1471,6 +1479,8 @@ function renderDomainDetail() {
 
       ${practiceCard}
 
+      ${lensEntry}
+
       <button class="btn amber" id="train">Train it now →</button>
       <p class="muted small center" style="margin-top:10px;">A few minutes. Formation, measured over weeks — never a verdict.</p>
     </div>`;
@@ -1478,6 +1488,8 @@ function renderDomainDetail() {
   document.getElementById('train').onclick = () => startDomainSession(id);
   const gp = document.getElementById('guidedpractice');
   if (gp && guidedOpt) gp.onclick = () => startGuidedSession(guidedOpt.module);
+  const tl = document.getElementById('tolens');
+  if (tl) tl.onclick = () => go('lens');
   wireGrowthCommit();
 }
 
@@ -3644,6 +3656,60 @@ function renderReview() {
       save(); render();
       announce('Commitment retired.');
       focusViewHeading();
+    };
+  });
+}
+
+// The Spiritual-identity LENS (v265) — a PRIVATE, non-scored reflective map of where a person
+// notices themselves across three faith components, each by a NON-RANKED status. Grounded in
+// Marcia's identity-status-by-component framing (Halevy 2025), deliberately NOT a stage/altitude
+// ladder. The load-bearing honesty move: it is a MIRROR, never a grade — "Forma does not stage
+// your soul." Faith-gated, walled (never an API/coach/snapshot/employer surface). Rooted in the
+// person's own reflection, not in any single tradition's stage scheme.
+const LENS_UI = [
+  { id: 'belief', name: 'Belief', desc: 'What you hold — your convictions about God, faith, meaning.' },
+  { id: 'practice', name: 'Practice', desc: 'How you practice — prayer, worship, the rhythms you keep.' },
+  { id: 'belonging', name: 'Belonging', desc: 'Where you belong — your place in a community of faith.' },
+];
+const LENS_STATUS_UI = [
+  { id: 'settled', label: 'Settled', note: 'I’ve found my footing here.' },
+  { id: 'exploring', label: 'Exploring', note: 'Actively questioning or searching.' },
+  { id: 'inherited', label: 'Received', note: 'Carried from where I come from — lived more than examined.' },
+  { id: 'drifting', label: 'Drifting', note: 'Distant or disengaged lately.' },
+];
+function renderInteriorLens() {
+  const p = state.profile;
+  // Faith-gated: only meaningful on the Spiritual Life track. Direct nav without it → home.
+  if (!(p.settings && p.settings.faithTrack)) { state.route = 'home'; return renderHome(); }
+  const lens = (p.interiorLens && typeof p.interiorLens === 'object') ? p.interiorLens : {};
+  const rows = LENS_UI.map((c) => `
+      <div class="card">
+        <div class="row" style="margin-bottom:2px;"><strong>${esc(c.name)}</strong></div>
+        <p class="muted small" style="margin:0 0 10px;">${esc(c.desc)}</p>
+        <div class="lens-opts">
+          ${LENS_STATUS_UI.map((s) => `<button class="lens-opt ${lens[c.id] === s.id ? 'sel' : ''}" data-lens="${c.id}" data-status="${s.id}" aria-pressed="${lens[c.id] === s.id}"><span class="lens-label">${esc(s.label)}</span> <span class="muted small">${esc(s.note)}</span></button>`).join('')}
+        </div>
+      </div>`).join('');
+  app.innerHTML = `
+    <div class="fade-in">
+      ${viewHead('Spiritual Life', 'Where you are', 'A mirror for your own reflection — not a measurement.', `<button class="btn ghost sm" id="back" style="width:auto;">← Spiritual Life</button>`)}
+      <div class="card" style="border-left:4px solid ${getDomain('interior') ? getDomain('interior').color : 'var(--accent)'};">
+        <p style="margin:0; line-height:1.55;">This is a mirror for your reflection, not a measurement of where you stand with God. Forma doesn’t stage your soul — it just helps you notice. These statuses aren’t ranked; there’s no “further along.” Where you are will shift, and that’s the life.</p>
+      </div>
+      ${rows}
+      <p class="muted small center" style="margin-top:12px;">Private to you. Never scored, never shared, never part of your measure.</p>
+    </div>`;
+  document.getElementById('back').onclick = () => { state.focusDomain = 'interior'; go('domain'); };
+  app.querySelectorAll('.lens-opt').forEach((b) => {
+    b.onclick = () => {
+      const c = b.dataset.lens; const status = b.dataset.status;
+      const cur = (state.profile.interiorLens || {})[c];
+      const next = cur === status ? null : status; // tap the current one again to clear it
+      state.profile = Profile.setInteriorLens(state.profile, c, next);
+      save(); render();
+      announce(next ? `${c}: ${status}` : `${c}: cleared`);
+      const again = app.querySelector(`.lens-opt[data-lens="${c}"][data-status="${status}"]`);
+      if (again) again.focus(); else focusViewHeading();
     };
   });
 }
