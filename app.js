@@ -1099,12 +1099,32 @@ function commitmentsCard(p) {
     const checkins = Array.isArray(g.checkins) ? g.checkins : [];
     const done = checkins.includes(today);
     const n = checkins.length;
-    return `<div class="goalrow">
-      <button class="goalcheck ${done ? 'on' : ''}" data-track="${esc(g.id)}" aria-pressed="${done}" aria-label="${done ? 'Kept today — tap to undo' : 'Mark kept today'}: “${esc(g.text)}”">${done ? '✓' : '○'}</button>
-      <span class="ico" aria-hidden="true">${d ? d.icon : '•'}</span>
-      <span class="goaltext">${esc(g.text)}${n ? ` <span class="goalkept muted small">· kept ${n}×</span>` : ''}</span>
-      <button class="goalicon" data-edit="${esc(g.id)}" aria-label="Edit “${esc(g.text)}”">✏️</button>
-      <button class="goalicon" data-del="${esc(g.id)}" aria-label="Delete “${esc(g.text)}”">🗑️</button>
+    const c = g.coping;
+    return `<div class="goalitem">
+      <div class="goalrow">
+        <button class="goalcheck ${done ? 'on' : ''}" data-track="${esc(g.id)}" aria-pressed="${done}" aria-label="${done ? 'Kept today — tap to undo' : 'Mark kept today'}: “${esc(g.text)}”">${done ? '✓' : '○'}</button>
+        <span class="ico" aria-hidden="true">${d ? d.icon : '•'}</span>
+        <span class="goaltext">${esc(g.text)}${n ? ` <span class="goalkept muted small">· kept ${n}×</span>` : ''}</span>
+        <button class="goalicon" data-edit="${esc(g.id)}" aria-label="Edit “${esc(g.text)}”">✏️</button>
+        <button class="goalicon" data-del="${esc(g.id)}" aria-label="Delete “${esc(g.text)}”">🗑️</button>
+      </div>
+      <div class="goalcoping">
+        ${c ? `<p class="copingread muted small">If ${esc(c.when)}, I’ll ${esc(c.then)}.</p>` : ''}
+        <details class="coping">
+          <summary class="muted small">${c ? 'Edit your hard-day plan' : 'Plan for a hard day (optional)'}</summary>
+          <div class="coping-body">
+            <label class="coping-field"><span class="muted small">What usually gets in the way?</span>
+              <input id="coping-when-${esc(g.id)}" type="text" maxlength="120" value="${c ? esc(c.when) : ''}" placeholder="e.g. a packed afternoon, low energy after lunch…" aria-label="What usually gets in the way?" /></label>
+            <label class="coping-field"><span class="muted small">If that happens, I’ll:</span>
+              <input id="coping-then-${esc(g.id)}" type="text" maxlength="120" value="${c ? esc(c.then) : ''}" placeholder="e.g. do a 2-minute version instead" aria-label="If that happens, I will" /></label>
+            <p class="muted small coping-help">Naming the recovery move ahead of time tends to help you get back on track — not because a hard day is a failure, just because the plan’s already made.</p>
+            <div class="row coping-actions">
+              <button class="btn sm" data-coping-save="${esc(g.id)}" style="width:auto;">Save plan</button>
+              <button class="btn ghost sm" data-coping-skip="${esc(g.id)}" style="width:auto;">${c ? 'Cancel' : 'Skip'}</button>
+            </div>
+          </div>
+        </details>
+      </div>
     </div>`;
   };
   return `
@@ -1185,6 +1205,23 @@ function wireCommitments() {
       announce('Commitment deleted.');
       focusViewHeading(); // the row is gone — return to a stable place in context
     };
+  });
+  // Coping plan (the opt-in "plan for a hard day"): save sets an if-then recovery plan on the
+  // commitment; skip/cancel just closes the panel. NEVER triggered by a miss — only this tap.
+  app.querySelectorAll('[data-coping-save]').forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.copingSave;
+      const w = (document.getElementById('coping-when-' + id) || {}).value || '';
+      const t = (document.getElementById('coping-then-' + id) || {}).value || '';
+      const kept = w.trim() && t.trim();
+      state.profile = Profile.setCoping(state.profile, id, w, t);
+      save(); render();
+      announce(kept ? 'Hard-day plan saved.' : 'Hard-day plan cleared.');
+      refocus(`[data-track="${id}"]`); // the panel re-collapses on render; return to a stable, visible control
+    };
+  });
+  app.querySelectorAll('[data-coping-skip]').forEach((b) => {
+    b.onclick = () => { const det = b.closest('details'); if (det) det.open = false; };
   });
   // Gentle, on-device "is this what you mean?" nudge — DISPLAY ONLY (never blocks the
   // save, never touches state, no network). Debounced so it doesn't flicker per key.

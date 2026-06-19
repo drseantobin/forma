@@ -281,6 +281,23 @@ export function editGoal(profile, goalId, text) {
   return p;
 }
 
+// Attach an OPTIONAL coping plan to a commitment (Sniehotta 2005 coping planning): a
+// proactively-chosen "if <obstacle>, I'll <recovery>" the person sets ahead of a hard day.
+// The recovery clause is positive by design. NEVER triggered by a missed/absent check-in —
+// a missing check-in is not a failure; this is set only when the person chooses to. Clears
+// the plan if either field is emptied. Both fields capped like editGoal.
+export function setCoping(profile, goalId, when, then) {
+  const p = clone(profile);
+  const g = p.goals.find((x) => x.id === goalId);
+  if (g) {
+    const w = String(when || '').trim().slice(0, 120);
+    const t = String(then || '').trim().slice(0, 120);
+    if (w && t) g.coping = { when: w, then: t };
+    else delete g.coping;
+  }
+  return p;
+}
+
 // Delete a commitment (the trash control).
 export function removeGoal(profile, goalId) {
   const p = clone(profile);

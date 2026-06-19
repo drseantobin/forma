@@ -411,6 +411,20 @@ button { font-family: inherit; cursor: pointer; }
 .commit-help { margin:8px 0 10px; }
 .commit-actions { gap:8px; }
 .commit-actions .btn { width:auto; }
+/* Coping planning: an OPTIONAL, opt-in "plan for a hard day" the person expands themselves —
+   proactive (Sniehotta 2005), never miss-triggered, never a guilt/streak mechanic. Indented
+   under the commitment text so it reads as a quiet sub-detail, collapsed by default. */
+.goalcoping { margin: 2px 0 0 34px; }
+.copingread { margin: 0 0 4px; font-style: italic; }
+.coping summary { list-style:none; cursor:pointer; color: var(--accent); display:inline-block; }
+.coping summary::-webkit-details-marker { display:none; }
+.coping-body { margin-top:8px; padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius-sm); }
+.coping-field { display:block; margin-bottom:8px; }
+.coping-field > span { display:block; margin-bottom:4px; }
+.coping-field input { width:100%; border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; font-size:.95rem; font-family:inherit; color:var(--ink); background:var(--card); }
+.coping-help { margin:6px 0 10px; }
+.coping-actions { gap:8px; }
+.coping-actions .btn { width:auto; }
 .goaladd summary { list-style:none; cursor:pointer; }
 .goaladd summary::-webkit-details-marker { display:none; }
 .goaladd-body input[type="text"] { width:100%; }

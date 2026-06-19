@@ -220,7 +220,7 @@ export function profileSummary(profile) {
   }
   if (profile.streak?.current) lines.push(`Current streak: ${profile.streak.current} day(s).`);
   const openGoals = (profile.goals || []).filter((g) => !g.done);
-  if (openGoals.length) lines.push(`Active goals: ${openGoals.map((g) => g.text).join(' | ')}`);
+  if (openGoals.length) lines.push(`Active goals: ${openGoals.map((g) => g.coping ? `${g.text} (if-then plan: if ${g.coping.when}, I’ll ${g.coping.then})` : g.text).join(' | ')}`);
   lines.push('');
   lines.push(growthReference());
   return lines.join('\n');
