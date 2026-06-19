@@ -295,7 +295,7 @@ button { font-family: inherit; cursor: pointer; }
 .memo-word { background: var(--accent-soft); color: var(--accent); font-weight:700; font-size:1.2rem; padding:10px 16px; border-radius: 12px; }
 .memo-countdown { text-align:center; font-size:2rem; font-weight:800; color: var(--amber); font-variant-numeric: tabular-nums; }
 .chiprow { display:flex; flex-wrap:wrap; gap:8px; }
-.chip { border:1.5px solid var(--line); background:var(--card); border-radius:999px; padding:8px 14px; font-weight:600; }
+.chip { border:1.5px solid var(--line); background:var(--card); border-radius:999px; padding:8px 14px; font-weight:600; color:var(--ink); font-family:inherit; }
 .chip.used { opacity:.4; }
 .chip.starter { cursor:pointer; border-color:var(--accent-soft); color:var(--accent); font-size:.85rem; }
 .chip.sel { border-color: var(--amber); background: var(--amber-soft); color:var(--amber-ink); }
@@ -304,7 +304,7 @@ button { font-family: inherit; cursor: pointer; }
 .rationale { font-size:.92rem; color: var(--ink-soft); margin-top:10px; padding:12px 14px; background:var(--bg); border-radius:12px; border:1px solid var(--line); }
 .reflect-area { width:100%; min-height:120px; border:1.5px solid var(--line); border-radius: var(--radius-sm); padding:14px; font-family:inherit; font-size:1rem; resize:vertical; }
 .rating { display:flex; gap:8px; margin:14px 0; }
-.rating button { flex:1; border:1.5px solid var(--line); background:var(--card); border-radius:12px; padding:12px 0; font-weight:700; font-size:1.1rem; }
+.rating button { flex:1; border:1.5px solid var(--line); background:var(--card); border-radius:12px; padding:12px 0; font-weight:700; font-size:1.1rem; color:var(--ink); font-family:inherit; }
 .rating button.on { border-color: var(--amber); background: var(--amber-soft); color:var(--amber-ink); }
 /* Visually hidden but available to screen readers (for live-region announcements
    like the settled session score, whose count-up number is aria-hidden). */
