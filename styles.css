@@ -12,11 +12,12 @@
   --green: #3d8b6e;
   --green-soft: #e2f0ea;
   --red: #d2706b;
+  --red-soft: #f9e7e6;    /* wrong-answer / down-pill tint (was hardcoded) */
   /* Accessible TEXT shades for colored text on the soft tinted pills/chips.
      The base hues above stay for borders/dots/fills; these darker inks clear
      WCAG AA 4.5:1 for the small bold labels that sit on the *-soft backgrounds.
      amber-ink #8a5e12 on amber-soft ≈ 4.96:1 · green-ink #2f6b54 on green-soft
-     ≈ 5.3:1 · red-ink #a83833 on the down-pill #f9e7e6 ≈ 5.37:1. */
+     ≈ 5.3:1 · red-ink #a83833 on the down-pill (--red-soft) ≈ 5.37:1. */
   --amber-ink: #8a5e12;
   --green-ink: #2f6b54;
   --red-ink: #a83833;
@@ -37,6 +38,37 @@
   --metric-2: 2rem;                       /* section metric: snapshot grid */
   --metric-3: 1.7rem;                     /* inline metric: AI-readiness, drilldown */
   --maxw: 560px;
+}
+
+/* ---------- dark mode ----------
+   A true low-light theme is the single biggest perceived-quality signal in 2026
+   health apps (Oura/WHOOP ship OLED-true dark by default) — and it's deeply on
+   Forma's brand: calm, serious, low-stimulation, never flashy. The whole app reads
+   from the :root tokens above, so the theme is just a token flip — every component
+   inherits it. Two entry points: the OS preference (auto), and an explicit
+   data-theme attribute (a future Settings toggle), with data-theme always winning.
+   Dark inks/bg are tuned to clear WCAG AA (--ink ≈ 13:1, --ink-faint ≈ 4.7:1). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #ecebe6; --ink-soft: #b3b2ad; --ink-faint: #8f8e8a;
+    --bg: #14151a; --card: #1c1d24; --line: #2c2d36;
+    --accent: #8a98ee; --accent-soft: #262a45;
+    --amber: #e0a857; --amber-soft: #34291a; --amber-ink: #e8bd7e;
+    --green: #5cae8c; --green-soft: #1b2a24; --green-ink: #7fc7a6;
+    --red: #e08a84; --red-soft: #2e1d1d; --red-ink: #e8a39d;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.34);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,.5), 0 24px 48px rgba(0,0,0,.45);
+  }
+}
+[data-theme="dark"] {
+  --ink: #ecebe6; --ink-soft: #b3b2ad; --ink-faint: #8f8e8a;
+  --bg: #14151a; --card: #1c1d24; --line: #2c2d36;
+  --accent: #8a98ee; --accent-soft: #262a45;
+  --amber: #e0a857; --amber-soft: #34291a; --amber-ink: #e8bd7e;
+  --green: #5cae8c; --green-soft: #1b2a24; --green-ink: #7fc7a6;
+  --red: #e08a84; --red-soft: #2e1d1d; --red-ink: #e8a39d;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.34);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,.5), 0 24px 48px rgba(0,0,0,.45);
 }
 
 * { box-sizing: border-box; }
@@ -137,7 +169,7 @@ button { font-family: inherit; cursor: pointer; }
 .opt:active { transform: scale(.99); }
 .opt.selected { border-color: var(--accent); background: var(--accent-soft); font-weight:600; }
 .opt.correct { border-color: var(--green); background: var(--green-soft); }
-.opt.wrong { border-color: var(--red); background: #f9e7e6; }
+.opt.wrong { border-color: var(--red); background: var(--red-soft); }
 .opt.reveal { opacity:.7; }
 
 .lesson-domain { display:flex; align-items:center; gap:10px; margin-bottom: 6px; }
@@ -202,11 +234,11 @@ button { font-family: inherit; cursor: pointer; }
 @media (max-width:380px) { .demo-grid { grid-template-columns:1fr; } }
 
 .insight {
-  background: linear-gradient(180deg, #fff, #fbfaf7); border:1px solid var(--line);
+  background: linear-gradient(180deg, var(--card), var(--bg)); border:1px solid var(--line);
   border-left: 4px solid var(--amber); border-radius: var(--radius-sm);
   padding: 16px 18px; margin: 4px 0 0;
 }
-.insight .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color: #9a6a16; font-weight:700; }
+.insight .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color: var(--amber-ink); font-weight:700; }
 .insight.live .k::after { content:" · live"; color: var(--green); }
 
 .radarwrap { display:grid; place-items:center; padding: 8px 0; }
@@ -228,20 +260,20 @@ button { font-family: inherit; cursor: pointer; }
 .modechip { border-radius:6px; padding:3px 8px; font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
 .modechip.measure { background: var(--amber-soft); color: var(--amber-ink); }
 .modechip.practice { background: var(--green-soft); color: var(--green-ink); }
-.passage { font-size:1.05rem; line-height:1.65; color: var(--ink); background:#fcfbf8; border:1px solid var(--line); border-radius: var(--radius-sm); padding:16px 18px; margin-bottom: 16px; }
+.passage { font-size:1.05rem; line-height:1.65; color: var(--ink); background:var(--card); border:1px solid var(--line); border-radius: var(--radius-sm); padding:16px 18px; margin-bottom: 16px; }
 .memo-words { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding: 24px 0; }
 .memo-word { background: var(--accent-soft); color: var(--accent); font-weight:700; font-size:1.2rem; padding:10px 16px; border-radius: 12px; }
 .memo-countdown { text-align:center; font-size:2rem; font-weight:800; color: var(--amber); font-variant-numeric: tabular-nums; }
 .chiprow { display:flex; flex-wrap:wrap; gap:8px; }
-.chip { border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:8px 14px; font-weight:600; }
+.chip { border:1.5px solid var(--line); background:var(--card); border-radius:999px; padding:8px 14px; font-weight:600; }
 .chip.used { opacity:.4; }
 .chip.sel { border-color: var(--amber); background: var(--amber-soft); color:var(--amber-ink); }
 .slot-row { display:flex; flex-wrap:wrap; gap:8px; min-height:46px; padding:8px; border:1.5px dashed var(--line); border-radius:12px; margin-bottom:12px; }
 .slot { background: var(--green-soft); color: var(--green-ink); border:0; font:inherit; cursor:pointer; border-radius:999px; padding:8px 14px; font-weight:700; }
-.rationale { font-size:.92rem; color: var(--ink-soft); margin-top:10px; padding:12px 14px; background:#fcfbf8; border-radius:12px; border:1px solid var(--line); }
+.rationale { font-size:.92rem; color: var(--ink-soft); margin-top:10px; padding:12px 14px; background:var(--bg); border-radius:12px; border:1px solid var(--line); }
 .reflect-area { width:100%; min-height:120px; border:1.5px solid var(--line); border-radius: var(--radius-sm); padding:14px; font-family:inherit; font-size:1rem; resize:vertical; }
 .rating { display:flex; gap:8px; margin:14px 0; }
-.rating button { flex:1; border:1.5px solid var(--line); background:#fff; border-radius:12px; padding:12px 0; font-weight:700; font-size:1.1rem; }
+.rating button { flex:1; border:1.5px solid var(--line); background:var(--card); border-radius:12px; padding:12px 0; font-weight:700; font-size:1.1rem; }
 .rating button.on { border-color: var(--amber); background: var(--amber-soft); color:var(--amber-ink); }
 /* Visually hidden but available to screen readers (for live-region announcements
    like the settled session score, whose count-up number is aria-hidden). */
@@ -305,7 +337,7 @@ button { font-family: inherit; cursor: pointer; }
 .goalrow { display:flex; align-items:center; gap:10px; padding:7px 0; }
 .goalcheck {
   flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:2px solid var(--ink-faint);
-  background:#fff; color:var(--green); font-size:.8rem; line-height:1; cursor:pointer; padding:0;
+  background:var(--card); color:var(--green); font-size:.8rem; line-height:1; cursor:pointer; padding:0;
 }
 .goalcheck:hover { border-color:var(--green); }
 .goalrow .goaltext { flex:1; }
@@ -331,7 +363,7 @@ button { font-family: inherit; cursor: pointer; }
 .airchip {
   display:inline-flex; align-items:center; gap:6px;
   border:1px solid var(--line, #e6e4dd); border-radius:999px; padding:3px 10px 3px 8px;
-  font-size:.8rem; background:#fff;
+  font-size:.8rem; background:var(--card);
 }
 .airchip .airdot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
 .airchip .airnm { color: var(--ink-soft); }
@@ -344,7 +376,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 .trendpill { font-size:.78rem; font-weight:700; padding:2px 8px; border-radius:999px; }
 .trendpill.up { background: var(--green-soft); color: var(--green-ink); }
-.trendpill.down { background: #f9e7e6; color: var(--red-ink); }
+.trendpill.down { background: var(--red-soft); color: var(--red-ink); }
 .trendpill.flat { background: var(--line); color: var(--ink-faint); }
 
 /* ---------- settings ---------- */
@@ -360,7 +392,7 @@ button { font-family: inherit; cursor: pointer; }
 .tabbar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
   display:flex; justify-content:space-around; align-items:center;
-  background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--card) 92%, transparent); backdrop-filter: blur(8px);
   border-top:1px solid var(--line); padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
   max-width: var(--maxw); margin: 0 auto;
 }
@@ -388,7 +420,7 @@ button { font-family: inherit; cursor: pointer; }
 .matopt { background:var(--card); border:1.5px solid var(--line); border-radius:14px; min-height:60px; display:grid; place-items:center; cursor:pointer; }
 .matopt.selected { border-color:var(--accent); background:var(--accent-soft); }
 .matopt.correct { border-color:var(--green); background:var(--green-soft); }
-.matopt.wrong { border-color:var(--red); background:#f9e7e6; }
+.matopt.wrong { border-color:var(--red); background:var(--red-soft); }
 /* Non-color correctness glyph on a revealed answer (✓/✕). The background tint was
    the ONLY right/wrong signal — useless to red-green color blindness. The glyph is a
    redundant, shape-based twin; on matrix cells it sits in the corner over the SVG. */

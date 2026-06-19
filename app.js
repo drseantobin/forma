@@ -2956,7 +2956,7 @@ function renderProgress() {
         })()}
       </div>
 
-      <div class="card" style="background:linear-gradient(180deg,#fff,#fbfaf7); border-left:4px solid var(--green);">
+      <div class="card" style="background:linear-gradient(180deg,var(--card),var(--bg)); border-left:4px solid var(--green);">
         <div class="row"><strong>Your 90-day proof</strong><span class="spacer"></span><span class="trendpill up">auditable</span></div>
         <p class="muted small" style="margin-top:6px;">Forma stakes itself on three measurable claims over 90 days. See the receipts — your own numbers, moving.</p>
         <button class="btn ghost sm" id="toproof">Open my 90-day proof →</button>
@@ -3146,7 +3146,7 @@ function renderMethods() {
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">The science behind your measures</h1><span class="spacer"></span>
         <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>
-      <div class="card" style="background:linear-gradient(180deg,#fff,#fbfaf7); border-left:4px solid var(--accent);">
+      <div class="card" style="background:linear-gradient(180deg,var(--card),var(--bg)); border-left:4px solid var(--accent);">
         <p class="muted small" style="margin:0;">Forma’s exercises adapt established cognitive and psychological paradigms — the same families of task used in research on attention, memory, reasoning, and emotional skill. They’re tuned to track <strong>growth over time</strong>, as formation, not to diagnose or label. The point is a measurement you can trust because you can see what it rests on.</p>
       </div>
 
