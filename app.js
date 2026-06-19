@@ -224,7 +224,7 @@ function render() {
     // standalone Tools practices that don't need a profile. So a new person can read the
     // science or try a tool instead of being bounced into setup (the "blank science page"
     // bug: tapping View → from Settings used to land on onboarding). Everything else → setup.
-    const PRE_OK = ['coach', 'settings', 'tools', 'methods', 'team', 'epistemiccheck', 'calibration', 'breathcount', 'svt'];
+    const PRE_OK = ['coach', 'settings', 'tools', 'methods', 'team', 'domain', 'epistemiccheck', 'calibration', 'breathcount', 'svt'];
     if (PRE_OK.includes(state.route)) renderRoute();
     else renderOnboarding();
     drawRing(); return;
@@ -250,6 +250,7 @@ function renderRoute() {
     case 'calibration': return renderCalibration();
     case 'breathcount': return renderBreathCount();
     case 'svt': return renderSvt();
+    case 'domain': return renderDomainDetail();
     case 'tools': return renderTools();
     case 'coach': return renderCoach();
     case 'settings': return renderSettings();
@@ -933,7 +934,7 @@ function domainRow(id, score) {
   if (score == null) return '';
   const band = bandFor(score);
   return `
-    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="Train ${esc(d.name)}">
+    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="${esc(d.name)} — how to grow it">
       <span class="ico">${d.icon}</span>
       <div class="meta">
         <div class="dn">${esc(d.name)} <span class="muted" style="font-weight:500; font-size:.82rem;">· ${esc(band.label)}</span></div>
@@ -976,14 +977,14 @@ function startGuidedSession(moduleId = null) {
 // The TEACH/DIRECT card — a few evidence-based ways to grow this capacity in daily life,
 // shown after a session (test → train → TEACH) so a result becomes direction. Honest:
 // general formation guidance, framed as habits that build the capacity over time.
-function growthCard(domainId) {
+function growthCard(domainId, opts = {}) {
   const items = growthFor(domainId);
   if (!items) return '';
   const d = getDomain(domainId);
   return `<div class="card growcard">
       <div class="eyebrow">Grow this in daily life</div>
-      <div class="row" style="margin:2px 0;"><strong>${esc(d ? d.name : 'this capacity')}</strong></div>
-      <p class="muted small" style="margin:0 0 10px;">Small, evidence-based habits that build this over time — formation, not a quick fix.</p>
+      ${opts.hideName ? '' : `<div class="row" style="margin:2px 0;"><strong>${esc(d ? d.name : 'this capacity')}</strong></div>`}
+      <p class="muted small" style="margin:${opts.hideName ? '6px' : '0'} 0 10px;">Small, evidence-based habits that build this over time — formation, not a quick fix.</p>
       ${items.map((g) => `<div class="growitem">
         <div class="growtitle">${esc(g.title)}</div>
         <div class="muted small" style="margin-top:2px;">${esc(g.how)}</div>
@@ -1132,13 +1133,52 @@ function wireCommitments() {
   });
 }
 
-// Make every [data-domain] row a link into a tailored session.
+// Make every [data-domain] row open the capacity's detail view — TEACH (why it matters +
+// how to grow it) and DIRECT (Train it now), rather than jumping straight into a session.
 function wireDomainLinks() {
   app.querySelectorAll('[data-domain]').forEach((el) => {
-    const fire = () => startDomainSession(el.dataset.domain);
+    const fire = () => { state.focusDomain = el.dataset.domain; go('domain'); };
     el.onclick = fire;
     el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); } };
   });
+}
+
+// Capacity detail — the TEACH/DIRECT screen for one domain: where you stand, why it
+// matters (the atrophy frame), how to grow it in daily life, and a Train-it-now CTA.
+function renderDomainDetail() {
+  const id = state.focusDomain;
+  const d = getDomain(id);
+  if (!d) { state.route = 'progress'; return renderProgress(); }
+  const p = state.profile;
+  const score = p.domainScores ? p.domainScores[id] : null;
+  const band = score != null ? bandFor(score) : null;
+  const basis = basisFor(id);
+  app.innerHTML = `
+    <div class="fade-in">
+      ${viewHead('Capacity', d.name, d.short, '<button class="btn ghost sm" id="back" style="width:auto;">← Progress</button>')}
+
+      <div class="card index-hero" style="padding: var(--s4) 0 var(--s3);">
+        ${score != null
+          ? `${indexRing(score, { label: d.name })}<div class="index-label">${esc(band.label)}</div>`
+          : '<p class="muted" style="margin:8px 0;">Not measured yet — train it to see where you stand.</p>'}
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Why this matters</div>
+        <p style="margin:6px 0 0; line-height:1.55;">${esc(d.aiRationale)}</p>
+      </div>
+
+      ${growthCard(id, { hideName: true })}
+
+      ${basis ? `<div class="card">
+        <div class="eyebrow">How Forma measures it</div>
+        <p class="muted small" style="margin:6px 0 0;">${esc(basis.detail)}</p></div>` : ''}
+
+      <button class="btn amber" id="train">Train it now →</button>
+      <p class="muted small center" style="margin-top:10px;">A few minutes. Formation, measured over weeks — never a verdict.</p>
+    </div>`;
+  document.getElementById('back').onclick = () => go('progress');
+  document.getElementById('train').onclick = () => startDomainSession(id);
 }
 
 // The "Today" landing — a calm runway before the session, not a cold start.
@@ -3887,7 +3927,7 @@ function progressRow(id) {
   const sign = t.delta > 0 ? '+' : '';
   const conf = confidenceTag(p, id);
   return `
-    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="Train ${esc(d.name)}" style="align-items:center;">
+    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="${esc(d.name)} — how to grow it" style="align-items:center;">
       <span class="ico">${d.icon}</span>
       <div class="meta">
         <div class="row"><span class="dn">${esc(d.name)}</span>
