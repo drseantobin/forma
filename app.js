@@ -1,7 +1,7 @@
 // app.js — Forma UI controller. Vanilla JS SPA, no build step.
 // Renders views into #app and persists everything locally via profile.js.
 
-import { DOMAINS, getDomain, bandFor, activeDomainIds, BANDS } from './src/domains.js';
+import { DOMAINS, getDomain, bandFor, activeDomainIds, BANDS, DOMAIN_ICON_PATHS } from './src/domains.js';
 import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
 import { pickExercise, nextMathProblem, shuffledIndices, exerciseMode, makeGuided } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
@@ -793,7 +793,7 @@ function weekStripCard(p) {
   const cells = days.map((d) => {
     const isToday = d.date === today;
     const dow = DOW[new Date(d.date + 'T00:00:00').getDay()];
-    const bg = d.done ? 'var(--green-soft)' : isToday ? 'var(--accent-soft)' : '#fff';
+    const bg = d.done ? 'var(--green-soft)' : isToday ? 'var(--accent-soft)' : 'var(--card)';
     const ring = isToday ? 'box-shadow:0 0 0 2px var(--accent);' : '';
     return `
       <div style="flex:1; text-align:center;">
@@ -825,9 +825,9 @@ function radarCard(scores) {
   }).join('');
   const axes = geo.axes.map((a) => `<line x1="${cx}" y1="${cy}" x2="${a.axisX}" y2="${a.axisY}" stroke="var(--line)" stroke-width="1"/>`).join('');
   const labels = geo.axes.map((a) => {
-    const d = getDomain(a.id);
-    const anchor = a.labelX < cx - 6 ? 'end' : a.labelX > cx + 6 ? 'start' : 'middle';
-    return `<text x="${a.labelX}" y="${a.labelY + 4}" font-size="13" text-anchor="${anchor}" fill="var(--ink-faint)">${d.icon}</text>`;
+    // Nest the domain icon (an SVG, not a glyph) centered on the axis label point.
+    const sz = 19;
+    return `<svg x="${(a.labelX - sz / 2).toFixed(1)}" y="${(a.labelY - sz / 2 + 1).toFixed(1)}" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${DOMAIN_ICON_PATHS[a.id] || ''}</svg>`;
   }).join('');
 
   const ariaSummary = order.map((id) => `${getDomain(id).name} ${scores[id] ?? 0}, ${bandFor(scores[id] ?? 0).label}`).join('; ');
@@ -838,7 +838,7 @@ function radarCard(scores) {
         <svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:320px;" role="img" aria-label="Your formation profile, out of 100: ${esc(ariaSummary)}">
           ${rings}${axes}
           <polygon points="${geo.points}" fill="rgba(76,95,213,.14)" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
-          ${geo.axes.map((a) => `<circle cx="${a.x}" cy="${a.y}" r="4.5" fill="${bandFor(scores[a.id] ?? 0).color}" stroke="#fff" stroke-width="1.5"/>`).join('')}
+          ${geo.axes.map((a) => `<circle cx="${a.x}" cy="${a.y}" r="4.5" fill="${bandFor(scores[a.id] ?? 0).color}" stroke="var(--card)" stroke-width="1.5"/>`).join('')}
           ${labels}
         </svg>
       </div>
@@ -2385,7 +2385,7 @@ function renderContemplation() {
   const half = Math.max(1, Math.floor(target / 2));
   app.innerHTML = `
     <div class="fade-in center">
-      <p class="muted small" style="margin-top:20px;">${esc(getDomain('interior').icon)} Be still.</p>
+      <p class="muted small" style="margin-top:20px;">${getDomain('interior').icon} Be still.</p>
       <div class="stillness-dot" aria-hidden="true"></div>
       <p class="muted small" style="margin-top:30px;">Put the phone down. Close your eyes if you like. Breathe — a chime will mark the halfway point and the end.</p>
       <button class="btn ghost sm" id="endearly" style="width:auto; margin-top:24px;">End early</button>
@@ -2697,7 +2697,7 @@ function completeGuided() {
   app.innerHTML = `
     <div class="fade-in">
       <div class="center" style="padding-top:24px;">
-        <div style="font-size:2.2rem;">${esc(getDomain('emotion_regulation').icon)}</div>
+        <div style="font-size:2.2rem;">${getDomain('emotion_regulation').icon}</div>
         <h2 style="font-size:1.15rem; margin-top:8px;">Practice complete</h2>
         <p class="muted small" style="max-width:32ch; margin:8px auto 0;">${esc(closingLineFor(m, r))}</p>
       </div>

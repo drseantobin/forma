@@ -251,6 +251,13 @@ button { font-family: inherit; cursor: pointer; }
 
 .radarwrap { display:grid; place-items:center; padding: 8px 0; }
 
+/* Domain glyphs are inline SVGs (currentColor, theme/state aware). Sized in em so the
+   many inline font-size overrides on their wrappers still scale them; vertical-aligned
+   to sit on the text baseline like the emoji they replaced. */
+.dico { width:1.15em; height:1.15em; vertical-align:-.16em; flex:none; }
+.ico .dico { width:1.4em; height:1.4em; vertical-align:middle; }
+.domain-row .ico .dico { width:1.45rem; height:1.45rem; color:var(--ink-soft); }
+
 .domain-list { display:flex; flex-direction:column; gap:10px; }
 .domain-row { display:flex; align-items:center; gap:12px; }
 .domain-row .ico { font-size:1.3rem; width:1.6rem; text-align:center; }

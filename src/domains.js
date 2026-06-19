@@ -139,6 +139,36 @@ export const INTERIOR_DOMAIN = {
   optional: true,
 };
 
+// Inline-SVG stroke icons (24px grid, single 1.6 weight, round joins, currentColor)
+// for each domain — one coherent geometric set replacing the emoji, so the glyphs are
+// crisp, consistent, and theme/state aware (they inherit the surrounding text color and
+// flip in dark mode for free). Inner markup only; domainIconSvg() wraps it.
+export const DOMAIN_ICON_PATHS = {
+  attention: '<circle cx="12" cy="12" r="7.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="1.6"/>',
+  memory: '<path d="M12 4 4 8l8 4 8-4-8-4Z"/><path d="M4 12l8 4 8-4"/><path d="M4 16l8 4 8-4"/>',
+  reading: '<path d="M12 6.5C9.5 5 6.5 5 4 5.6V18c2.5-.6 5.5-.6 8 1 2.5-1.6 5.5-1.6 8-1V5.6C17.5 5 14.5 5 12 6.5Z"/><path d="M12 6.5V19"/>',
+  persistence: '<path d="M3 18.5 9 7l3.5 6 2-3.2 6.5 8.7Z"/>',
+  judgment: '<path d="M12 4v16"/><path d="M6.5 20h11"/><path d="M4.5 8h15"/><path d="M4.5 8 2.5 13a2.5 2.5 0 0 0 4 0Z"/><path d="M19.5 8l-2 5a2.5 2.5 0 0 0 4 0Z"/>',
+  ai_autonomy: '<circle cx="12" cy="12" r="9"/><path d="M15.6 8.4 13 13l-4.6 2.6L11 11Z"/>',
+  presence: '<circle cx="9" cy="8.5" r="2.6"/><circle cx="16.5" cy="9.5" r="2"/><path d="M4 18c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/><path d="M14.5 15.5c.6-1.3 2-2 3.5-2 2 0 3.5 1.3 3.5 3.2"/>',
+  communication: '<path d="M4 6h13a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H9l-3.5 3V7a1 1 0 0 1 1-1Z"/><circle cx="9" cy="10" r=".7"/><circle cx="12.5" cy="10" r=".7"/><circle cx="16" cy="10" r=".7"/>',
+  emotion_regulation: '<path d="M3 9.5c2-2.2 4-2.2 6 0s4 2.2 6 0 4-2.2 6 0"/><path d="M3 14.5c2-2.2 4-2.2 6 0s4 2.2 6 0 4-2.2 6 0"/>',
+  values: '<path d="M12 21v-7"/><path d="M12 14c0-3.5 2.2-6 6-6.5-.3 4-2.6 6.3-6 6.5Z"/><path d="M12 14c0-2.8-1.8-4.8-5-5.3.4 3.3 2.2 5 5 5.3Z"/>',
+  interior: '<path d="M12 3c2.5 3 4 4.8 4 8a4 4 0 0 1-8 0c0-2.2 1-3.5 2.2-4.4.3 1.3 1 2 2 2.4-.2-2.4-1-4.2-.2-6Z"/>',
+};
+
+// Wrap a domain's icon paths in an inline SVG. Default class 'dico' (sized in em by CSS,
+// so existing font-size overrides still scale it). Used everywhere a domain glyph renders.
+export function domainIconSvg(id, opts = {}) {
+  const paths = DOMAIN_ICON_PATHS[id];
+  if (!paths) return '';
+  const cls = opts.class || 'dico';
+  return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+}
+
+// Swap each domain's render glyph from emoji to its SVG — one consistent set, no emoji.
+[...DOMAINS, INTERIOR_DOMAIN].forEach((d) => { if (DOMAIN_ICON_PATHS[d.id]) d.icon = domainIconSvg(d.id); });
+
 // Domains that have an objective in-app measure vs. those formed through
 // reflection (the "soft" capacities Forma is careful NOT to fake-test).
 export const OBJECTIVE_DOMAINS = ['attention', 'memory', 'reading', 'judgment'];
