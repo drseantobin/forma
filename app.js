@@ -3510,23 +3510,31 @@ function renderReview() {
   document.getElementById('back').onclick = () => go('home');
   document.getElementById('reviewdone').onclick = () => go('home');
   // Keep = the null action, made deliberate: settle the row, change nothing (the commitment stays).
+  // Announce + keep focus on the confirmation in place (the activated button is replaced), so
+  // screen-reader/keyboard users get feedback and don't drop to <body> — the app's a11y standard.
   app.querySelectorAll('[data-rev-keep]').forEach((b) => {
     b.onclick = () => {
       const row = b.closest('.reviewrow');
       const acts = row && row.querySelector('.reviewacts');
-      if (acts) acts.innerHTML = '<span class="muted small">Keeping this — carried into the week ✓</span>';
+      if (acts) {
+        acts.innerHTML = '<span class="muted small" tabindex="-1">Keeping this — carried into the week ✓</span>';
+        const span = acts.querySelector('span'); if (span && span.focus) span.focus();
+      }
+      announce('Keeping this commitment — carried into the week.');
     };
   });
   // Adjust = edit it in place on Home (reuses the existing inline goal-edit; no duplicate UI).
   app.querySelectorAll('[data-rev-adjust]').forEach((b) => {
     b.onclick = () => { state._editGoal = b.dataset.revAdjust; go('home'); };
   });
-  // Retire = remove it (reuses Profile.removeGoal); re-render the review without it.
+  // Retire = remove it (reuses Profile.removeGoal); re-render the review without it. The row is
+  // gone, so restore focus to a stable place — matching the commitments delete pattern (no body-drop).
   app.querySelectorAll('[data-rev-retire]').forEach((b) => {
     b.onclick = () => {
       state.profile = Profile.removeGoal(state.profile, b.dataset.revRetire);
       save(); render();
       announce('Commitment retired.');
+      focusViewHeading();
     };
   });
 }
