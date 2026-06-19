@@ -4226,6 +4226,45 @@ function progressRow(id) {
 }
 
 // ---------------- coach ----------------
+// The coach ORIGINATES a commitment (v249): pick a measured, NON-interior capacity that has
+// genuinely slipped lately and has NO open commitment — so the cold open can OFFER to start one.
+// Honesty (forma-validity v249): the trend EARNS the chip but never appears in its copy (no "you
+// dipped" verdict in the user's own voice). domainTrend's 'down' is endpoint-only (first vs latest),
+// so compensate: require the LATEST reading to sit below the earlier mean AND not be a recovery
+// step, and exclude provisional/frozen scales (a dip there is sampling noise or an emptying bank,
+// not the person). Suppress a capacity touched by a commitment in the last 14 days (re-originating
+// right after a lapse reads as nagging). Returns a capacity id, or null.
+function originableCapacity(p) {
+  const today = todayStr();
+  const open = new Set((p.goals || []).filter((g) => g && !g.done).map((g) => g.domain));
+  const recentlyTouched = new Set();
+  (p.goals || []).forEach((g) => {
+    if (!g || !g.domain) return;
+    const created = g.createdAt ? daysBetween(String(g.createdAt).slice(0, 10), today) : Infinity;
+    const ck = Array.isArray(g.checkins) ? g.checkins : [];
+    const lastKept = ck.length ? daysBetween(ck[ck.length - 1], today) : Infinity;
+    if ((created >= 0 && created <= 14) || (lastKept >= 0 && lastKept <= 14)) recentlyTouched.add(g.domain);
+  });
+  const ids = activeDomainIds(p.settings && p.settings.faithTrack)
+    .filter((id) => id !== 'interior' && !open.has(id) && !recentlyTouched.has(id));
+  let best = null;
+  for (const id of ids) {
+    const t = domainTrend(p.history || [], id);
+    if (!t || t.first == null || t.direction !== 'down') continue;
+    const pts = t.points || [];
+    if (pts.length < 3) continue;
+    const latest = pts[pts.length - 1];
+    const prev = pts[pts.length - 2];
+    const earlier = pts.slice(0, -1);
+    const mean = earlier.reduce((a, b) => a + b, 0) / earlier.length;
+    if (!(latest < mean - 2 && latest <= prev)) continue; // recent readings genuinely below earlier ones — not a first-vs-last artifact or a recovery
+    const conf = confidence(p, id);
+    if (conf.level === 'provisional' || conf.frozen) continue; // need >=building, never an emptying bank
+    if (!best || t.delta < best.delta) best = { id, delta: t.delta };
+  }
+  return best ? best.id : null;
+}
+
 function renderCoach() {
   const p = state.profile;
   const live = Coach.hasKey(p);
@@ -4236,10 +4275,18 @@ function renderCoach() {
   const focus = Planner.focusForToday(p) || recommendFocus(p);
   const fname = getDomain(focus) ? getDomain(focus).name.toLowerCase() : null;
   const starters = log.length ? [] : [
-    'Where should I focus right now?',
-    fname ? `How do I grow my ${fname}?` : 'How do I grow a capacity?',
-    'What’s one small step I could take this week?',
+    { label: 'Where should I focus right now?' },
+    { label: fname ? `How do I grow my ${fname}?` : 'How do I grow a capacity?' },
+    { label: 'What’s one small step I could take this week?' },
   ];
+  // Coach ORIGINATES a commitment: if a measured capacity has genuinely slipped and has no
+  // commitment, OFFER (opt-in) to start one. The chip copy is generic + growth-framed; the
+  // capacity is named ONLY in the message it sends, inside the conversation the person chooses
+  // to start — so the cold-open screen never displays a "you dipped" verdict (forma-validity v249).
+  const originId = log.length ? null : originableCapacity(p);
+  if (originId) {
+    starters.unshift({ label: 'Help me pick one capacity to commit to.', send: `Help me set one small commitment for my ${getDomain(originId).name}.` });
+  }
   app.innerHTML = `
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">Coach</h1><span class="spacer"></span>
@@ -4248,7 +4295,7 @@ function renderCoach() {
       <div class="chat" id="chat" role="log" aria-live="polite">
         ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">${esc(Coach.coachGreeting(p))}</div>`}
       </div>
-      ${starters.length ? `<div id="starters" class="chiprow" style="margin:2px 0 10px;">${starters.map((s) => `<button class="chip starter" data-p="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
+      ${starters.length ? `<div id="starters" class="chiprow" style="margin:2px 0 10px;">${starters.map((c) => `<button class="chip starter" data-p="${esc(c.send || c.label)}">${esc(c.label)}</button>`).join('')}</div>` : ''}
       <div class="composer">
         <button class="btn amber" id="cmic" aria-label="Dictate your message" style="padding:12px 14px;">${micGlyph}</button>
         <input id="ci" placeholder="Ask your coach…" autocomplete="off" aria-label="Message your coach" />
