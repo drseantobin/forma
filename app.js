@@ -1015,7 +1015,7 @@ function wireGrowthCommit() {
   app.querySelectorAll('.growcommit').forEach((b) => {
     const dom = b.getAttribute('data-gd');
     const title = b.getAttribute('data-gt');
-    const settle = (label) => { b.textContent = label; b.setAttribute('aria-label', `“${title}” — ${label.replace(' ✓', '')}`); b.disabled = true; b.classList.add('committed'); };
+    const settle = (label) => { b.textContent = label; b.setAttribute('aria-label', `“${title}” — ${label.replace(' ✓', '')}`); b.setAttribute('aria-disabled', 'true'); b.onclick = null; b.classList.add('committed'); };
     // Already committed — match the bare title OR a plan composed from it (see composeCommitment).
     const has = (state.profile.goals || []).some((g) => !g.done && commitmentMatches(g.text, title));
     if (has) { settle('In your commitments ✓'); return; }
@@ -1068,6 +1068,9 @@ function openCommitPlan(btn, dom, title, settle) {
     form.remove();
     btn.style.display = '';
     settle('Added to commitments ✓');
+    announce('Added to your commitments.'); // SR feedback — committing was silent before (a11y standard)
+    if (btn.focus) btn.focus();             // the form (with the activated button) was removed; return
+                                            // focus to the now-committed button instead of dropping to <body>
   };
   form.querySelector('.cue-save').onclick = () => finish(composeCommitment(input.value, title));
   form.querySelector('.cue-skip').onclick = () => finish(title);
