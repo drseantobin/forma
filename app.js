@@ -1158,7 +1158,7 @@ function wireCommitments() {
 // how to grow it) and DIRECT (Train it now), rather than jumping straight into a session.
 function wireDomainLinks() {
   app.querySelectorAll('[data-domain]').forEach((el) => {
-    const fire = () => { state.focusDomain = el.dataset.domain; go('domain'); };
+    const fire = () => { state.focusDomainFrom = state.route; state.focusDomain = el.dataset.domain; go('domain'); };
     el.onclick = fire;
     el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); } };
   });
@@ -1186,6 +1186,9 @@ function renderDomainDetail() {
   const score = p.domainScores ? p.domainScores[id] : null;
   const band = score != null ? bandFor(score) : null;
   const basis = basisFor(id);
+  // Return to wherever the person opened this from (Home or Progress) — not always Progress.
+  const from = state.focusDomainFrom === 'home' ? 'home' : 'progress';
+  const fromLabel = from === 'home' ? 'Home' : 'Progress';
   // Honest per-capacity trajectory: the person's OWN measured scores over time (not a
   // validated trait line). Only shown once there are ≥2 points; framed "never a verdict".
   const t = domainTrend(p.history || [], id);
@@ -1199,7 +1202,7 @@ function renderDomainDetail() {
       </div>` : '';
   app.innerHTML = `
     <div class="fade-in">
-      ${viewHead('Capacity', d.name, d.short, '<button class="btn ghost sm" id="back" style="width:auto;">← Progress</button>')}
+      ${viewHead('Capacity', d.name, d.short, `<button class="btn ghost sm" id="back" style="width:auto;">← ${fromLabel}</button>`)}
 
       <div class="card index-hero" style="padding: var(--s4) 0 var(--s3);">
         ${score != null
@@ -1228,7 +1231,7 @@ function renderDomainDetail() {
       <button class="btn amber" id="train">Train it now →</button>
       <p class="muted small center" style="margin-top:10px;">A few minutes. Formation, measured over weeks — never a verdict.</p>
     </div>`;
-  document.getElementById('back').onclick = () => go('progress');
+  document.getElementById('back').onclick = () => go(from);
   document.getElementById('train').onclick = () => startDomainSession(id);
   wireGrowthCommit();
 }
