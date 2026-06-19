@@ -1323,7 +1323,8 @@ function sessionHeader(ex) {
   return `<div class="exercise-head"><span class="tagchip">${esc(typeLabel)}</span>
     <span class="modechip ${mode}" title="${esc(modeTitle)}">${mode === 'practice' ? 'Practice' : 'Measure'}</span>
     <span class="muted small">${d.icon} ${esc(d.name)}</span></div>
-    <h2>${esc(ex.title)}</h2>`;
+    <h2>${esc(ex.title)}</h2>
+    <p class="muted small" style="margin:2px 0 10px;">${mode === 'practice' ? 'Building' : 'Measuring'} <strong>${esc(d.name)}</strong>${d.short ? ` — ${esc(d.short.toLowerCase())}` : ''}.</p>`;
 }
 
 function renderReading() {
