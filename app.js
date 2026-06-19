@@ -232,7 +232,12 @@ function render() {
     // science or try a tool instead of being bounced into setup (the "blank science page"
     // bug: tapping View → from Settings used to land on onboarding). Everything else → setup.
     const PRE_OK = ['coach', 'settings', 'tools', 'methods', 'team', 'domain', 'epistemiccheck', 'calibration', 'breathcount', 'svt'];
-    if (PRE_OK.includes(state.route)) renderRoute();
+    // The Today and Progress tabs would otherwise fall through to renderOnboarding and just
+    // repeat the Home/welcome screen for a brand-new visitor. Give each its OWN first-time
+    // invitation instead (Today → the quick check; Progress → a skill to track).
+    if (state.route === 'session') renderTodayIntro();
+    else if (state.route === 'progress') renderProgressIntro();
+    else if (PRE_OK.includes(state.route)) renderRoute();
     else renderOnboarding();
     drawRing(); return;
   }
@@ -1491,6 +1496,69 @@ function renderDomainDetail() {
   const tl = document.getElementById('tolens');
   if (tl) tl.onclick = () => go('lens');
   wireGrowthCommit();
+}
+
+// Begin the Likert quick check (baseline) from anywhere — used by the first-time Today/Progress
+// invitations below. Mirrors the welcome screen's #start handler (onboard.step → 1), but first
+// returns the route to home so render() reaches renderOnboarding (session/progress have their own
+// first-time intros and would otherwise re-render the intro instead of the check).
+function startQuickCheck() {
+  state.route = 'home';
+  state.onboard.step = 1;
+  render();
+}
+
+// First-time "Today" tab. A brand-new visitor hasn't done the quick check, so the daily session
+// can't run yet — but Today shouldn't just echo the welcome screen. Give it its own door: this is
+// where the daily practice lives, and it opens with the quick check.
+function renderTodayIntro() {
+  const mins = Math.max(3, Math.round(BASELINE_ITEMS.length * 7 / 60));
+  app.innerHTML = `
+    <div class="fade-in">
+      ${viewHead('Today', 'Your daily practice', 'A few focused minutes a day — the rep that builds what AI can’t keep for you.')}
+      <div class="card" style="border-left:4px solid var(--accent);">
+        <p style="margin:0 0 10px; line-height:1.55;">This is where your day in Forma happens: one short, guided practice, chosen for where you are. It hasn’t started yet — Forma first needs a sense of your starting point.</p>
+        <p class="muted small" style="margin:0;">That’s the quick check — a few honest self-ratings across the capacities. No right answers, never a diagnosis; just a baseline so you can watch yourself move.</p>
+      </div>
+      <button class="btn amber" id="beginqc">Start the quick check · ~${mins} min →</button>
+      <button class="btn ghost" id="trytool" style="margin-top:10px;">Or just try a practice now →</button>
+      <p class="muted small center" style="margin-top:10px;">Explore freely first — the quick check is what unlocks your daily session.</p>
+    </div>`;
+  document.getElementById('beginqc').onclick = startQuickCheck;
+  document.getElementById('trytool').onclick = () => go('tools');
+}
+
+// First-time "Progress" tab. No baseline yet → no trajectory to chart. Rather than repeat Home,
+// show WHAT can be tracked (the capacities) as a tappable preview, and point to the quick check
+// that starts the measuring. (Sean: invite them to "a skill to track.")
+function renderProgressIntro() {
+  const ids = activeDomainIds(state.onboard.faithTrack);
+  const rows = ids.map((id) => {
+    const d = getDomain(id);
+    if (!d) return '';
+    return `
+      <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="${esc(d.name)} — what it is and how to grow it">
+        <span class="ico">${d.icon}</span>
+        <div class="meta">
+          <div class="dn">${esc(d.name)}</div>
+          <div class="muted small">${esc(d.short)}</div>
+        </div>
+        <span class="chev" aria-hidden="true">›</span>
+      </div>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="fade-in">
+      ${viewHead('Progress', 'What you’ll track', 'Over weeks this becomes the picture of how you’re changing — capacity by capacity.')}
+      <div class="card" style="border-left:4px solid var(--accent);">
+        <p style="margin:0 0 6px; line-height:1.55;">There’s nothing to chart yet — your trajectory starts the moment you do. These are the capacities Forma can help you track. Tap one to see what it is and why it matters.</p>
+        <p class="muted small" style="margin:0;">Pick the one that pulls at you, or start with the quick check and let Forma find your edge.</p>
+      </div>
+      <div class="card" style="padding:6px;">${rows}</div>
+      <button class="btn amber" id="beginqc">Start the quick check →</button>
+      <p class="muted small center" style="margin-top:10px;">The quick check sets your baseline — then every session moves these scales.</p>
+    </div>`;
+  document.getElementById('beginqc').onclick = startQuickCheck;
+  wireDomainLinks();
 }
 
 // The "Today" landing — a calm runway before the session, not a cold start.
