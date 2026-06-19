@@ -2967,6 +2967,21 @@ function emptyState(line) {
   </div>`;
 }
 
+// Cold-start placeholder for the Formation Index trajectory: instead of a bare dashed
+// pill, show the SHAPE of the instrument that's coming — a faint baseline axis + a soft
+// dashed ghost line in the SAME 320×60 frame as the real sparkline. The ghost is
+// directionally NEUTRAL (gently undulating, not rising) so it promises a line, not a
+// guaranteed gain (honesty contract). aria-hidden; the copy carries the meaning.
+function trajectoryPlaceholder(line) {
+  return `<div class="trajempty">
+    <svg viewBox="0 0 320 60" width="100%" class="trajghost" aria-hidden="true">
+      <line x1="0" y1="52" x2="320" y2="52" stroke="var(--line)" stroke-width="1.5"/>
+      <path d="M0 38 C 60 30, 110 44, 160 36 S 262 28, 320 33" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 7" opacity=".5"/>
+    </svg>
+    <p class="muted small" style="margin:6px 0 0;">${esc(line)}</p>
+  </div>`;
+}
+
 function renderProgress() {
   const p = state.profile;
   const fi = formationIndex(p.domainScores);
@@ -2985,7 +3000,7 @@ function renderProgress() {
           return ic.thin ? `<p class="muted small" style="margin:4px 0 0;">${esc(ic.note)}</p>` : '';
         })()}
         ${idxPts.length < 2
-          ? emptyState('Your trajectory appears here after a few sessions. Formation is measured over weeks, not in a day — there’s nothing to catch up on.')
+          ? trajectoryPlaceholder('Your trajectory appears here after a few sessions. Formation is measured over weeks, not in a day — there’s nothing to catch up on.')
           : `<svg viewBox="0 0 320 60" width="100%" style="margin-top:8px;">
           <path d="${sparklinePath(idxPts, 320, 60, 6)}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>

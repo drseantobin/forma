@@ -394,6 +394,9 @@ button { font-family: inherit; cursor: pointer; }
 .goaledit-input { flex:1; }
 /* Calm cold-start empty state — a gentle placeholder, never a broken-looking blank. */
 .emptystate { display:flex; align-items:center; gap:12px; margin-top:8px; padding:14px 16px; border:1px dashed var(--line); border-radius:12px; background:transparent; }
+/* Trajectory cold-start: the instrument's frame, faint, so the shape is legible. */
+.trajempty { margin-top:8px; }
+.trajghost { display:block; }
 .goaladd summary { list-style:none; cursor:pointer; }
 .goaladd summary::-webkit-details-marker { display:none; }
 .goaladd-body input[type="text"] { width:100%; }
