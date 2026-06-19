@@ -355,7 +355,7 @@ function renderOnboarding() {
         </div>
         <p class="muted small center" style="margin-top:12px;">The quick check is ${BASELINE_ITEMS.length} honest ratings across your capacities — a short self-assessment that works offline. The conversation is an adaptive interview that writes your profile — it uses your own AI key (any provider), so it stays yours.</p>
         <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
-          <span style="font-size:1.3rem;">🕊️</span>
+          ${uiIcon('dove')}
           <div style="flex:1;">
             <div style="font-weight:600; font-size:.95rem;">Spiritual Life track <span class="muted small">· optional</span></div>
             <div class="muted small">Bring prayer, silence, and the spiritual life into your formation — tended alongside the rest, kept private, and never shown to anyone but you.</div>
@@ -738,6 +738,15 @@ const UI_ICON = {
   spark: '<path d="M12 4l1.7 4.6L18 10l-4.3 1.4L12 16l-1.7-4.6L6 10l4.3-1.4Z"/>',
   ember: '<path d="M12 8c.5 1.7 1.5 2.6 2.2 3.6a3.4 3.4 0 1 1-5.6 1.2c.3.5.8.8 1.4.9C9.6 11.9 10.4 10.2 12 8Z"/>',
   bolt: '<path d="M13 3 5 13h5l-1 8 8-10h-5l1-8Z"/>',
+  // Remaining chrome glyphs, brought into the one stroke set (dove=faith, save=backup,
+  // mail=contact, buoy=grace day, check=done, pencil/trash=goal actions).
+  dove: '<path d="M21 7c-2 0-3.6 1-4.7 2.6C15 12 12.6 13 9.6 13 7 13 5 12 3.5 10c.3 4.4 3.7 7.6 8.1 7.6 3.9 0 6.8-2.4 7.9-5.5.8-.2 1.4-.8 1.7-1.7.3-1 .2-2.2-.7-3.4Z"/><path d="M9.6 13 8 17.4"/>',
+  save: '<path d="M5 5h11l3 3v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/><path d="M8 5v4h6V5"/><rect x="8" y="13" width="8" height="6"/>',
+  mail: '<rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="M4 7.5l8 5.5 8-5.5"/>',
+  buoy: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/><path d="M12 3.5v5M12 15.5v5M3.5 12h5M15.5 12h5"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+  pencil: '<path d="M4 20h4L18 10l-4-4L4 16v4Z"/><path d="M13.5 6.5l4 4"/>',
+  trash: '<path d="M5 7h14M10 7V5h4v2M6.5 7l1 12.5h9L17.5 7"/>',
 };
 function uiIcon(name, cls) {
   const p = UI_ICON[name];
@@ -905,7 +914,7 @@ function backupNudgeCard(p) {
   const daysSince = last ? daysBetween(String(last).slice(0, 10), now) : Infinity;
   if (daysSince < 30) return '';
   return `<div class="card" id="backupnudge" style="border-left:4px solid var(--amber);">
-    <div class="row"><span style="font-size:1.2rem;">💾</span>
+    <div class="row">${uiIcon('save')}
       <div style="flex:1;"><strong>Keep a backup of your data</strong>
         <p class="muted small" style="margin:2px 0 0;">${last ? 'It’s been a while since your last backup.' : 'Your formation lives on this device — a quick export means a cleared browser can’t erase it.'}</p></div></div>
     <div class="row" style="gap:8px; margin-top:10px;">
@@ -942,7 +951,7 @@ function weekStripCard(p) {
       <div style="flex:1; text-align:center;">
         <div class="muted small" style="font-size:.65rem;">${dow}</div>
         <div style="margin-top:4px; height:38px; border-radius:10px; border:1px solid var(--line); ${ring} background:${bg}; display:grid; place-items:center; font-size:1.1rem;">
-          ${d.done ? '✓' : getDomain(d.domain).icon}
+          ${d.done ? uiIcon('check', 'dico') : getDomain(d.domain).icon}
         </div>
       </div>`;
   }).join('');
@@ -1280,8 +1289,8 @@ function commitmentsCard(p) {
         <button class="goalcheck ${done ? 'on' : ''}" data-track="${esc(g.id)}" aria-pressed="${done}" aria-label="${done ? 'Kept today — tap to undo' : 'Mark kept today'}: “${esc(g.text)}”">${done ? '✓' : '○'}</button>
         <span class="ico" aria-hidden="true">${d ? d.icon : '•'}</span>
         <span class="goaltext">${esc(g.text)}${n ? ` <span class="goalkept muted small">· kept ${n}×</span>` : ''}</span>
-        <button class="goalicon" data-edit="${esc(g.id)}" aria-label="Edit “${esc(g.text)}”">✏️</button>
-        <button class="goalicon" data-del="${esc(g.id)}" aria-label="Delete “${esc(g.text)}”">🗑️</button>
+        <button class="goalicon" data-edit="${esc(g.id)}" aria-label="Edit “${esc(g.text)}”">${uiIcon('pencil', 'miniico')}</button>
+        <button class="goalicon" data-del="${esc(g.id)}" aria-label="Delete “${esc(g.text)}”">${uiIcon('trash', 'miniico')}</button>
       </div>
       <div class="goalcoping">
         ${c ? `<p class="copingread muted small">If ${esc(c.when)}, I’ll ${esc(c.then)}.</p>` : ''}
@@ -1506,7 +1515,7 @@ function renderDomainDetail() {
     <div class="fade-in">
       ${viewHead('Capacity', d.name, d.short, `<button class="btn ghost sm" id="back" style="width:auto;">← ${fromLabel}</button>`)}
 
-      <div class="card index-hero" style="padding: var(--s4) 0 var(--s3);">
+      <div class="card index-hero">
         ${score != null
           ? `${indexRing(score, { label: d.name })}<div class="index-label">${esc(band.label)}</div>`
           : '<p class="muted" style="margin:8px 0;">Not measured yet — train it to see where you stand.</p>'}
@@ -3499,7 +3508,7 @@ async function completeSession() {
          </div>`
       : (graced
         ? `<div class="milestone" role="status" style="--mile:var(--amber)">
-             <div class="mile-rule">🛟 Grace day</div>
+             <div class="mile-rule">${uiIcon('buoy', 'binline')} Grace day</div>
              <div class="mile-head">Your ${profile.streak.current}-day streak held</div>
              <div class="mile-note">You missed a day and came back — that's the harder rep. The streak doesn't count the gap, but it didn't break either. Grace is spent now; show up tomorrow and it's restored.</div>
            </div>`
@@ -4895,7 +4904,7 @@ function renderSettings() {
 
       <div class="card">
         <div class="row">
-          <span style="font-size:1.3rem;">🕊️</span>
+          ${uiIcon('dove')}
           <div style="flex:1;">
             <h2 style="font-size:1.05rem; margin:0;">Spiritual Life track</h2>
             <p class="muted small" style="margin:2px 0 0;">Optional, faith-based. Adds a spiritual-formation scale, daily reflections, and a contemplative-silence practice. Kept private — never shown to any employer view.</p>
@@ -4970,7 +4979,7 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row"><span style="font-size:1.3rem;">✉️</span>
+        <div class="row">${uiIcon('mail')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Reminders &amp; encouragement</h2>
             <p class="muted small" style="margin:2px 0 0;">Optional. Reminders aren’t built yet — opt in now and your email is stored <strong>only on this device</strong> (it’s never sent anywhere), so Forma can reach you once they ship, and only for that. This is separate from the anonymous research data and is never linked to it. Remove it anytime.</p>
           </div>

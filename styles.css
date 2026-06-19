@@ -203,6 +203,9 @@ button { font-family: inherit; cursor: pointer; }
 }
 /* Inline chip glyph — em-sized, no own margin (the chip's gap handles spacing). */
 .chipico { width:1.05em; height:1.05em; flex:0 0 auto; }
+/* Small icon-button glyph (goal edit/delete) — inherits the button's ink so .goalicon's
+   opacity dims it; no accent tint. */
+.miniico { width:1.1rem; height:1.1rem; display:block; }
 .streakchip.cold { background: var(--line); color: var(--ink-faint); }
 /* A streak that has never started yet (brand-new user) — invite, don't scold.
    Warm growth-green, not the grey "cold/relight it" branch a lapse would get. */
