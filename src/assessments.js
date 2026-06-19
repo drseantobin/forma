@@ -53,11 +53,13 @@ export const BASELINE_ITEMS = [
   { id: 'jud3', domain: 'judgment', reverse: false, text: 'I can tell the difference between a confident claim and a well-supported one.' },
   { id: 'jud4', domain: 'judgment', reverse: true, text: 'I accept answers that sound right without checking the reasoning.' },
 
-  // AI Independence
-  { id: 'ai1', domain: 'ai_autonomy', reverse: false, text: 'I choose deliberately when to use AI and when to do the thinking myself.' },
-  { id: 'ai2', domain: 'ai_autonomy', reverse: true, text: 'I reach for AI for tasks I could easily do on my own.' },
-  { id: 'ai3', domain: 'ai_autonomy', reverse: false, text: 'I can complete meaningful work without AI assistance when I want to.' },
-  { id: 'ai4', domain: 'ai_autonomy', reverse: true, text: 'I feel uneasy or stuck starting hard work without an AI to help.' },
+  // Agency — staying the author, not abstaining: intentional reliance, active shaping
+  // of the tool's output (agentic engagement, Reeve 2013), authorship, and the absence
+  // of dependence. Item ids kept stable (ai1–ai4) for longitudinal continuity.
+  { id: 'ai1', domain: 'ai_autonomy', reverse: false, text: 'I decide deliberately when to lean on AI and when to do the thinking myself.' },
+  { id: 'ai2', domain: 'ai_autonomy', reverse: true, text: 'I tend to accept what AI gives me without questioning or reshaping it.' },
+  { id: 'ai3', domain: 'ai_autonomy', reverse: false, text: 'When AI helps with my work, the direction and the important calls still come from me.' },
+  { id: 'ai4', domain: 'ai_autonomy', reverse: true, text: 'I feel stuck starting hard work without an AI to lean on.' },
 
   // Relational Presence
   { id: 'pre1', domain: 'presence', reverse: false, text: 'In conversation I give people my full attention, phone away.' },

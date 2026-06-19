@@ -27,8 +27,8 @@ export const MEASURE_BASIS = {
     detail: 'Reasoning under a pull toward the wrong answer (CRT), pattern completion with no instructions (fluid reasoning, the Raven’s tradition), and structured decision scenarios scored on the quality of the reasoning, not just the choice.',
   },
   ai_autonomy: {
-    paradigm: 'Automation-engagement trade-off scenarios',
-    detail: 'Rather than measuring how much you use AI, these scenarios probe how deliberately you choose WHICH efforts to keep — the documented risk being skill atrophy when cognitive work is handed over by default rather than by decision.',
+    paradigm: 'Appropriate-reliance task + agentic-engagement self-report',
+    detail: 'Rather than measuring how much you use AI, a behavioral task gives you problems with verifiable answers and a sometimes-wrong AI assistant: it credits taking good help and, above all, holding your own judgment when the tool is confidently wrong (the appropriate-reliance paradigm, Schemmer et al. 2023), alongside self-report on how much you stay the author. An adaptation for formation, not a validated "AI-agency" test.',
   },
   presence: {
     paradigm: 'Situational judgment of relational attention + reflection',

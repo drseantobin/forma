@@ -2347,12 +2347,11 @@ export function pickExercise(targetDomain, opts = {}) {
     case 'presence':
       // Relational-presence situational measure first, then reflection.
       return notSeen(PRESENCE_SCENES.concat(REFLECTIONS.filter((r) => r.domain === targetDomain)));
-    case 'ai_autonomy':
-      // Agency: the behavioral appropriate-reliance task first, then the trade-off SJT,
-      // then reflection — every fallback still measures the capacity.
-      return notSeen(RELIANCE.concat(TRADEOFFS, REFLECTIONS.filter((r) => r.domain === targetDomain)));
     case 'persistence':
+    case 'ai_autonomy':
     case 'values':
+      // Agency's reliance task + trade-off SJT are served by the orchestrator's own
+      // rotation (it tracks recent types); this generic fallback rests on reflection.
       return notSeen(REFLECTIONS.filter((r) => r.domain === targetDomain));
     case 'interior':
       return notSeen(INTERIOR_REFLECTIONS);

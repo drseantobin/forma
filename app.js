@@ -1846,6 +1846,99 @@ function renderDecision() {
   }
 }
 
+// Agency — the behavioral appropriate-reliance task. For each problem: commit your
+// OWN answer, then an AI assistant weighs in (sometimes right, sometimes confidently
+// wrong), and you commit a final answer. Measures whether you stay the author —
+// taking good help, holding your ground against bad help (scoreReliance).
+function renderReliance() {
+  const s = state.session;
+  const ex = s.exercise;
+  const trials = ex.trials || [];
+
+  if (s.phase === 'reliance-intro') {
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <div class="card"><p style="margin:0; line-height:1.55;">${esc(ex.intro)}</p></div>
+        <button class="btn amber" id="begin">Begin →</button>
+      </div>`;
+    document.getElementById('begin').onclick = () => {
+      s.response = s.response || {};
+      s.response.trials = trials.map(() => ({ initial: null, final: null }));
+      s.phase = 'reliance-run'; s.rIdx = 0; s.rStage = 'initial';
+      render();
+    };
+    return;
+  }
+
+  if (s.phase === 'reliance-review') {
+    // One teaching screen: per problem, was the assistant right or wrong, what did you
+    // do, and the one-line why. This is where the agency lesson lands.
+    const rows = trials.map((t, i) => {
+      const r = s.response.trials[i] || {};
+      const finalCorrect = r.final === t.answer;
+      const overRel = !finalCorrect && t.ai && t.ai.correct === false && r.final === t.ai.suggestId;
+      const aiLabel = t.ai && t.ai.correct ? 'The assistant was right' : 'The assistant was wrong';
+      const verdict = finalCorrect
+        ? (t.ai && !t.ai.correct ? 'You held your own — good.' : 'You landed it.')
+        : (overRel ? 'You went with the assistant, and it was off.' : 'Not quite.');
+      const cls = finalCorrect ? 'correct' : 'wrong';
+      return `<div class="opt ${cls}" style="cursor:default; text-align:left;">
+        <div style="font-weight:600;">${esc(t.prompt)}</div>
+        <div class="muted small" style="margin-top:4px;">${esc(aiLabel)} · ${esc(verdict)}</div>
+        <div class="rationale">${esc(t.explain)}</div></div>`;
+    }).join('');
+    app.innerHTML = `
+      <div class="fade-in">
+        ${sessionHeader(ex)}
+        <p class="likert-q" style="font-size:1.05rem;">How the reliance went</p>
+        <div class="likert-opts">${rows}</div>
+        <button class="btn" id="fin" style="margin-top:16px;">Continue →</button>
+      </div>`;
+    document.getElementById('fin').onclick = completeSession;
+    return;
+  }
+
+  // run phase — one problem, two stages: 'initial' (your answer) then 'ai' (decide)
+  const i = s.rIdx;
+  const t = trials[i];
+  const r = s.response.trials[i];
+  const stage = s.rStage;
+  const chosen = stage === 'initial' ? r.initial : r.final;
+  const aiOpt = t.options.find((o) => o.id === t.ai.suggestId);
+  app.innerHTML = `
+    <div class="fade-in">
+      ${sessionHeader(ex)}
+      <p class="muted small">Problem ${i + 1} of ${trials.length}${stage === 'ai' ? ' · the assistant has weighed in' : ''}</p>
+      <p class="likert-q" style="font-size:1.05rem;">${esc(t.prompt)}</p>
+      ${stage === 'ai' ? `<div class="ai-suggest"><span class="ai-badge">AI assistant</span> suggests <strong>${esc(aiOpt ? aiOpt.text : '')}</strong></div>` : ''}
+      <div class="likert-opts">
+        ${t.options.map((o) => {
+          const sel = o.id === chosen;
+          const isAi = stage === 'ai' && o.id === t.ai.suggestId;
+          return `<button class="opt ${sel ? 'selected' : ''}${isAi ? ' ai-pick' : ''}" data-id="${o.id}" aria-pressed="${sel}">${esc(o.text)}</button>`;
+        }).join('')}
+      </div>
+      <button class="btn" id="lock" ${chosen == null ? 'disabled' : ''} style="margin-top:16px;">${stage === 'initial' ? 'Lock in my answer' : 'Lock in my final answer'}</button>
+      <p class="muted small center" style="margin-top:8px;">${stage === 'initial' ? 'Commit your own answer first — the assistant weighs in after.' : 'Keep your answer or change it. Your call.'}</p>
+    </div>`;
+  app.querySelectorAll('.opt').forEach((b) => b.onclick = () => {
+    if (stage === 'initial') r.initial = b.dataset.id; else r.final = b.dataset.id;
+    render();
+  });
+  document.getElementById('lock').onclick = () => {
+    if (stage === 'initial') {
+      if (r.final == null) r.final = r.initial; // pre-fill final with your own answer, so "keep it" needs no re-tap
+      s.rStage = 'ai';
+    } else if (i < trials.length - 1) {
+      s.rIdx = i + 1; s.rStage = 'initial';
+    } else {
+      s.phase = 'reliance-review';
+    }
+    render();
+  };
+}
+
 // "The Lure" — cognitive-reflection item. Answer, then see whether you overrode
 // the intuitive pull, with the bias named.
 function renderCRT() {
@@ -3972,7 +4065,7 @@ function renderTeam() {
 
       <div class="card">
         <div class="eyebrow">What "AI-readiness" means</div>
-        <p class="muted small" style="margin-top:6px;">A blend of Judgment, AI Independence, Deep Reading, and Communication — the capacities most associated with using AI as a tool of judgment rather than dependence. It's a development signal for growth, <strong>not a predictor of job performance and not a basis for hiring, ranking, or selection</strong> — and it isn't normed against a population.</p>
+        <p class="muted small" style="margin-top:6px;">A blend of Judgment, Agency, Deep Reading, and Communication — the capacities most associated with using AI as a tool of judgment rather than dependence. It's a development signal for growth, <strong>not a predictor of job performance and not a basis for hiring, ranking, or selection</strong> — and it isn't normed against a population.</p>
       </div>
 
       <div class="row no-print" style="gap:8px;">
@@ -4003,7 +4096,7 @@ function renderProof() {
       <p class="muted small">Day ${m.daysElapsed} of 90. These are the claims Forma is willing to be measured on — checked against your own data, not our marketing.</p>
 
       ${proofClaimCard('① Deeper reading comprehension', 'Sustained reading-comprehension retention should rise.', m.reading, m.daysElapsed, 'reading')}
-      ${proofClaimCard('② More independence from AI', 'You should reach for AI less for work you could do yourself.', m.aiIndependence, m.daysElapsed, 'ai_autonomy')}
+      ${proofClaimCard('② More agency with AI', 'You should stay more the author of your work — taking good help, holding your own judgment when the tool is wrong.', m.aiIndependence, m.daysElapsed, 'ai_autonomy')}
       ${proofFocusCard(m.focus, m.daysElapsed)}
 
       <p class="muted small center" style="margin-top:8px;">Projections are naive straight-line estimates from your current pace — shown to set a direction, not to promise a number.</p>

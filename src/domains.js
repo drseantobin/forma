@@ -67,14 +67,14 @@ export const DOMAINS = [
   },
   {
     id: 'ai_autonomy',
-    name: 'AI Independence',
-    short: 'Wise delegation, not dependence',
+    name: 'Agency',
+    short: 'Stay the author, even with the tools',
     icon: '🧭',
     color: '#6E8B3D',
     blurb:
-      'Using AI as a tool without surrendering the work that forms you — knowing what to delegate and what to keep doing yourself.',
+      'Remaining the intentional author of your work while you engage tools deeply — leaning on AI when it genuinely helps, holding your own judgment when it’s wrong, and shaping what it gives you rather than just accepting it.',
     aiRationale:
-      'The goal is not to avoid AI but to stay capable alongside it. Independence is the freedom to choose effort, not to have it quietly chosen for you.',
+      'The goal is not to use AI less but to stay the one deciding. Agency is calibrated reliance — taking good help, resisting confident-but-wrong help, and keeping authorship of the result.',
   },
   {
     id: 'presence',

@@ -11,7 +11,7 @@
 
 import { focusForToday } from './planner.js';
 import { recommendFocus } from './insights.js';
-import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS, makeFlankerExercise, makeSeriesExercise, makeSymmetrySpanExercise, MLQ_PRESENCE } from './exercises.js';
+import { pickExercise, makeNBackExercise, CRT, makeStreamExercise, makeContemplation, STAY, makeVigilanceExercise, VIGNETTES, TRADEOFFS, RELIANCE, makeMathFluency, makePursuitExercise, MAZE, SENTENCES, makeDigitSpan, MATRICES, STEM, COMM, PRESENCE_SCENES, STEU_ITEMS, makeFlankerExercise, makeSeriesExercise, makeSymmetrySpanExercise, MLQ_PRESENCE } from './exercises.js';
 import { recentSeenIds } from './profile.js';
 import { hasKey } from './coach.js';
 import { todayStr } from './progress.js';
@@ -102,7 +102,9 @@ export function chooseExercise(profile, opts = {}) {
   }
 
   if (focus === 'ai_autonomy') {
-    // "The Trade" scenario activity, alternated with a reflection.
+    // Agency: lead with the behavioral appropriate-reliance task (the real measure of
+    // staying the author with the tools), then the trade-off SJT, then a reflection.
+    if (!recentTypes.includes('reliance')) return pickFrom(RELIANCE, seen, rng);
     if (!recentTypes.includes('tradeoff')) return pickFrom(TRADEOFFS, seen, rng);
     return pickExercise('ai_autonomy', { seenIds: seen, rng });
   }
