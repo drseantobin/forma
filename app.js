@@ -520,7 +520,7 @@ function renderConversationalOnboarding() {
       <div class="chat" id="dchat">
         <div class="bubble coach">${esc(Diagnostic.OPENING)}</div>
         ${d.messages.map((m) => `<div class="bubble ${m.role === 'user' ? 'me' : 'coach'}">${esc(m.content)}</div>`).join('')}
-        ${d.busy ? '<div class="bubble coach typing">…</div>' : ''}
+        ${d.busy ? '<div class="bubble coach typing"><span class="typing-dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="sr-only">Coach is composing a reply</span></div>' : ''}
       </div>
       ${d.error ? `<p class="muted small" style="color:var(--red)">${esc(d.error)}</p>` : ''}
       ${canBuild
@@ -3877,7 +3877,16 @@ function appendBubble({ role, content, typing, assertive }) {
   // whatever a screen reader is already reading. role="alert" (assertive) makes
   // it interrupt and be spoken first — for a user in genuine distress.
   if (assertive) { div.setAttribute('role', 'alert'); div.setAttribute('aria-live', 'assertive'); }
-  div.textContent = content;
+  if (typing) {
+    // A calm, animated three-dot "composing" indicator — visually distinct from a real
+    // message (no italic ellipsis pretending to be text). The dots are aria-hidden so the
+    // polite chat log doesn't read them as content; a visually-hidden label (OUTSIDE the
+    // hidden group, or it'd be hidden too) states the status once. Decays to three static
+    // dots under reduced-motion — a recognizable "composing" glyph that still communicates.
+    div.innerHTML = '<span class="typing-dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="sr-only">Coach is composing a reply</span>';
+  } else {
+    div.textContent = content;
+  }
   chat.appendChild(div);
   // An explicit behavior:'smooth' overrides the CSS reduced-motion block (which
   // only governs the scroll-behavior property), so honor the preference in JS.

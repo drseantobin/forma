@@ -317,8 +317,19 @@ button { font-family: inherit; cursor: pointer; }
 .bubble { max-width: 86%; padding:12px 15px; border-radius:16px; white-space:pre-wrap; font-size:.97rem; }
 .bubble.coach { background: var(--card); border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:5px; }
 .bubble.me { background: var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:5px; }
-.bubble.typing { color: var(--ink-faint); font-style:italic; }
-.composer { position: sticky; bottom: 84px; display:flex; gap:8px; background: var(--bg); padding-top:8px; }
+/* Coach "composing" indicator — a calm three-dot breath (soft opacity + 2px lift, one
+   hue, no scale-pop), visually distinct from a real message. Decays to three static dots
+   under reduced-motion: a still glyph that still reads as "composing". */
+.bubble.typing { display:inline-flex; align-items:center; gap:5px; padding:14px 16px; min-height:0; }
+.typing-dots { display:inline-flex; gap:5px; }
+.bubble.typing .dot { width:7px; height:7px; border-radius:50%; background: var(--ink-faint); opacity:.45; animation: coachDot 1.25s ease-in-out infinite; }
+.bubble.typing .dot:nth-child(2) { animation-delay: .18s; }
+.bubble.typing .dot:nth-child(3) { animation-delay: .36s; }
+@keyframes coachDot { 0%, 80%, 100% { opacity:.30; transform: translateY(0); } 40% { opacity:.85; transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .bubble.typing .dot { animation: none; opacity:.5; } }
+/* Hairline above the composer so the scrolling log doesn't appear to slide under a
+   same-color bar (mirrors the tabbar's top border). */
+.composer { position: sticky; bottom: 84px; display:flex; gap:8px; background: var(--bg); padding-top:8px; border-top:1px solid var(--line); margin-top:4px; }
 .composer input { flex:1; border:1.5px solid var(--line); border-radius:999px; padding:12px 16px; font-size:1rem; font-family:inherit; }
 .composer .btn { width:auto; padding:12px 18px; }
 
