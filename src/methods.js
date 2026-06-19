@@ -61,7 +61,7 @@ export function basisFor(domainId) {
   return MEASURE_BASIS[domainId] || null;
 }
 
-// Standalone self-knowledge INSTRUMENTS (they live in Settings, not tied to one capacity domain).
+// Standalone self-knowledge INSTRUMENTS (they live in the Tools tab, not tied to one capacity domain).
 // Same ADAPTS-not-administers framing. Each names its validated paradigm + a citation so a thoughtful
 // person can see the basis of what they just did — Forma's whole credibility premise. Order = display order.
 export const INSTRUMENT_BASIS = [

@@ -461,7 +461,7 @@ button { font-family: inherit; cursor: pointer; }
   border-top:1px solid var(--line); padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
   max-width: var(--maxw); margin: 0 auto;
 }
-.tab { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; color: var(--ink-faint); font-size:.68rem; font-weight:600; padding:4px 10px; border-radius:12px; }
+.tab { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; color: var(--ink-faint); font-size:.66rem; font-weight:600; padding:4px 6px; border-radius:12px; }
 .tab .tab-ico { font-size:1.25rem; line-height:0; }
 /* SVG tab icons: fixed 23px, inherit the tab's currentColor (active=accent, else faint). */
 .tab .tab-ico svg { width:23px; height:23px; display:block; }

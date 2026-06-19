@@ -210,10 +210,12 @@ function render() {
   });
 
   if (!onboarded) {
-    // Before the baseline exists: Coach and Settings are usable; every other
-    // tab brings you into the short setup (which is "home" until it's done).
-    if (state.route === 'coach') renderCoach();
-    else if (state.route === 'settings') renderSettings();
+    // Before the baseline exists, these routes are safe AND useful — info pages and the
+    // standalone Tools practices that don't need a profile. So a new person can read the
+    // science or try a tool instead of being bounced into setup (the "blank science page"
+    // bug: tapping View → from Settings used to land on onboarding). Everything else → setup.
+    const PRE_OK = ['coach', 'settings', 'tools', 'methods', 'team', 'epistemiccheck', 'calibration', 'breathcount', 'svt'];
+    if (PRE_OK.includes(state.route)) renderRoute();
     else renderOnboarding();
     drawRing(); return;
   }
@@ -238,6 +240,7 @@ function renderRoute() {
     case 'calibration': return renderCalibration();
     case 'breathcount': return renderBreathCount();
     case 'svt': return renderSvt();
+    case 'tools': return renderTools();
     case 'coach': return renderCoach();
     case 'settings': return renderSettings();
     default: return renderHome();
@@ -3288,7 +3291,7 @@ function renderMethods() {
       <h2 style="font-size:1.05rem; margin:18px 0 8px;">The paradigm behind each measure</h2>
       ${rows}
       <h2 style="font-size:1.05rem; margin:18px 0 8px;">Self-knowledge instruments</h2>
-      <p class="muted small" style="margin:0 0 10px;">Optional checks in Settings, each adapted from an established research paradigm — the same honesty: a mirror you can see the basis of, never a verdict.</p>
+      <p class="muted small" style="margin:0 0 10px;">Optional checks in the Tools tab, each adapted from an established research paradigm — the same honesty: a mirror you can see the basis of, never a verdict.</p>
       ${INSTRUMENT_BASIS.map((b) => `<div class="card" style="margin-bottom:10px;">
         <div class="row"><span class="ico" aria-hidden="true">${b.icon}</span>
           <strong style="margin-left:8px;">${esc(b.name)}</strong></div>
@@ -3475,7 +3478,7 @@ function renderSvt() {
     </div>`;
     const h = document.getElementById('svthead'); if (h) h.focus();
     announce('Here is your deep-reading read.');
-    document.getElementById('svtdone').onclick = () => go('settings');
+    document.getElementById('svtdone').onclick = () => go('tools');
     return;
   }
 
@@ -3490,7 +3493,7 @@ function renderSvt() {
       <p class="muted small">Take the time you need. When you continue, the passage is put away and you’ll answer from memory.</p>
       <button class="btn" id="svtread">I’ve read it — put it away →</button>
     </div>`;
-    document.getElementById('back').onclick = () => go('settings');
+    document.getElementById('back').onclick = () => go('tools');
     document.getElementById('svtread').onclick = () => {
       const items = p.items.slice();
       for (let i = items.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = items[i]; items[i] = items[j]; items[j] = t; }
@@ -3515,7 +3518,7 @@ function renderSvt() {
         <button class="opt" data-yes="0">This is different, or wasn’t in the passage</button>
       </div>
     </div>`;
-  document.getElementById('back').onclick = () => go('settings');
+  document.getElementById('back').onclick = () => go('tools');
   app.querySelectorAll('.opt[data-yes]').forEach((b) => {
     b.onclick = () => {
       s.trials.push({ same: item.same, yes: b.dataset.yes === '1' });
@@ -3543,7 +3546,7 @@ function renderBreathCount() {
     app.innerHTML = `
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">Breath counting</h1><span class="spacer"></span>
-        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>
+        <button class="btn ghost sm" id="back" style="width:auto;">← Tools</button></div>
       <div class="card">
         <p><strong>Count your breaths, silently, in your head.</strong></p>
         <p>Breathe naturally. With each breath, tap <strong>Breath</strong>. On every <strong>ninth</strong> breath, tap <strong>Ninth</strong> instead — then start again at one.</p>
@@ -3553,7 +3556,7 @@ function renderBreathCount() {
       </div>
       <button class="btn amber" id="begin">Begin</button>
     </div>`;
-    document.getElementById('back').onclick = () => go('settings');
+    document.getElementById('back').onclick = () => go('tools');
     document.getElementById('begin').onclick = () => {
       b._tones = createTones();
       if (b._tones) { b._tones.unlock(); b._tones.start(); }
@@ -3623,7 +3626,7 @@ function renderBreathCount() {
   const h = document.getElementById('bchead'); if (h) h.focus();
   announce('Your breath-counting read is ready.');
   const redo = document.getElementById('bredo'); if (redo) redo.onclick = () => { state.bct = null; go('breathcount'); };
-  const done = document.getElementById('bdone'); if (done) done.onclick = () => go('settings');
+  const done = document.getElementById('bdone'); if (done) done.onclick = () => go('tools');
 }
 
 // Calibration (src/calibration.js) — a 2AFC "how well does your confidence track your accuracy?"
@@ -3654,13 +3657,13 @@ function renderCalibration() {
     </div>`;
     const h = document.getElementById('calhead'); if (h) h.focus();
     announce('Here is your calibration read.');
-    document.getElementById('caldone').onclick = () => { state.calib = null; go('settings'); };
+    document.getElementById('caldone').onclick = () => { state.calib = null; go('tools'); };
     return;
   }
 
   const it = c.items[c.i];
   const stepHead = `<div class="row"><span class="muted small">Question ${c.i + 1} of ${c.items.length}</span><span class="spacer"></span>
-        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>`;
+        <button class="btn ghost sm" id="back" style="width:auto;">← Tools</button></div>`;
 
   if (c.picked == null) {
     // Answer phase.
@@ -3673,7 +3676,7 @@ function renderCalibration() {
         <button class="opt" data-pick="b">${esc(it.b)}</button>
       </div>
     </div>`;
-    document.getElementById('back').onclick = () => { state.calib = null; go('settings'); };
+    document.getElementById('back').onclick = () => { state.calib = null; go('tools'); };
     app.querySelectorAll('.opt[data-pick]').forEach((b) => { b.onclick = () => { c.picked = b.dataset.pick; render(); }; });
     return;
   }
@@ -3688,7 +3691,7 @@ function renderCalibration() {
         ${[50, 60, 70, 80, 90, 100].map((p) => `<button class="chip" data-conf="${p}" aria-label="${p === 50 ? 'Fifty percent — a guess' : p + ' percent sure'}">${p === 50 ? '50% (a guess)' : p + '%'}</button>`).join('')}
       </div>
     </div>`;
-  document.getElementById('back').onclick = () => { state.calib = null; go('settings'); };
+  document.getElementById('back').onclick = () => { state.calib = null; go('tools'); };
   app.querySelectorAll('.chip[data-conf]').forEach((b) => {
     b.onclick = () => {
       c.trials.push({ confidence: Number(b.dataset.conf), correct: it.correct === c.picked });
@@ -3718,14 +3721,14 @@ function renderEpistemicCheck() {
     app.innerHTML = `
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">Epistemic check</h1><span class="spacer"></span>
-        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>
+        <button class="btn ghost sm" id="back" style="width:auto;">← Tools</button></div>
       <p class="muted">Tick the ones you genuinely recognize — no pressure to tick many.</p>
       <div class="likert-opts">
         ${e.items.map((it, i) => `<button class="opt ${e.selected.has(it.t) ? 'selected' : ''}" data-i="${i}" aria-pressed="${e.selected.has(it.t)}">${esc(it.t)}</button>`).join('')}
       </div>
       <button class="btn" id="ecdone" style="margin-top:14px;">See what these were →</button>
     </div>`;
-    document.getElementById('back').onclick = () => { state.epistemic = null; go('settings'); };
+    document.getElementById('back').onclick = () => { state.epistemic = null; go('tools'); };
     app.querySelectorAll('.opt[data-i]').forEach((b) => {
       b.onclick = () => { const it = e.items[Number(b.dataset.i)]; if (e.selected.has(it.t)) e.selected.delete(it.t); else e.selected.add(it.t); render(); };
     });
@@ -3752,7 +3755,7 @@ function renderEpistemicCheck() {
     </div>`;
   const h = document.getElementById('echead'); if (h) h.focus();
   announce('Here is what these were, and a gentle read.');
-  document.getElementById('ecdone2').onclick = () => { state.epistemic = null; go('settings'); };
+  document.getElementById('ecdone2').onclick = () => { state.epistemic = null; go('tools'); };
 }
 
 function renderFocusCheck() {
@@ -3957,6 +3960,57 @@ function appendBubble({ role, content, typing, assertive }) {
   return div;
 }
 
+// ---------------- tools ----------------
+// Optional self-knowledge checks, lifted OUT of Settings (where they didn't belong) into
+// their own bottom-tab. Each is a calm "mirror", adapted from an established research
+// paradigm; none is part of the daily session. Handlers mirror the old Settings ones.
+function renderTools() {
+  app.innerHTML = `
+    <div class="fade-in">
+      <h1>Tools</h1>
+      <p class="muted small" style="margin:-4px 0 16px;">Optional self-knowledge checks — each a calm mirror for a habit, adapted from an established research paradigm. Do them anytime; they're separate from your daily session.</p>
+
+      <div class="card">
+        <div class="row">${uiIcon('mirror')}
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Epistemic check</h2>
+            <p class="muted small" style="margin:2px 0 0;">A two-minute mirror for a habit we all share — recognizing things we don’t actually know. Some items are made up on purpose.</p></div>
+          <button class="btn ghost sm" id="toepistemic" style="width:auto;">Begin →</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">${uiIcon('target')}
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Calibration</h2>
+            <p class="muted small" style="margin:2px 0 0;">A few questions where you answer and say how sure you are — a mirror for whether your confidence tracks what you actually know.</p></div>
+          <button class="btn ghost sm" id="tocalibration" style="width:auto;">Begin →</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">${uiIcon('breath')}
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Breath counting</h2>
+            <p class="muted small" style="margin:2px 0 0;">A few quiet minutes counting your own breaths — a mirror for attention and for noticing when the mind has wandered.</p></div>
+          <button class="btn ghost sm" id="tobreath" style="width:auto;">Begin →</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">${uiIcon('book')}
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Deep reading</h2>
+            <p class="muted small" style="margin:2px 0 0;">Read a short passage, then tell true restatements from clever near-misses — a measure of how accurately you take in what you read.</p></div>
+          <button class="btn ghost sm" id="tosvt" style="width:auto;">Begin →</button>
+        </div>
+      </div>
+
+      <p class="muted small center" style="margin-top:6px;">A mirror you can see the basis of — never a verdict. See <button class="btn ghost sm" id="tomethods2" style="width:auto; display:inline; padding:0; border:none; color:var(--accent); font-weight:600;">the science behind them →</button></p>
+    </div>`;
+  const tec = document.getElementById('toepistemic'); if (tec) tec.onclick = () => { state.epistemic = null; go('epistemiccheck'); };
+  const tcal = document.getElementById('tocalibration'); if (tcal) tcal.onclick = () => { state.calib = null; go('calibration'); };
+  const tbr = document.getElementById('tobreath'); if (tbr) tbr.onclick = () => { state.bct = null; go('breathcount'); };
+  const tsvt = document.getElementById('tosvt'); if (tsvt) tsvt.onclick = () => { state.svt = null; go('svt'); };
+  const tm2 = document.getElementById('tomethods2'); if (tm2) tm2.onclick = () => go('methods');
+}
+
 // ---------------- settings ----------------
 function renderSettings() {
   const p = state.profile;
@@ -4049,38 +4103,6 @@ function renderSettings() {
       </div>
 
       <div class="card">
-        <div class="row">${uiIcon('mirror')}
-          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Epistemic check</h2>
-            <p class="muted small" style="margin:2px 0 0;">A two-minute mirror for a habit we all share — recognizing things we don’t actually know. Some items are made up on purpose.</p></div>
-          <button class="btn ghost sm" id="toepistemic" style="width:auto;">Begin →</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="row">${uiIcon('target')}
-          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Calibration</h2>
-            <p class="muted small" style="margin:2px 0 0;">A few questions where you answer and say how sure you are — a mirror for whether your confidence tracks what you actually know.</p></div>
-          <button class="btn ghost sm" id="tocalibration" style="width:auto;">Begin →</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="row">${uiIcon('breath')}
-          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Breath counting</h2>
-            <p class="muted small" style="margin:2px 0 0;">A few quiet minutes counting your own breaths — a mirror for attention and for noticing when the mind has wandered.</p></div>
-          <button class="btn ghost sm" id="tobreath" style="width:auto;">Begin →</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="row">${uiIcon('book')}
-          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Deep reading</h2>
-            <p class="muted small" style="margin:2px 0 0;">Read a short passage, then tell true restatements from clever near-misses — a measure of how accurately you take in what you read.</p></div>
-          <button class="btn ghost sm" id="tosvt" style="width:auto;">Begin →</button>
-        </div>
-      </div>
-
-      <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
         <p class="muted small">Everything Forma stores about you lives on this device — no server, no account, nothing uploaded. You own it: back it up, and restore it on any device. (Clearing your browser data erases it, so keep an export.)</p>
         <p class="muted small" style="margin-top:8px;">Two things do leave the device, only when you choose them: the live coach sends your message to the AI provider you picked, using your own key (never your Interior Life track), and voice dictation uses your browser’s speech service — in some browsers (e.g. Chrome) that sends the audio to a vendor to transcribe. Type, and stay offline, to keep everything fully on-device.</p>
@@ -4168,10 +4190,6 @@ function renderSettings() {
   });
   const tt = document.getElementById('toteam'); if (tt) tt.onclick = () => go('team');
   const tm = document.getElementById('tomethods'); if (tm) tm.onclick = () => go('methods');
-  const tec = document.getElementById('toepistemic'); if (tec) tec.onclick = () => { state.epistemic = null; go('epistemiccheck'); };
-  const tcal = document.getElementById('tocalibration'); if (tcal) tcal.onclick = () => { state.calib = null; go('calibration'); };
-  const tbr = document.getElementById('tobreath'); if (tbr) tbr.onclick = () => { state.bct = null; go('breathcount'); };
-  const tsvt = document.getElementById('tosvt'); if (tsvt) tsvt.onclick = () => { state.svt = null; go('svt'); };
   document.getElementById('faith').onclick = () => {
     state.profile = p.settings.faithTrack ? Profile.disableFaithTrack(p) : Profile.enableFaithTrack(p);
     // Regenerate the plan so the change takes effect immediately.
