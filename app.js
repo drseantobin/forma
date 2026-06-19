@@ -732,6 +732,12 @@ const UI_ICON = {
   book: '<path d="M12 6.5C9.5 5 6.5 5 4 5.6V18c2.5-.6 5.5-.6 8 1 2.5-1.6 5.5-1.6 8-1V5.6C17.5 5 14.5 5 12 6.5Z"/><path d="M12 6.5V19"/>',
   people: '<circle cx="9" cy="8.5" r="2.6"/><circle cx="16.5" cy="9.5" r="2"/><path d="M4 18c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/><path d="M14.5 15.5c.6-1.3 2-2 3.5-2 2 0 3.5 1.3 3.5 3.2"/>',
   lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  // Streak / status glyphs — calm stroke OUTLINES (not filled, glossy emoji), so the gamification
+  // mark reads quiet, inherits the chip's color + dark mode, and matches the rest of the icon set.
+  flame: '<path d="M12 3c.6 2.6 2.1 3.9 3.3 5.4A5 5 0 1 1 7 11.6c0-1 .4-2 1-2.8.4.8 1 1.3 1.9 1.4C9.5 7.7 10.4 5.4 12 3Z"/>',
+  spark: '<path d="M12 4l1.7 4.6L18 10l-4.3 1.4L12 16l-1.7-4.6L6 10l4.3-1.4Z"/>',
+  ember: '<path d="M12 8c.5 1.7 1.5 2.6 2.2 3.6a3.4 3.4 0 1 1-5.6 1.2c.3.5.8.8 1.4.9C9.6 11.9 10.4 10.2 12 8Z"/>',
+  bolt: '<path d="M13 3 5 13h5l-1 8 8-10h-5l1-8Z"/>',
 };
 function uiIcon(name, cls) {
   const p = UI_ICON[name];
@@ -812,7 +818,7 @@ function renderHome() {
           const ic = indexConfidence(p);
           return ic.thin ? `<div class="muted small" style="margin-top:4px;">${esc(ic.note)}</div>` : '';
         })()}
-        <div class="streakchip ${alive ? '' : neverStarted ? 'fresh' : 'cold'}">${alive ? '🔥' : neverStarted ? '✨' : '🕯️'} ${neverStarted ? 'Your first session starts your streak' : `${p.streak.current || 0}-day streak${alive ? (() => {
+        <div class="streakchip ${alive ? '' : neverStarted ? 'fresh' : 'cold'}">${uiIcon(alive ? 'flame' : neverStarted ? 'spark' : 'ember', 'chipico')} ${neverStarted ? 'Your first session starts your streak' : `${p.streak.current || 0}-day streak${alive ? (() => {
           // Honest forward-pull: the true number of days to the next real mark.
           // Only when the streak is alive (don't compete with the warmer "relight
           // it" copy) and a mark is still ahead (silent past 365). No fake urgency.
@@ -1617,7 +1623,7 @@ function renderTodayLanding() {
   app.innerHTML = `
     <div class="fade-in">
       <div class="row"><h1 style="margin:0;">Today</h1><span class="spacer"></span>
-        <span class="streakchip ${alive ? '' : neverStarted ? 'fresh' : 'cold'}" style="margin:0;">${alive ? '🔥' : neverStarted ? '✨' : '🕯️'} ${neverStarted ? 'Day 1 awaits' : (p.streak.current || 0)}</span></div>
+        <span class="streakchip ${alive ? '' : neverStarted ? 'fresh' : 'cold'}" style="margin:0;">${uiIcon(alive ? 'flame' : neverStarted ? 'spark' : 'ember', 'chipico')} ${neverStarted ? 'Day 1 awaits' : (p.streak.current || 0)}</span></div>
 
       ${doneToday ? `
         <div class="card" style="text-align:center;">
@@ -3487,7 +3493,7 @@ async function completeSession() {
        </div>`
     : (streakMark
       ? `<div class="milestone" role="status" style="--mile:var(--amber)">
-           <div class="mile-rule">🔥 Streak</div>
+           <div class="mile-rule">${uiIcon('flame', 'binline')} Streak</div>
            <div class="mile-head">${streakMark}-day streak</div>
            <div class="mile-note">Showing up is the formation. Keep the chain alive.</div>
          </div>`
@@ -4092,7 +4098,7 @@ function renderTeam() {
       <div class="card index-hero">
         ${indexRing(agg.avgIndex, { label: 'Team Formation Index' })}
         <div class="index-label">Team Formation Index</div>
-        <div class="streakchip" style="margin-top:8px;">⚡ AI-readiness ${agg.aiReadiness}</div>
+        <div class="streakchip" style="margin-top:8px;">${uiIcon('bolt', 'chipico')} AI-readiness ${agg.aiReadiness}</div>
       </div>
 
       <div class="card">

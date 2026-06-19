@@ -199,8 +199,10 @@ button { font-family: inherit; cursor: pointer; }
 .index-label { color: var(--ink-faint); font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; }
 .streakchip {
   display:inline-flex; align-items:center; gap:6px; background: var(--amber-soft); color:var(--amber-ink);
-  border-radius:999px; padding:6px 14px; font-weight:700; font-size:.9rem; margin-top:10px; font-variant-numeric: tabular-nums;
+  border-radius:999px; padding:6px 14px; font-weight:600; font-size:.82rem; margin-top:10px; font-variant-numeric: tabular-nums;
 }
+/* Inline chip glyph — em-sized, no own margin (the chip's gap handles spacing). */
+.chipico { width:1.05em; height:1.05em; flex:0 0 auto; }
 .streakchip.cold { background: var(--line); color: var(--ink-faint); }
 /* A streak that has never started yet (brand-new user) — invite, don't scold.
    Warm growth-green, not the grey "cold/relight it" branch a lapse would get. */
