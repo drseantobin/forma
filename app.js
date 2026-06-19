@@ -1012,10 +1012,12 @@ function growthCard(domainId, opts = {}) {
       ${opts.hideName || opts.nested ? '' : `<div class="row" style="margin:2px 0;"><strong>${esc(d ? d.name : 'this capacity')}</strong></div>`}
       ${opts.nested ? '' : `<p class="muted small" style="margin:${opts.hideName ? '6px' : '0'} 0 10px;">Small, evidence-based habits that build this over time — formation, not a quick fix.</p>`}
       ${items.map((g) => `<div class="growitem">
-        <div class="growtitle">${esc(g.title)}</div>
+        <div class="growitem-head">
+          <div class="growtitle">${esc(g.title)}</div>
+          <button class="btn ghost growcommit" data-gd="${esc(domainId)}" data-gt="${esc(g.title)}" aria-label="Make “${esc(g.title)}” a commitment">+ Commitment</button>
+        </div>
         <div class="muted small" style="margin-top:2px;">${esc(g.how)}</div>
         <div class="growwhy">${esc(g.why)}</div>
-        <button class="btn ghost sm growcommit" data-gd="${esc(domainId)}" data-gt="${esc(g.title)}" aria-label="Make “${esc(g.title)}” a commitment" style="width:auto; margin-top:8px;">+ Make it a commitment</button>
       </div>`).join('')}
     </div>`;
 }
@@ -1029,7 +1031,7 @@ function wireGrowthCommit() {
     const settle = (label) => { b.textContent = label; b.setAttribute('aria-label', `“${title}” — ${label.replace(' ✓', '')}`); b.setAttribute('aria-disabled', 'true'); b.onclick = null; b.classList.add('committed'); };
     // Already committed — match the bare title OR a plan composed from it (see composeCommitment).
     const has = (state.profile.goals || []).some((g) => !g.done && commitmentMatches(g.text, title));
-    if (has) { settle('In your commitments ✓'); return; }
+    if (has) { settle('Committed ✓'); return; }
     b.onclick = () => openCommitPlan(b, dom, title, settle);
   });
 }
@@ -1056,7 +1058,10 @@ function composeCommitment(cue, title) {
 // Inline cue capture: tapping "+ Make it a commitment" opens ONE optional "when will you do
 // this?" field (Save plan / Skip — just track it), then stores the composed plan via addGoal.
 function openCommitPlan(btn, dom, title, settle) {
-  if (btn.nextElementSibling && btn.nextElementSibling.classList.contains('commit-plan-form')) return;
+  // The button now lives in a flex header row (top-right of the habit), so the cue form
+  // is appended to the END of the habit item rather than right after the button.
+  const item = btn.closest('.growitem') || btn.parentElement;
+  if (item.querySelector('.commit-plan-form')) return;
   btn.style.display = 'none';
   const form = document.createElement('div');
   form.className = 'commit-plan-form';
@@ -1070,7 +1075,7 @@ function openCommitPlan(btn, dom, title, settle) {
       <button class="btn sm cue-save" type="button">Save plan</button>
       <button class="btn ghost sm cue-skip" type="button">Skip — just track it</button>
     </div>`;
-  btn.insertAdjacentElement('afterend', form);
+  item.appendChild(form);
   const input = form.querySelector('.cue-input');
   if (input.focus) input.focus();
   const finish = (text) => {
@@ -1078,7 +1083,7 @@ function openCommitPlan(btn, dom, title, settle) {
     save();
     form.remove();
     btn.style.display = '';
-    settle('Added to commitments ✓');
+    settle('Committed ✓');
     announce('Added to your commitments.'); // SR feedback — committing was silent before (a11y standard)
     if (btn.focus) btn.focus();             // the form (with the activated button) was removed; return
                                             // focus to the now-committed button instead of dropping to <body>
@@ -1467,6 +1472,8 @@ function renderDomainDetail() {
 
       ${traj}
 
+      ${id === 'interior' ? practiceCard + lensEntry : ''}
+
       <div class="card" style="border-left:4px solid ${band ? band.color : 'var(--accent)'};">
         <div class="eyebrow">Your next step</div>
         <p style="margin:6px 0 0; line-height:1.5;">${esc(nextStepFor(score, t, myCommits))}</p>
@@ -1483,9 +1490,7 @@ function renderDomainDetail() {
         <summary class="eyebrow">How Forma measures it</summary>
         <p class="muted small" style="margin:8px 0 0;">${esc(basis.detail)}</p></details>` : ''}
 
-      ${practiceCard}
-
-      ${lensEntry}
+      ${id === 'interior' ? '' : practiceCard}
 
       <button class="btn amber" id="train">Train it now →</button>
       <p class="muted small center" style="margin-top:10px;">A few minutes. Formation, measured over weeks — never a verdict.</p>

@@ -81,12 +81,14 @@ export function coachGreeting(profile) {
   else if (ids.length) {
     const low = ids.slice().sort((a, b) => scores[a] - scores[b])[0];
     signal = `I've read your scales — ${domainName(low)} looks like your biggest opening right now.`;
-  } else signal = `I've read your baseline.`;
+  } else signal = '';
+  // No signal yet (e.g. the coach opened BEFORE the quick check) → just a warm open, no
+  // claim to have "read your baseline" when there isn't one.
 
   const close = hasKey(profile)
     ? `What's on your mind — a day that didn't go how you wanted, or where to put your effort next?`
     : `What's on your mind today? (Offline for now — I'll read your own data back to you; add a Claude key in Settings for the full conversation.)`;
-  return `${hi} ${signal} ${close}`;
+  return [hi, signal, close].filter(Boolean).join(' ');
 }
 
 // A solution-focused conversation opener, seeded into the coach when the person

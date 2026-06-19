@@ -563,6 +563,10 @@ details.disclosure[open] > summary::after { content:'–'; }
 .growcard .growitem:first-of-type { border-top:none; padding-top:2px; }
 .growtitle { font-weight:700; font-size:.95rem; }
 .growwhy { font-size:.78rem; color:var(--ink-faint); margin-top:3px; font-style:italic; }
+/* Habit title + a small, top-right "+ Commitment" affordance on one row. */
+.growitem-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.growitem-head .growtitle { flex:1; }
+.growcommit { width:auto; flex:0 0 auto; align-self:flex-start; padding:4px 11px; font-size:.78rem; font-weight:600; white-space:nowrap; }
 .growcommit.committed { color: var(--green-ink); border-color: var(--green); background: var(--green-soft); }
 /* Nested inside another card (the capacity-detail "Your next step") — no second card chrome. */
 .growcard.nested { background:transparent; border:none; box-shadow:none; border-radius:0; padding:0; margin:12px 0 0; }
