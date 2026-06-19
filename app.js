@@ -1172,8 +1172,12 @@ function nextStepFor(score, t) {
   if (score == null) return 'Train it to see where you stand — then we’ll know where to grow.';
   const n = (t.points && t.points.length) || 0;
   if (n < 2) return 'You’ve measured it once. Practice it again to start a trajectory you can watch.';
-  if (t.delta > 0) return `Up ${t.delta} since you began — keep it going: pick one habit below and stay with it.`;
-  if (t.delta < 0) return 'It’s dipped lately — worth returning to. Choose one habit below and commit to it this week.';
+  // A real upward move needs more than two points and more than EWMA wobble — use the same
+  // threshold domainTrend uses for direction 'up' (±2), and DON'T claim it's "working": an
+  // early rise on a repeated task can be growing task-familiarity, not the capacity itself.
+  // Disconfirmation-framed, not a bare causal nudge (which read a noisy delta as validated growth).
+  if (n >= 3 && t.direction === 'up') return `Your scores have trended up since you began (+${t.delta}). Some of that can be task-familiarity, not just growth — the way to find out is to keep the habit and watch it hold. Pick one below.`;
+  if (t.direction === 'down') return 'It’s dipped lately — worth returning to, not a verdict. Choose one habit below and commit to it this week.';
   return 'Holding steady — one small habit below, done consistently, is how it moves.';
 }
 
@@ -1197,7 +1201,7 @@ function renderDomainDetail() {
         <svg viewBox="0 0 320 52" width="100%" style="margin-top:8px; max-width:440px;" role="img" aria-label="Your ${esc(d.name)} scores over time">
           <path d="${sparklinePath(t.points, 320, 52, 6)}" fill="none" stroke="${band.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <p class="muted small" style="margin:6px 0 0;">${t.points.length} measurements${t.delta !== 0 ? ` · ${t.delta > 0 ? '+' : ''}${t.delta} since you began` : ''} — your own scores over time, measured over weeks. Never a verdict; consistency can also reflect growing task-familiarity.</p>
+        <p class="muted small" style="margin:6px 0 0;">${t.points.length} measurements${t.direction !== 'flat' ? ` · ${t.delta > 0 ? '+' : ''}${t.delta} since you began` : ''} — your own scores over time, measured over weeks. Never a verdict; consistency can also reflect growing task-familiarity.</p>
       </div>` : '';
   app.innerHTML = `
     <div class="fade-in">
