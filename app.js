@@ -1266,17 +1266,27 @@ function wireDomainLinks() {
 // A single DIRECTIVE next-step for this capacity, personalized to the person's own data
 // (not generic). Growth-framed: a dip is "worth returning to", never a deficit. Honest:
 // built only from their measured scores; points to the habits below + the Train CTA.
-function nextStepFor(score, t) {
+function nextStepFor(score, t, commits = []) {
   if (score == null) return 'Train it to see where you stand — then we’ll know where to grow.';
   const n = (t.points && t.points.length) || 0;
+  const committed = commits.length > 0;
+  const ref = !committed ? '' : (commits.length === 1 ? `“${commits[0]}”` : `${commits.length} habits`);
+  // COMMITMENT-AWARE directive: if the person is already building this capacity in real life, the
+  // next step is to keep that going (and weigh it in the weekly review) — not to "pick one below"
+  // as if they hadn't. Honesty (forma-validity v245): hedge the CAUSE, not just the score — a
+  // commitment/habit must NEVER sit next to a score change as the only un-hedged candidate cause
+  // (post-hoc-ergo-propter-hoc by adjacency). Judgment is routed to the weekly review, where the
+  // "a commitment is never proven to cause a change" framing already lives. The task-familiarity
+  // hedge on any "up" branch is non-negotiable (domainTrend can't separate recall from growth).
+  if (committed) {
+    if (n >= 3 && t.direction === 'up') return `You’re already building this — ${ref}. Separately, your scores have trended up (+${t.delta}) — could be real growth, could be task-familiarity; one habit can’t be credited for it. Keep it because it’s worth keeping, and weigh the whole picture in your weekly review.`;
+    if (t.direction === 'down') return `You’re already building this — ${ref}. It’s dipped lately — not a verdict, and not a sign the habit failed; scores move for many reasons. This is a good moment to keep it and weigh it in your weekly review.`;
+    return `You’re already building this — ${ref}. Keep checking it off because it’s worth doing — not to chase the number; whether the score moves has many causes. You’ll weigh it in your weekly review.`;
+  }
   if (n < 2) return 'You’ve measured it once. Practice it again to start a trajectory you can watch.';
-  // A real upward move needs more than two points and more than EWMA wobble — use the same
-  // threshold domainTrend uses for direction 'up' (±2), and DON'T claim it's "working": an
-  // early rise on a repeated task can be growing task-familiarity, not the capacity itself.
-  // Disconfirmation-framed, not a bare causal nudge (which read a noisy delta as validated growth).
-  if (n >= 3 && t.direction === 'up') return `Your scores have trended up since you began (+${t.delta}). Some of that can be task-familiarity, not just growth — the way to find out is to keep the habit and watch it hold. Pick one below.`;
+  if (n >= 3 && t.direction === 'up') return `Your scores have trended up since you began (+${t.delta}) — that can be real growth or growing task-familiarity; there’s no way to credit a single cause. If you want to build deliberately here, pick one habit below to commit to.`;
   if (t.direction === 'down') return 'It’s dipped lately — worth returning to, not a verdict. Choose one habit below and commit to it this week.';
-  return 'Holding steady — one small habit below, done consistently, is how it moves.';
+  return 'Holding steady. One small habit below, kept consistently, is a deliberate way to work on this — pick one to commit to.';
 }
 
 function renderDomainDetail() {
@@ -1293,6 +1303,9 @@ function renderDomainDetail() {
   // Honest per-capacity trajectory: the person's OWN measured scores over time (not a
   // validated trait line). Only shown once there are ≥2 points; framed "never a verdict".
   const t = domainTrend(p.history || [], id);
+  // Open commitments the person already set FOR this capacity — makes the next-step directive
+  // acknowledge what they're building, rather than telling them to "pick one" as if they hadn't.
+  const myCommits = (p.goals || []).filter((g) => g && !g.done && g.domain === id).map((g) => g.text);
   const traj = (score != null && t.points && t.points.length >= 2) ? `
       <div class="card">
         <div class="eyebrow">Your trajectory</div>
@@ -1333,7 +1346,7 @@ function renderDomainDetail() {
 
       <div class="card" style="border-left:4px solid ${band ? band.color : 'var(--accent)'};">
         <div class="eyebrow">Your next step</div>
-        <p style="margin:6px 0 0; line-height:1.5;">${esc(nextStepFor(score, t))}</p>
+        <p style="margin:6px 0 0; line-height:1.5;">${esc(nextStepFor(score, t, myCommits))}</p>
         ${growthCard(id, { hideName: true, nested: true })}
       </div>
 
