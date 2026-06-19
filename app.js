@@ -991,7 +991,7 @@ function growthCard(domainId, opts = {}) {
         <div class="growtitle">${esc(g.title)}</div>
         <div class="muted small" style="margin-top:2px;">${esc(g.how)}</div>
         <div class="growwhy">${esc(g.why)}</div>
-        <button class="btn ghost sm growcommit" data-gd="${esc(domainId)}" data-gt="${esc(g.title)}" style="width:auto; margin-top:8px;">+ Make it a commitment</button>
+        <button class="btn ghost sm growcommit" data-gd="${esc(domainId)}" data-gt="${esc(g.title)}" aria-label="Make “${esc(g.title)}” a commitment" style="width:auto; margin-top:8px;">+ Make it a commitment</button>
       </div>`).join('')}
     </div>`;
 }
@@ -1003,13 +1003,12 @@ function wireGrowthCommit() {
     const dom = b.getAttribute('data-gd');
     const text = b.getAttribute('data-gt');
     const has = (state.profile.goals || []).some((g) => g.text === text && !g.done);
-    if (has) { b.textContent = 'In your commitments ✓'; b.disabled = true; b.classList.add('committed'); return; }
+    const settle = (label) => { b.textContent = label; b.setAttribute('aria-label', `“${text}” — ${label.replace(' ✓', '')}`); b.disabled = true; b.classList.add('committed'); };
+    if (has) { settle('In your commitments ✓'); return; }
     b.onclick = () => {
       state.profile = Profile.addGoal(state.profile, dom, text);
       save();
-      b.textContent = 'Added to commitments ✓';
-      b.disabled = true;
-      b.classList.add('committed');
+      settle('Added to commitments ✓');
     };
   });
 }
