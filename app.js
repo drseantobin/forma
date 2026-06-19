@@ -1166,6 +1166,18 @@ function wireDomainLinks() {
 
 // Capacity detail — the TEACH/DIRECT screen for one domain: where you stand, why it
 // matters (the atrophy frame), how to grow it in daily life, and a Train-it-now CTA.
+// A single DIRECTIVE next-step for this capacity, personalized to the person's own data
+// (not generic). Growth-framed: a dip is "worth returning to", never a deficit. Honest:
+// built only from their measured scores; points to the habits below + the Train CTA.
+function nextStepFor(score, t) {
+  if (score == null) return 'Train it to see where you stand — then we’ll know where to grow.';
+  const n = (t.points && t.points.length) || 0;
+  if (n < 2) return 'You’ve measured it once. Practice it again to start a trajectory you can watch.';
+  if (t.delta > 0) return `Up ${t.delta} since you began — keep it going: pick one habit below and stay with it.`;
+  if (t.delta < 0) return 'It’s dipped lately — worth returning to. Choose one habit below and commit to it this week.';
+  return 'Holding steady — one small habit below, done consistently, is how it moves.';
+}
+
 function renderDomainDetail() {
   const id = state.focusDomain;
   const d = getDomain(id);
@@ -1196,6 +1208,11 @@ function renderDomainDetail() {
       </div>
 
       ${traj}
+
+      <div class="card" style="border-left:4px solid ${band ? band.color : 'var(--accent)'};">
+        <div class="eyebrow">Your next step</div>
+        <p style="margin:6px 0 0; line-height:1.5;">${esc(nextStepFor(score, t))}</p>
+      </div>
 
       <div class="card">
         <div class="eyebrow">Why this matters</div>
