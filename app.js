@@ -1262,7 +1262,7 @@ function renderTodayLanding() {
         <button class="btn ghost" id="begin">Do another session →</button>
       ` : `
         <div class="card">
-          <div class="k" style="font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700;">Today's focus</div>
+          <div class="k">Today's focus</div>
           <div class="row" style="margin-top:8px;">
             <span class="ico" style="font-size:1.7rem;">${fd.icon}</span>
             <div class="meta"><div class="dn" style="font-size:1.05rem;">${esc(fd.name)}</div>
@@ -3283,7 +3283,7 @@ function renderPlan() {
       <div class="row"><h1 style="margin:0;">This Week</h1><span class="spacer"></span>
         <button class="btn ghost sm" id="back" style="width:auto;">← Home</button></div>
       <div class="card" style="border-left:4px solid ${getDomain(plan.theme).color};">
-        <div class="k" style="font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700;">Focus capacity</div>
+        <div class="k">Focus capacity</div>
         <div class="row" style="margin-top:4px;"><span class="ico" style="font-size:1.4rem;">${getDomain(plan.theme).icon}</span>
           <strong style="font-size:1.1rem;">${esc(getDomain(plan.theme).name)}</strong></div>
         <div id="plannote" class="muted" style="margin-top:8px;"><span class="spinner" style="width:14px;height:14px;"></span> <span class="small">writing your week…</span></div>

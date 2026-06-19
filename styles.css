@@ -512,7 +512,11 @@ button { font-family: inherit; cursor: pointer; }
 .growcard.nested .growitem:first-of-type { border-top:1px solid var(--line); padding-top:12px; }
 
 /* shared eyebrow label */
-.eyebrow { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700; }
+/* One source of truth for the section "eyebrow" label. `.k` is the legacy alias (its only
+   prior styling was the amber `.insight .k`, leaving bare `.k` labels unstyled); folding it
+   in here makes every section label a consistent eyebrow — insight's amber still wins by
+   specificity. */
+.eyebrow, .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700; }
 /* Shared view header: eyebrow + title (+ optional lede / right slot) — one authored
    rhythm for every primary tab, instead of bare hand-rolled <h1> rows. */
 .viewhead { margin: 2px 0 18px; }
