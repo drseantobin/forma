@@ -49,7 +49,7 @@ export const GROWTH_GUIDE = {
   ],
   communication: [
     { title: 'Name the feeling first', how: 'Before responding, label the emotion the other person seems to be expressing.', why: 'Reading emotion accurately is trainable and underpins an attuned response.' },
-    { title: 'Take their perspective', how: "Briefly imagine the situation from the other person's point of view before you reply.", why: 'Perspective-taking engages emotion-relevant processing and supports attunement.' },
+    { title: "Ask, don't assume", how: "Instead of guessing what someone feels, check it directly — 'It sounds like that landed hard; is that right?' — and let them correct you.", why: "Across 25 experiments, imagining another's viewpoint did not improve how accurately people read them — but getting their perspective directly did (Eyal, Steffel & Epley, 2018); feedback about a person's actual feelings sharpens accuracy over time (Ickes)." },
     { title: 'Reflect, then respond', how: "Paraphrase what you heard ('so you're saying…') before adding your own point.", why: 'Reflective listening confirms understanding and de-escalates (general guidance).' },
   ],
   emotion_regulation: [
