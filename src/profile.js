@@ -209,9 +209,11 @@ function summarizeResponse(exercise, response) {
         note: response.note || '',
       };
     case 'guided':
-      // ACT guided practice. Stored on-device only; the personal note/value text
-      // is never sent to any API (a guided session is unscored, and the live
-      // coach paths only ever see domain/type/score, never these fields).
+      // ACT guided practice, stored on-device. For NON-interior practices the coach may
+      // surface the value/action/note back to the person (their own keyed model) so it can
+      // refer to what they actually said — but interior/faith guided content (the Examen) is
+      // still walled from every API path (coach.js profileSummary filters domain==='interior',
+      // and distress text is excluded), and a guided session remains unscored.
       return {
         moduleId: response.moduleId,
         completed: !!response.completed,

@@ -222,6 +222,27 @@ export function profileSummary(profile) {
       lines.push(`  - ${s.date}: ${domainName(s.domain)} (${s.type}) scored ${s.rawScore}`);
     }
   }
+  // Recent WRITTEN reflections — what the person actually SAID in their practices (a value they
+  // named, a step they chose, a note they wrote), so the coach can refer back to it instead of
+  // "I don't have that." Two hard guardrails preserved: (1) interior/faith content is excluded
+  // here too (same wall as scores/sessions above); (2) anything that reads as distress is NOT
+  // sent to the API — the crisis-escalation path, not the coach, handles that. On-device data,
+  // surfaced only to the person's OWN keyed model.
+  const clip = (str) => { const x = String(str).trim(); return x.length > 200 ? x.slice(0, 197) + '…' : x; };
+  const reflections = [];
+  for (const s of (profile.sessions || []).filter((x) => x.domain !== 'interior').slice(-10)) {
+    const r = s.response || {};
+    const bits = [];
+    if (r.value && r.value.trim() && !looksLikeDistress(r.value)) bits.push(`named “${clip(r.value)}”`);
+    if (r.action && r.action.trim() && !looksLikeDistress(r.action)) bits.push(`chose to: ${clip(r.action)}`);
+    if (r.note && r.note.trim() && !looksLikeDistress(r.note)) bits.push(`noted: ${clip(r.note)}`);
+    if (r.text && r.text.trim() && !looksLikeDistress(r.text)) bits.push(`reflected: ${clip(r.text)}`);
+    if (bits.length) reflections.push(`  - ${s.date} (${domainName(s.domain)}): ${bits.join('; ')}`);
+  }
+  if (reflections.length) {
+    lines.push('Recent reflections in their own words (refer back to these naturally when relevant):');
+    reflections.slice(-6).forEach((l) => lines.push(l));
+  }
   if (profile.streak?.current) lines.push(`Current streak: ${profile.streak.current} day(s).`);
   const openGoals = (profile.goals || []).filter((g) => !g.done);
   if (openGoals.length) lines.push(`Active goals: ${openGoals.map((g) => g.coping ? `${g.text} (if-then plan: if ${g.coping.when}, I’ll ${g.coping.then})` : g.text).join(' | ')}`);
