@@ -388,6 +388,11 @@ button { font-family: inherit; cursor: pointer; }
 .trendpill.flat { background: var(--line); color: var(--ink-faint); }
 
 /* ---------- settings ---------- */
+/* Segmented control (Appearance: System / Light / Dark) — calm, instrument-grade,
+   selected state mirrors the chip vocabulary used elsewhere (accent on accent-soft). */
+.segmented { display:flex; gap:6px; }
+.seg { flex:1; border:1.5px solid var(--line); background:var(--card); color:var(--ink-soft); border-radius:12px; padding:10px 0; font-weight:700; font-size:.92rem; font-family:inherit; cursor:pointer; min-height:44px; }
+.seg.on { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
 .field { margin-bottom: 16px; }
 .field label { display:block; font-weight:600; margin-bottom:6px; font-size:.92rem; }
 .field input, .field select { width:100%; border:1.5px solid var(--line); border-radius:12px; padding:11px 13px; font-size:1rem; font-family:inherit; }

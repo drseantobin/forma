@@ -59,6 +59,19 @@ if (state.profile && state.profile.settings && state.profile.settings.faithTrack
 function save() { Profile.saveProfile(state.profile); }
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
+// Appearance theme: 'system' (follow the OS), 'light', or 'dark'. Persisted in
+// localStorage and applied to <html data-theme> — read by a tiny <head> script before
+// first paint (no flash). The CSS already covers all three: [data-theme] forces a theme;
+// absent → @media prefers-color-scheme. Stored OUTSIDE the profile so it works pre-boot.
+const THEME_KEY = 'forma_theme';
+function currentTheme() { try { return localStorage.getItem(THEME_KEY) || 'system'; } catch (e) { return 'system'; } }
+function setTheme(pref) {
+  try {
+    if (pref === 'light' || pref === 'dark') { localStorage.setItem(THEME_KEY, pref); document.documentElement.setAttribute('data-theme', pref); }
+    else { localStorage.removeItem(THEME_KEY); document.documentElement.removeAttribute('data-theme'); }
+  } catch (e) { /* noop */ }
+}
+
 function prefersReducedMotion() {
   return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -3860,6 +3873,17 @@ function renderSettings() {
       </div>
 
       <div class="card">
+        <h2 style="font-size:1.05rem;">Appearance</h2>
+        <p class="muted small" style="margin:2px 0 10px;">Forma follows your device by default. Dark is calm and easy on the eyes at night.</p>
+        <div class="segmented" role="group" aria-label="Appearance">
+          ${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => {
+            const on = currentTheme() === v;
+            return `<button class="seg ${on ? 'on' : ''}" data-theme-set="${v}" aria-pressed="${on}">${l}</button>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="card">
         <div class="row">
           <span style="font-size:1.3rem;">🕊️</span>
           <div style="flex:1;">
@@ -4035,6 +4059,9 @@ function renderSettings() {
     </div>`;
 
   document.getElementById('name').onchange = (e) => { p.settings.name = e.target.value.trim(); save(); };
+  [...document.querySelectorAll('[data-theme-set]')].forEach((b) => {
+    b.onclick = () => { setTheme(b.getAttribute('data-theme-set')); render(); };
+  });
   const tt = document.getElementById('toteam'); if (tt) tt.onclick = () => go('team');
   const tm = document.getElementById('tomethods'); if (tm) tm.onclick = () => go('methods');
   const tec = document.getElementById('toepistemic'); if (tec) tec.onclick = () => { state.epistemic = null; go('epistemiccheck'); };

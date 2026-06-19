@@ -26,6 +26,9 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#4c5fd5" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#14151a" media="(prefers-color-scheme: dark)" />
+  <!-- Apply a saved Appearance preference (light/dark) BEFORE first paint, so an
+       explicit choice never flashes the wrong theme. Absent → follow the OS (CSS @media). -->
+  <script>try{var t=localStorage.getItem('forma_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <link rel="apple-touch-icon" href="icon.svg" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
