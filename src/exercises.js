@@ -1827,6 +1827,80 @@ export const TRADEOFFS = [
   },
 ];
 
+// ----- RELIANCE: a BEHAVIORAL agency measure (appropriate reliance on AI) -----
+// Agency isn't abstaining from the tool — it's staying the author: leaning on the
+// assistant when it genuinely helps, and holding your own judgment when it's wrong.
+// Each trial is a two-step act: commit YOUR answer, then see what an AI assistant
+// suggests (correct on some trials, confidently WRONG on others) and decide. Scoring
+// (scoreReliance) rewards ending up correct and especially NOT following a wrong
+// assistant (over-reliance — the core agency failure), per the appropriate-reliance
+// paradigm (Schemmer et al. 2023: RAIR = switch to AI when you were wrong; RSR = hold
+// your own when the AI is wrong). Each item has VERIFIABLE answers, so the wrong-AI
+// trials are honest, not rigged. Keyed → single-use-gated in profile.js RECALL_PRONE.
+const RELIANCE_INTRO = 'You’ll work through a few short problems. Each time, commit your own answer first — then an AI assistant offers its take. Sometimes it’s right; sometimes it’s confidently wrong. Decide what to do with it. There’s no penalty for using the tool and none for trusting yourself — what’s measured is whether your reliance fits the moment.';
+export const RELIANCE = [
+  {
+    id: 'rel-reason', type: 'reliance', domain: 'ai_autonomy', title: 'Working With an Assistant',
+    intro: RELIANCE_INTRO,
+    trials: [
+      {
+        prompt: 'A bat and a ball cost $1.10 together. The bat costs $1.00 more than the ball. How much is the ball?',
+        options: [{ id: 'a', text: '5 cents' }, { id: 'b', text: '10 cents' }, { id: 'c', text: '1 cent' }],
+        answer: 'a', ai: { suggestId: 'b', correct: false },
+        explain: 'The ball is 5¢ (the bat is $1.05). 10¢ is the intuitive trap — it would make the total $1.20. The assistant sounded sure and was wrong; trusting your own check was the agentic move.',
+      },
+      {
+        prompt: 'If 5 machines take 5 minutes to make 5 widgets, how long do 100 machines take to make 100 widgets?',
+        options: [{ id: 'a', text: '5 minutes' }, { id: 'b', text: '100 minutes' }, { id: 'c', text: '20 minutes' }],
+        answer: 'a', ai: { suggestId: 'a', correct: true },
+        explain: 'Each machine makes one widget in 5 minutes, so 100 machines make 100 widgets in 5 minutes. Here the assistant was right — taking the good help is also agency.',
+      },
+      {
+        prompt: 'A patch of lily pads doubles in size every day and covers the whole lake on day 48. On which day was the lake half covered?',
+        options: [{ id: 'a', text: 'Day 24' }, { id: 'b', text: 'Day 47' }, { id: 'c', text: 'Day 46' }],
+        answer: 'b', ai: { suggestId: 'b', correct: true },
+        explain: 'If it doubles daily and is full on day 48, it was half-full the day before — day 47. The assistant had it; accepting a correct answer you can verify is appropriate reliance.',
+      },
+      {
+        prompt: 'A jacket sells for $80 after a 20% discount. What was its original price?',
+        options: [{ id: 'a', text: '$96' }, { id: 'b', text: '$100' }, { id: 'c', text: '$120' }],
+        answer: 'b', ai: { suggestId: 'a', correct: false },
+        explain: '$80 is 80% of the original, so the original is $80 ÷ 0.8 = $100. $96 (adding 20% back to $80) is the confident-sounding error; holding your own working was right.',
+      },
+    ],
+  },
+  {
+    id: 'rel-estimate', type: 'reliance', domain: 'ai_autonomy', title: 'Checking the Tool’s Work',
+    intro: RELIANCE_INTRO,
+    trials: [
+      {
+        prompt: 'A shirt is marked 20% off, then an extra 25% off the reduced price. What is the total discount off the original?',
+        options: [{ id: 'a', text: '40%' }, { id: 'b', text: '45%' }, { id: 'c', text: '50%' }],
+        answer: 'a', ai: { suggestId: 'b', correct: false },
+        explain: 'You pay 0.80 × 0.75 = 0.60 of the original, so 40% off. 45% (just adding the two) is the tempting wrong answer the assistant gave; discounts don’t add.',
+      },
+      {
+        prompt: 'You flip a fair coin three times. What is the probability of getting at least one heads?',
+        options: [{ id: 'a', text: '7/8' }, { id: 'b', text: '3/4' }, { id: 'c', text: '1/2' }],
+        answer: 'a', ai: { suggestId: 'a', correct: true },
+        explain: 'The only way to avoid heads is three tails: 1/8. So at least one heads is 1 − 1/8 = 7/8. The assistant was correct here.',
+      },
+      {
+        prompt: 'Which fraction is larger: 3/7 or 5/11?',
+        options: [{ id: 'a', text: '5/11' }, { id: 'b', text: '3/7' }, { id: 'c', text: 'They are equal' }],
+        answer: 'a', ai: { suggestId: 'b', correct: false },
+        explain: '3/7 ≈ 0.4286 and 5/11 ≈ 0.4545, so 5/11 is larger (cross-multiply: 3×11=33 < 5×7=35). The assistant’s confident “3/7” was wrong.',
+      },
+      {
+        prompt: 'All bloops are razzies. All razzies are lazzies. Are all bloops necessarily lazzies?',
+        options: [{ id: 'a', text: 'Yes' }, { id: 'b', text: 'No' }, { id: 'c', text: 'Can’t tell' }],
+        answer: 'a', ai: { suggestId: 'a', correct: true },
+        explain: 'The chain holds: bloops → razzies → lazzies, so all bloops are lazzies. The assistant reasoned it correctly.',
+      },
+    ],
+  },
+];
+
 // ----- VIGNETTES: AI-scored communication / emotional-intelligence exercise -----
 // A charged interpersonal moment. The person responds OUT LOUD (or types), and
 // Claude scores the transcript on a relational-presence rubric (see coach.js
@@ -2273,8 +2347,11 @@ export function pickExercise(targetDomain, opts = {}) {
     case 'presence':
       // Relational-presence situational measure first, then reflection.
       return notSeen(PRESENCE_SCENES.concat(REFLECTIONS.filter((r) => r.domain === targetDomain)));
-    case 'persistence':
     case 'ai_autonomy':
+      // Agency: the behavioral appropriate-reliance task first, then the trade-off SJT,
+      // then reflection — every fallback still measures the capacity.
+      return notSeen(RELIANCE.concat(TRADEOFFS, REFLECTIONS.filter((r) => r.domain === targetDomain)));
+    case 'persistence':
     case 'values':
       return notSeen(REFLECTIONS.filter((r) => r.domain === targetDomain));
     case 'interior':

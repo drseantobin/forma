@@ -276,6 +276,29 @@ export function scoreDecision(optionId, options) {
   return opt ? clamp(opt.score) : 0;
 }
 
+// --- Agency: appropriate reliance on an AI assistant (Schemmer et al. 2023) ---
+// Each trial: the person commits an answer, sees a (sometimes-wrong) AI suggestion,
+// then commits a final answer. Agency = staying the author: ending up correct, and
+// above all NOT deferring to a confidently-wrong assistant (over-reliance — the core
+// failure). Per trial: final correct = 100 (held a right answer, or appropriately
+// switched to good help); final wrong AND equal to a WRONG AI suggestion = 10
+// (over-reliance); any other wrong = 25 (incl. ignoring correct help — under-reliance).
+// `responses[i]` = { initial, final }; an unanswered trial doesn't count toward the mean.
+export function scoreReliance(trials, responses) {
+  const list = Array.isArray(trials) ? trials : [];
+  const res = Array.isArray(responses) ? responses : [];
+  let sum = 0, counted = 0;
+  list.forEach((t, i) => {
+    const r = res[i];
+    if (!r || r.final == null) return;
+    counted++;
+    if (r.final === t.answer) { sum += 100; return; }
+    if (t.ai && t.ai.correct === false && r.final === t.ai.suggestId) { sum += 10; return; }
+    sum += 25;
+  });
+  return counted ? clamp(round(sum / counted)) : 0;
+}
+
 // --- Reflection: honest self-rating (1..5) → 0..100 ---
 // The written reflection itself is interpreted by the coach; the number comes
 // from the user's own honest self-rating. (The AI coach may nuance this, but we
@@ -337,6 +360,9 @@ export function scoreExercise(exercise, response) {
       // SJT family (judgment / emotion-management & understanding / communication /
       // presence): the chosen option carries its rated score, same mechanism throughout.
       return scoreDecision(response.optionId, exercise.options);
+    case 'reliance':
+      // Agency: behavioral appropriate-reliance across the trials.
+      return scoreReliance(exercise.trials || [], response.trials || []);
     case 'matrix':
       // Fluid-reasoning item. A wrong answer stays formative (non-zero — you
       // engaged a hard item) but must sit BELOW the 25% chance level on a 4-option

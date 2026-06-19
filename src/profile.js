@@ -105,7 +105,7 @@ export function applySession(profile, exercise, response, opts = {}) {
   // response. Generated types (nback/series/span/mathfluency/vigilance/pursuit) carry a fresh id per
   // serve, so every item is genuinely new and they need no gate.
   // (profile.sessions does not yet include this session, so .some() tests prior history.)
-  const RECALL_PRONE = new Set(['crt', 'decision', 'tradeoff', 'stem', 'comm', 'attend', 'steu', 'matrix', 'reading', 'maze']);
+  const RECALL_PRONE = new Set(['crt', 'decision', 'tradeoff', 'stem', 'comm', 'attend', 'steu', 'matrix', 'reading', 'maze', 'reliance']);
   const isSingleUseReplay = RECALL_PRONE.has(exercise.type)
     && (p.sessions || []).some((s) => s.exerciseId === exercise.id);
   const measured = rawScore != null && !isSingleUseReplay;

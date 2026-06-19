@@ -985,6 +985,7 @@ function initialPhase(ex) {
     : ex.type === 'pursuit' ? 'pursuit-intro'
     : ex.type === 'contemplation' ? 'contempl-intro'
     : ex.type === 'guided' ? 'guided-intro'
+    : ex.type === 'reliance' ? 'reliance-intro'
     : 'play';
 }
 
@@ -1613,6 +1614,7 @@ function renderSession() {
     case 'digitspan': return renderDigitSpan();
     case 'decision': return renderDecision();
     case 'tradeoff': return renderDecision();
+    case 'reliance': return renderReliance();
     case 'stem': return renderDecision();
     case 'comm': return renderDecision();
     case 'attend': return renderDecision();
@@ -1640,7 +1642,7 @@ function renderSession() {
 
 function sessionHeader(ex) {
   const d = getDomain(ex.domain);
-  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'AI Independence', matrix: 'Reasoning', series: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', span: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', meaning: 'Purpose', stay: 'Frustration Tolerance', contemplation: 'Spiritual Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
+  const typeLabel = { reading: 'Deep Reading', memory: 'Working Memory', decision: 'Judgment', tradeoff: 'Agency', reliance: 'Agency', matrix: 'Reasoning', series: 'Reasoning', crt: 'Reflection Test', nback: 'Working Memory', span: 'Working Memory', mathfluency: 'Working Memory', digitspan: 'Working Memory', maze: 'Deep Reading', stream: 'Sustained Attention', vigilance: 'Live Attention', pursuit: 'Sustained Attention', flanker: 'Executive Attention', vignette: 'Communication', sentence: 'Self-Knowledge', meaning: 'Purpose', stay: 'Frustration Tolerance', contemplation: 'Spiritual Life', guided: 'Guided Practice', stem: 'Emotion Management', steu: 'Emotional Understanding', comm: 'Communication', attend: 'Relational Presence', reflection: 'Reflection' }[ex.type] || ex.type;
   const mode = exerciseMode(ex.type);
   const modeTitle = mode === 'practice'
     ? 'A practice — a formation rep, not graded right or wrong.'
@@ -5081,7 +5083,10 @@ const PROMO_KEY = 'forma_promo_seen';
   // Returning/already-onboarded people aren't "new" — mark seen and never show.
   if (state.profile && state.profile.baseline) { try { localStorage.setItem(PROMO_KEY, '1'); } catch (e) {} return; }
 
-  const SCENE_MS = 4000;
+  // Calm pacing: each scene holds ~6.5s before auto-advancing. The moment the
+  // person takes manual control (an arrow / a key), auto-advance stops for good
+  // so it never fights them — they drive from there.
+  const SCENE_MS = 6500;
   const caps = DOMAINS.slice(0, 7).map((d) => `<span class="pill">${d.icon} ${esc(d.name)}</span>`).join('');
   // Each scene is a builder → innerHTML for the stage. The last scene is the CTA
   // and does NOT auto-advance; it waits for the person to choose.
@@ -5104,6 +5109,8 @@ const PROMO_KEY = 'forma_promo_seen';
     <div class="promo-card">
       <div class="promo-rail" aria-hidden="true">${scenes.map(() => '<span></span>').join('')}</div>
       <button class="promo-close" id="promoClose" aria-label="Close">×</button>
+      <button class="promo-nav promo-prev" id="promoPrev" aria-label="Previous" hidden>‹</button>
+      <button class="promo-nav promo-next" id="promoNext" aria-label="Next">›</button>
       <div class="promo-stage" id="promoStage"></div>
       <div class="promo-foot">
         <button class="promo-skip" id="promoSkip">Skip intro</button>
@@ -5118,7 +5125,9 @@ const PROMO_KEY = 'forma_promo_seen';
   const rail = [...overlay.querySelectorAll('.promo-rail span')];
   const cta = overlay.querySelector('#promoCta');
   const skip = overlay.querySelector('#promoSkip');
-  let i = -1, timer = null;
+  const prevBtn = overlay.querySelector('#promoPrev');
+  const nextBtn = overlay.querySelector('#promoNext');
+  let i = -1, timer = null, manual = false;
 
   function dismiss() {
     if (timer) { clearTimeout(timer); timer = null; }
@@ -5128,33 +5137,42 @@ const PROMO_KEY = 'forma_promo_seen';
     // Reveal the welcome screen beneath, focused for keyboard/AT users.
     try { app.focus(); } catch (e) {}
   }
-  function show(n) {
-    i = n;
+  // n = scene index (clamped); byUser = true when the person navigated, which
+  // pins manual mode (auto-advance off) and silences the progress-fill animation.
+  function show(n, byUser) {
+    if (byUser) manual = true;
+    i = Math.max(0, Math.min(last, n));
     const onLast = i >= last;
+    const live = !reduce && !manual; // timed sequence still running?
     // Retrigger the fade by toggling the class off→on.
     stage.classList.remove('fade'); void stage.offsetWidth;
     stage.style.setProperty('--promo-dur', SCENE_MS + 'ms');
     stage.innerHTML = scenes[i]();
     stage.classList.add('fade');
-    rail.forEach((s, idx) => { s.classList.toggle('done', idx < i); s.classList.toggle('now', idx === i && !onLast && !reduce); });
+    rail.forEach((s, idx) => { s.classList.toggle('done', idx < i); s.classList.toggle('now', idx === i && !onLast && live); });
     cta.hidden = !onLast;
     skip.hidden = onLast;
+    prevBtn.hidden = i <= 0;   // arrows: back hidden on the first scene,
+    nextBtn.hidden = onLast;   // next hidden on the CTA scene
     if (timer) { clearTimeout(timer); timer = null; }
-    if (!onLast && !reduce) timer = setTimeout(() => show(i + 1), SCENE_MS);
+    if (!onLast && live) timer = setTimeout(() => show(i + 1, false), SCENE_MS);
   }
   function onKey(e) {
     if (e.key === 'Escape') { e.preventDefault(); dismiss(); }
-    else if ((e.key === 'ArrowRight' || e.key === ' ') && i < last) { e.preventDefault(); show(i + 1); }
+    else if ((e.key === 'ArrowRight' || e.key === ' ') && i < last) { e.preventDefault(); show(i + 1, true); }
+    else if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); show(i - 1, true); }
   }
 
   overlay.querySelector('#promoClose').onclick = dismiss;
   overlay.querySelector('#promoBegin').onclick = dismiss; // reveals the welcome CTA beneath
-  skip.onclick = () => show(last);
+  prevBtn.onclick = () => show(i - 1, true);
+  nextBtn.onclick = () => show(i + 1, true);
+  skip.onclick = () => show(last, true);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); }); // backdrop
   document.addEventListener('keydown', onKey, true);
 
   // Reduced motion → skip the timed sequence, land on the CTA scene immediately.
-  show(reduce ? last : 0);
+  show(reduce ? last : 0, false);
 })();
 
 // Local data-safety: ask the browser to PERSIST our storage so it won't silently
