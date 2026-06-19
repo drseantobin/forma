@@ -418,7 +418,7 @@ async function renderBaselineResult() {
       <div class="card" id="interp">
         <div class="row"><span class="spinner"></span> <span class="muted">Reading your profile…</span></div>
       </div>
-      <button class="btn ghost" id="talkbaseline" style="margin-bottom:10px;">💬 Talk through my profile with the coach →</button>
+      <button class="btn ghost" id="talkbaseline" style="margin-bottom:10px;">${coachGlyph} Talk through my profile with the coach →</button>
       <div class="card" id="researchconsent-card" style="text-align:left;">
         <div class="eyebrow" style="color:var(--green);">Help improve Forma — optional</div>
         <p class="muted small" style="margin-top:4px;">Share your <strong>anonymous</strong> results so we can learn what actually helps people grow. It changes nothing about your experience — and never includes your name, anything you write, or your Interior Life. Just anonymous scores.</p>
@@ -636,6 +636,11 @@ function welcomeBackCard(p) {
         <p class="muted small" style="margin:6px 0 0;">${banked} The return is the rep — more than any streak. Pick up where you are.</p>
       </div>`;
 }
+
+// Inline chat glyph for the "talk to the coach" buttons — same stroke system (24px grid,
+// 1.6 weight, currentColor) as the tab + domain icons, so the coach flow carries no stray
+// emoji either. Sized in em (.binline) so it tracks the button text.
+const coachGlyph = '<svg class="binline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9l-4 3.5V7a1 1 0 0 1 1-1Z"/></svg>';
 
 // ---------------- home ----------------
 // A thin progress ring around the Formation Index — gives the one number the whole
@@ -2736,7 +2741,7 @@ function completeGuided() {
           <button class="btn sm" id="gcommit">Keep this as a commitment</button>
           <span id="gcommitted" class="trendpill up" style="display:none;">saved ✓</span>
         </div>` : ''}
-      <button class="btn ghost" id="gtalk" style="margin-top:16px;">💬 Talk this through with the coach →</button>
+      <button class="btn ghost" id="gtalk" style="margin-top:16px;">${coachGlyph} Talk this through with the coach →</button>
       <button class="btn amber" id="gdone" style="margin-top:10px;">Done →</button>
     </div>`;
 
@@ -2867,7 +2872,7 @@ async function completeSession() {
       <div class="card" id="insight" aria-live="polite">
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
       </div>
-      <button class="btn ghost" id="talkthrough" style="margin-bottom:10px;">💬 Talk this through with the coach →</button>
+      <button class="btn ghost" id="talkthrough" style="margin-bottom:10px;">${coachGlyph} Talk this through with the coach →</button>
       ${tomorrowNudge}
       <button class="btn amber" id="home">Done →</button>
     </div>`;
