@@ -19,6 +19,7 @@ import { confidenceTag, confidence, milestoneEligible, indexConfidence, scaleFre
 import { basisFor, INSTRUMENT_BASIS } from './src/methods.js';
 import { CONSTRUCTS, constructProfile } from './src/constructs.js';
 import { growthFor } from './src/growth.js';
+import { practiceFor } from './src/practice.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
 import * as Orchestrator from './src/orchestrator.js';
 import * as Research from './src/research.js';
@@ -804,6 +805,8 @@ function renderHome() {
         <p class="muted small center" style="margin:10px 0 0;">Tap the capacity above to learn how to grow it.</p>
       </div>
 
+      ${todaysPracticeCard(p)}
+
       <div class="card">
         <div class="row" style="margin-bottom:6px;">
           <span class="ico" style="font-size:1.3rem;">${getDomain('emotion_regulation').icon}</span>
@@ -839,6 +842,7 @@ function renderHome() {
   };
   wireDomainLinks();
   wireCommitments();
+  wireTodaysPractice();
 }
 
 // A gentle, dismissible reminder to keep a backup — Forma is local-first, so a
@@ -1090,6 +1094,107 @@ function startDomainSession(domain) {
   state.route = 'session';
   render();
   window.scrollTo(0, 0);
+}
+
+// "Today's Practice" — the TRAIN side made daily + interactive. Surfaces today's focus capacity's
+// real-life practice. HYBRID: if there's an open commitment for that capacity, IT is today's
+// practice (one-tap check-in). If not, an adaptable fill-in-the-blank template — cadence-framed
+// (daily "Today I'll…" vs situational "Next time…") + an optional WOOP obstacle line — which the
+// person edits and adopts → becomes a commitment (reuses composeCommitment + addGoal + setCoping).
+// Honest: real-life practice, never "raises your score"; a situational no-trigger day isn't a miss.
+function todaysPracticeCard(p) {
+  const focus = Planner.focusForToday(p) || recommendFocus(p);
+  const d = getDomain(focus);
+  const practice = practiceFor(focus);
+  if (!d || !practice) return '';
+  const today = todayStr();
+  const commit = (p.goals || []).find((g) => g && !g.done && g.domain === focus);
+  if (commit) {
+    const checkins = Array.isArray(commit.checkins) ? commit.checkins : [];
+    const done = checkins.includes(today);
+    const n = checkins.length;
+    const c = commit.coping;
+    const note = done
+      ? 'Done today — that’s the rep.'
+      : (practice.cadence === 'situational' ? 'It stays armed — a day without the moment isn’t a miss.' : 'A small real-life rep, your way.');
+    return `
+      <div class="card practice-card">
+        <div class="k">Today’s practice · ${esc(d.name)}</div>
+        <div class="practice-commit">
+          <button class="goalcheck ${done ? 'on' : ''}" data-practicecheck="${esc(commit.id)}" aria-pressed="${done}" aria-label="${done ? 'Done today — tap to undo' : 'Mark done today'}: “${esc(commit.text)}”">${done ? '✓' : '○'}</button>
+          <div class="practice-commit-body">
+            <div class="practice-commit-text">${esc(commit.text)}</div>
+            ${c ? `<p class="muted small" style="margin:4px 0 0;">If ${esc(c.when)}, I’ll ${esc(c.then)}.</p>` : ''}
+            ${n ? `<p class="muted small" style="margin:4px 0 0;">Kept ${n}×.</p>` : ''}
+          </div>
+        </div>
+        <p class="muted small" style="margin:10px 0 0;">${note}</p>
+      </div>`;
+  }
+  const daily = practice.cadence === 'daily';
+  const lede = daily
+    ? 'One small real-life rep today — make it yours.'
+    : 'Arm a plan for next time it comes up. A day without the moment isn’t a miss.';
+  const fields = daily
+    ? `<label class="practice-field"><span class="muted small">Today I’ll</span>
+           <input class="practice-action" type="text" maxlength="90" value="${esc(practice.action)}" aria-label="Today I will" /></label>
+         <label class="practice-field"><span class="muted small">When / where</span>
+           <input class="practice-cue" type="text" maxlength="70" value="${esc(practice.cue)}" placeholder="e.g. after my morning coffee" aria-label="When or where" /></label>`
+    : `<label class="practice-field"><span class="muted small">Next time</span>
+           <input class="practice-cue" type="text" maxlength="70" value="${esc(practice.cue)}" aria-label="Next time — the trigger" /></label>
+         <label class="practice-field"><span class="muted small">I’ll</span>
+           <input class="practice-action" type="text" maxlength="90" value="${esc(practice.action)}" aria-label="I will" /></label>`;
+  return `
+    <div class="card practice-card">
+      <div class="k">Today’s practice · ${esc(d.name)}</div>
+      <p class="muted small" style="margin:6px 0 10px;">${lede}</p>
+      <div class="practice-form">
+        ${fields}
+        <details class="practice-woop">
+          <summary class="muted small">Plan for a snag (optional)</summary>
+          <div class="practice-woop-body">
+            <label class="practice-field"><span class="muted small">If</span>
+              <input class="practice-obstacle" type="text" maxlength="70" placeholder="the thing most likely in my way" aria-label="If — the obstacle" /></label>
+            <label class="practice-field"><span class="muted small">I’ll</span>
+              <input class="practice-recovery" type="text" maxlength="70" placeholder="my recovery move" aria-label="Then I will — the recovery" /></label>
+          </div>
+        </details>
+        <p class="practice-why muted small">${esc(practice.why)}</p>
+        <button class="btn" id="practiceadopt" data-domain="${esc(focus)}">Make it today’s practice</button>
+      </div>
+    </div>`;
+}
+
+function wireTodaysPractice() {
+  const chk = app.querySelector('[data-practicecheck]');
+  if (chk) chk.onclick = () => {
+    const id = chk.dataset.practicecheck;
+    const g = (state.profile.goals || []).find((x) => x.id === id);
+    const had = g && (g.checkins || []).includes(todayStr());
+    state.profile = Profile.trackGoal(state.profile, id, todayStr());
+    save(); render();
+    announce(had ? 'Unmarked for today.' : 'Done today — that’s the rep.');
+    const again = app.querySelector(`[data-practicecheck="${id}"]`); if (again) again.focus(); else focusViewHeading();
+  };
+  const adopt = document.getElementById('practiceadopt');
+  if (adopt) adopt.onclick = () => {
+    const focus = adopt.dataset.domain;
+    const card = adopt.closest('.practice-card');
+    if (!card) return;
+    const val = (sel) => { const el = card.querySelector(sel); return el ? el.value.trim() : ''; };
+    const action = val('.practice-action');
+    if (!action) { const a = card.querySelector('.practice-action'); if (a && a.focus) a.focus(); return; }
+    state.profile = Profile.addGoal(state.profile, focus, composeCommitment(val('.practice-cue'), action));
+    const obstacle = val('.practice-obstacle');
+    const recovery = val('.practice-recovery');
+    if (obstacle && recovery) {
+      const g = state.profile.goals[state.profile.goals.length - 1];
+      if (g) state.profile = Profile.setCoping(state.profile, g.id, obstacle, recovery);
+    }
+    save(); render();
+    announce('Set as today’s practice — it’s in your commitments.');
+    const c = app.querySelector('[data-practicecheck]'); if (c) c.focus(); else focusViewHeading();
+  };
 }
 
 // Commitments — solution-focused, self-chosen next steps. Closes a real loop:

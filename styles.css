@@ -432,6 +432,19 @@ details.disclosure > summary { cursor:pointer; list-style:none; display:flex; al
 details.disclosure > summary::-webkit-details-marker { display:none; }
 details.disclosure > summary::after { content:'+'; margin-left:auto; color:var(--ink-faint); font-weight:400; font-size:1.05rem; line-height:1; }
 details.disclosure[open] > summary::after { content:'–'; }
+/* Today's Practice — the daily real-life rep. Calm fill-in-the-blank inputs the person edits and
+   adopts; the WOOP obstacle line is an optional disclosure; the committed state shows a check-in. */
+.practice-field { display:block; margin-bottom:8px; }
+.practice-field > span { display:block; margin-bottom:3px; }
+.practice-field input { width:100%; border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; font-size:.95rem; font-family:inherit; color:var(--ink); background:var(--card); }
+.practice-woop { margin:2px 0 8px; }
+.practice-woop > summary { cursor:pointer; list-style:none; color:var(--accent); display:inline-block; }
+.practice-woop > summary::-webkit-details-marker { display:none; }
+.practice-woop-body { margin-top:8px; padding:10px 12px; border:1px solid var(--line); border-radius:var(--radius-sm); }
+.practice-why { margin:6px 0 12px; }
+.practice-commit { display:flex; align-items:flex-start; gap:10px; margin-top:8px; }
+.practice-commit-body { flex:1; }
+.practice-commit-text { line-height:1.5; }
 .goaladd summary { list-style:none; cursor:pointer; }
 .goaladd summary::-webkit-details-marker { display:none; }
 .goaladd-body input[type="text"] { width:100%; }
