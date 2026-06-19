@@ -240,7 +240,14 @@ export function enableFaithTrack(profile) {
 export function disableFaithTrack(profile) {
   const p = clone(profile);
   p.settings.faithTrack = false;
+  // Remove ALL stored interior state, not just the live score — disabling fully removes the
+  // Spiritual Life track, so no orphaned interior data lingers in baseline/bandPeak. Privacy: the
+  // interior track is private and must never leak into a non-faith profile, and a future read of
+  // baseline.domainScores/bandPeak without the faith gate is exactly how an orphan would leak it.
+  // Re-enabling re-seeds fresh (the honest behavior on an explicit opt-out), not a stale resurrection.
   delete p.domainScores.interior;
+  if (p.baseline && p.baseline.domainScores) delete p.baseline.domainScores.interior;
+  if (p.bandPeak) delete p.bandPeak.interior;
   return p;
 }
 
