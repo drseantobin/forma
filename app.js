@@ -1350,15 +1350,15 @@ function renderDomainDetail() {
         ${growthCard(id, { hideName: true, nested: true })}
       </div>
 
-      <div class="card">
-        <div class="eyebrow">About this capacity</div>
-        <p style="margin:6px 0 0; line-height:1.55;">${esc(d.blurb)}</p>
+      <details class="card disclosure">
+        <summary class="eyebrow">About this capacity</summary>
+        <p style="margin:8px 0 0; line-height:1.55;">${esc(d.blurb)}</p>
         <p style="margin:10px 0 0; line-height:1.55;"><strong>Why it matters now.</strong> ${esc(d.aiRationale)}</p>
-      </div>
+      </details>
 
-      ${basis ? `<div class="card">
-        <div class="eyebrow">How Forma measures it</div>
-        <p class="muted small" style="margin:6px 0 0;">${esc(basis.detail)}</p></div>` : ''}
+      ${basis ? `<details class="card disclosure">
+        <summary class="eyebrow">How Forma measures it</summary>
+        <p class="muted small" style="margin:8px 0 0;">${esc(basis.detail)}</p></details>` : ''}
 
       ${practiceCard}
 

@@ -425,6 +425,13 @@ button { font-family: inherit; cursor: pointer; }
 .coping-help { margin:6px 0 10px; }
 .coping-actions { gap:8px; }
 .coping-actions .btn { width:auto; }
+/* Progressive disclosure on the capacity detail (v252): the reference cards (micro-lesson +
+   measurement basis) collapse so the directive + action lead the screen — STAND → DIRECT → ACT,
+   with the context one tap away. The summary keeps its .eyebrow look + a calm +/− affordance. */
+details.disclosure > summary { cursor:pointer; list-style:none; display:flex; align-items:center; margin:0; }
+details.disclosure > summary::-webkit-details-marker { display:none; }
+details.disclosure > summary::after { content:'+'; margin-left:auto; color:var(--ink-faint); font-weight:400; font-size:1.05rem; line-height:1; }
+details.disclosure[open] > summary::after { content:'–'; }
 .goaladd summary { list-style:none; cursor:pointer; }
 .goaladd summary::-webkit-details-marker { display:none; }
 .goaladd-body input[type="text"] { width:100%; }
