@@ -4771,12 +4771,21 @@ function renderTools() {
         </div>
       </div>
 
+      <div class="card">
+        <div class="row">${uiIcon('breath')}
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Body scan</h2>
+            <p class="muted small" style="margin:2px 0 0;">A few minutes moving attention slowly through the body, listening to what it’s telling you — the body as a place of knowing, not a problem to fix. Optional, private, never scored.</p></div>
+          <button class="btn ghost sm" id="tobody" style="width:auto;">Begin →</button>
+        </div>
+      </div>
+
       <p class="muted small center" style="margin-top:6px;">A mirror you can see the basis of — never a verdict. See <button class="btn ghost sm" id="tomethods2" style="width:auto; display:inline; padding:0; border:none; color:var(--accent); font-weight:600;">the science behind them →</button></p>
     </div>`;
   const tec = document.getElementById('toepistemic'); if (tec) tec.onclick = () => { state.epistemic = null; go('epistemiccheck'); };
   const tcal = document.getElementById('tocalibration'); if (tcal) tcal.onclick = () => { state.calib = null; go('calibration'); };
   const tbr = document.getElementById('tobreath'); if (tbr) tbr.onclick = () => { state.bct = null; go('breathcount'); };
   const tsvt = document.getElementById('tosvt'); if (tsvt) tsvt.onclick = () => { state.svt = null; go('svt'); };
+  const tbody = document.getElementById('tobody'); if (tbody) tbody.onclick = () => startGuidedSession('embodiment');
   const tm2 = document.getElementById('tomethods2'); if (tm2) tm2.onclick = () => go('methods');
 }
 

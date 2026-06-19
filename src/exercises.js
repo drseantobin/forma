@@ -1251,6 +1251,33 @@ export const ACT_MODULES = [
     ],
     after: 'Close however you like — many end with the Our Father.',
   },
+  {
+    id: 'embodiment',
+    // Attaches any saved intention to Emotional Regulation — the research's lower-risk
+    // home for body-awareness — and, like every guided practice, is UNSCORED. The body
+    // here is a source of knowing, never a thing to grade. Universal (not faith-gated).
+    domain: 'emotion_regulation',
+    process: 'Coming home to the body',
+    name: 'The body scan',
+    lead: 'For when you’re up in your head, numb, or running on stress. You’ll move attention slowly through the body and listen to what it’s telling you — the body as a place of knowing, not a problem to fix.',
+    basis: 'Adapts the body scan from MBSR (Kabat-Zinn, 1990) and interoceptive body-awareness work (MAIA; Mehling et al., 2018) — attention to bodily sensation weighted toward LISTENING to and TRUSTING the body, not monitoring it anxiously. A formation practice, never a clinical measure.',
+    breath: { inhale: 4, hold: 0, exhale: 6 },
+    eyesOpen: false,
+    before: 'Let your eyes close if that’s comfortable. We’re going to slow down and come back into the body — gently, with curiosity, not judgment.',
+    // Written capture (the listening is the practice): value = a sensation noticed (body
+    // listening), action = one gentle way to tend the body (saved as a private intention).
+    // Deliberately NO 0-10 scale — more body-noticing isn't "better," so we don't grade it.
+    capture: { value: 'What is your body telling you right now? (a sensation, a word — just noticing)', action: 'One small way you’ll tend to or listen to your body today:' },
+    steps: [
+      { text: 'Settle, and feel the weight of your body where it rests — held by the chair or the floor. Let it be heavy.', sec: 18 },
+      { text: 'Bring attention down to your feet and legs. Don’t change anything — just notice what’s there. Warmth, pressure, tingling, or nothing at all. All of it is fine.', sec: 20 },
+      { text: 'Move up through your belly and chest. Notice the breath moving on its own. Is there tightness, or ease? Just listen — you don’t have to fix it.', sec: 20 },
+      { text: 'Let attention rest in your shoulders, arms, and hands. If something is bracing and wants to soften, let it.', sec: 18 },
+      { text: 'Now your neck, jaw, and face — they carry a lot. Let them be exactly as they are, and simply notice.', sec: 18 },
+      { text: 'Take in the whole body at once, as one living, knowing thing. Ask it gently: what are you telling me today?', sec: 20 },
+    ],
+    after: 'However the body felt, you turned toward it and listened. That’s the whole practice — no score, nothing to get right.',
+  },
 ];
 
 export const ACT_MODULE_BY_ID = Object.fromEntries(ACT_MODULES.map((m) => [m.id, m]));
@@ -1264,6 +1291,7 @@ const ACT_THEME_KEYWORDS = {
   present: ['distract', 'scattered', 'can’t focus', 'cant focus', 'racing', 'restless', 'too much going', 'all over', 'can’t settle', 'cant settle', 'frazzled', 'wired', 'spinning'],
   values: ['pointless', 'what’s the point', 'whats the point', 'no point', 'don’t care', 'dont care', 'feel lost', 'no motivation', 'why bother', 'going through the motions', 'empty', 'meaningless', 'adrift', 'aimless', 'numb'],
   woop: ['procrastinat', 'keep putting off', 'putting it off', 'can’t follow through', 'cant follow through', 'never follow through', 'never finish', 'don’t finish', 'dont finish', 'keep slipping', 'no willpower', 'no self-control', 'won’t stick', 'wont stick', 'can’t stick to', 'cant stick to', 'keep failing to', 'keep meaning to', 'avoid doing'],
+  embodiment: ['in my head', 'out of my body', 'disconnected from my body', 'can’t feel', 'cant feel', 'tense all over', 'carrying tension', 'clenched', 'tight chest', 'burnt out', 'burned out', 'exhausted', 'ignoring my body', 'pushing through', 'so much tension', 'hold it in my'],
 };
 
 // Choose the ACT module that best fits this person right now — on-device, from
