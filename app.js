@@ -619,6 +619,24 @@ function welcomeBackCard(p) {
 }
 
 // ---------------- home ----------------
+// A thin progress ring around the Formation Index — gives the one number the whole
+// app exists to deliver real visual gravity (an instrument readout, à la Oura/WHOOP)
+// WITHOUT gamification: the arc simply mirrors the 0–100 composite, single calm hue,
+// rounded cap, no fill, no spin. SVG so it stays crisp and theme-aware (dark mode too).
+function indexRing(value, opts = {}) {
+  const v = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+  const C = 339.292; // circumference = 2·π·54
+  const off = (C * (1 - v / 100)).toFixed(2); // full arc at 0, closed at 100
+  const label = opts.label || 'Formation Index';
+  return `<div class="index-ring" role="img" aria-label="${esc(label)}: ${v} out of 100">
+      <svg class="index-ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="ring-track" cx="60" cy="60" r="54"></circle>
+        <circle class="ring-arc" cx="60" cy="60" r="54" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${off}"></circle>
+      </svg>
+      <div class="index-num kbig" aria-hidden="true">${v}</div>
+    </div>`;
+}
+
 function renderHome() {
   const p = state.profile;
   const fi = formationIndex(p.domainScores);
@@ -637,7 +655,7 @@ function renderHome() {
         <div class="tag">${greeting()}${p.settings.name ? ', ' + esc(p.settings.name) : ''}</div></div>
 
       <div class="card index-hero">
-        <div class="index-num kbig">${fi}</div>
+        ${indexRing(fi)}
         <div class="index-label">Formation Index${(() => {
           const t = indexTrend(p.indexHistory);
           return t.delta !== 0
@@ -3188,7 +3206,7 @@ function renderTeam() {
         <p class="muted small" style="margin:0;">Forma shows team signals only at <strong>${Team.MIN_COHORT} or more members</strong>. With fewer, an aggregate would reveal an individual — so nothing is shown. This protects people, and it's exactly the property an employer should expect from a tool that measures development, not performance.</p>
       </div>` : `
       <div class="card index-hero">
-        <div class="index-num kbig">${agg.avgIndex}</div>
+        ${indexRing(agg.avgIndex, { label: 'Team Formation Index' })}
         <div class="index-label">Team Formation Index</div>
         <div class="streakchip" style="margin-top:8px;">⚡ AI-readiness ${agg.aiReadiness}</div>
       </div>

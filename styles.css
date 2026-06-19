@@ -180,6 +180,14 @@ button { font-family: inherit; cursor: pointer; }
 /* ---------- home / dashboard ---------- */
 .index-hero { text-align:center; padding: 8px 0 4px; }
 .index-num { font-family: var(--font-num); font-size: var(--metric-1); font-weight: 600; letter-spacing:-.015em; line-height:1; font-variant-numeric: tabular-nums lining-nums; }
+/* Formation Index focal ring — the hero number gets a quiet progress arc (its own
+   0–100 composite). Calm instrument, not a game: one hue, rounded cap, no fill, no spin. */
+.index-ring { position: relative; width: 176px; height: 176px; margin: 6px auto 2px; }
+.index-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); display:block; }
+.index-ring .ring-track { fill: none; stroke: var(--line); stroke-width: 7; }
+.index-ring .ring-arc { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .6s ease; }
+.index-ring .index-num { position: absolute; inset: 0; display: grid; place-items: center; }
+@media (prefers-reduced-motion: reduce) { .index-ring .ring-arc { transition: none; } }
 .index-label { color: var(--ink-faint); font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; }
 .streakchip {
   display:inline-flex; align-items:center; gap:6px; background: var(--amber-soft); color:var(--amber-ink);
