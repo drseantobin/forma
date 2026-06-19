@@ -1203,6 +1203,24 @@ function renderDomainDetail() {
         </svg>
         <p class="muted small" style="margin:6px 0 0;">${t.points.length} measurements${t.direction !== 'flat' ? ` · ${t.delta > 0 ? '+' : ''}${t.delta} since you began` : ''} — your own scores over time, measured over weeks. Never a verdict; consistency can also reflect growing task-familiarity.</p>
       </div>` : '';
+  // TRAIN-side connector: for the two reflective capacities whose ACT guided practice maps
+  // cleanly, offer that existing deliberate practice right from the capacity — distinct from
+  // "Train it now" (the measure). The guided practice is UNSCORED (scoreExercise→null for
+  // 'guided'), so it can never move this scale. forma-validity vetted the mapping + framing
+  // (v240): only emotion_regulation + values (no adjacent objective score to misread), an
+  // explicit moduleId so a capacity-labeled button always opens its matching module, and the
+  // "unscored, never part of your measure" clause so it never reads as score-moving.
+  const GUIDED_FOR_DOMAIN = {
+    emotion_regulation: { module: 'acceptance', caption: 'A short, breath-guided practice for working <em>with</em> a hard feeling — making room for it rather than fighting it. A way to practice this in the moment. Optional, unscored, and never part of your measure.' },
+    values: { module: 'values', caption: 'A short, breath-guided practice for reconnecting with what you want to stand for — ending in one small step. A way to practice this in the moment. Optional, unscored, and never part of your measure.' },
+  };
+  const guidedOpt = GUIDED_FOR_DOMAIN[id];
+  const practiceCard = guidedOpt ? `
+      <div class="card">
+        <div class="eyebrow">Practice it now</div>
+        <p class="muted small" style="margin:6px 0 10px; line-height:1.5;">${guidedOpt.caption}</p>
+        <button class="btn ghost" id="guidedpractice">Try a guided practice →</button>
+      </div>` : '';
   app.innerHTML = `
     <div class="fade-in">
       ${viewHead('Capacity', d.name, d.short, `<button class="btn ghost sm" id="back" style="width:auto;">← ${fromLabel}</button>`)}
@@ -1231,11 +1249,15 @@ function renderDomainDetail() {
         <div class="eyebrow">How Forma measures it</div>
         <p class="muted small" style="margin:6px 0 0;">${esc(basis.detail)}</p></div>` : ''}
 
+      ${practiceCard}
+
       <button class="btn amber" id="train">Train it now →</button>
       <p class="muted small center" style="margin-top:10px;">A few minutes. Formation, measured over weeks — never a verdict.</p>
     </div>`;
   document.getElementById('back').onclick = () => go(from);
   document.getElementById('train').onclick = () => startDomainSession(id);
+  const gp = document.getElementById('guidedpractice');
+  if (gp && guidedOpt) gp.onclick = () => startGuidedSession(guidedOpt.module);
   wireGrowthCommit();
 }
 
