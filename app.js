@@ -1174,6 +1174,17 @@ function renderDomainDetail() {
   const score = p.domainScores ? p.domainScores[id] : null;
   const band = score != null ? bandFor(score) : null;
   const basis = basisFor(id);
+  // Honest per-capacity trajectory: the person's OWN measured scores over time (not a
+  // validated trait line). Only shown once there are ≥2 points; framed "never a verdict".
+  const t = domainTrend(p.history || [], id);
+  const traj = (score != null && t.points && t.points.length >= 2) ? `
+      <div class="card">
+        <div class="eyebrow">Your trajectory</div>
+        <svg viewBox="0 0 320 52" width="100%" style="margin-top:8px; max-width:440px;" role="img" aria-label="Your ${esc(d.name)} scores over time">
+          <path d="${sparklinePath(t.points, 320, 52, 6)}" fill="none" stroke="${band.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="muted small" style="margin:6px 0 0;">${t.points.length} measurements${t.delta !== 0 ? ` · ${t.delta > 0 ? '+' : ''}${t.delta} since you began` : ''} — your own scores over time, measured over weeks. Never a verdict; consistency can also reflect growing task-familiarity.</p>
+      </div>` : '';
   app.innerHTML = `
     <div class="fade-in">
       ${viewHead('Capacity', d.name, d.short, '<button class="btn ghost sm" id="back" style="width:auto;">← Progress</button>')}
@@ -1183,6 +1194,8 @@ function renderDomainDetail() {
           ? `${indexRing(score, { label: d.name })}<div class="index-label">${esc(band.label)}</div>`
           : '<p class="muted" style="margin:8px 0;">Not measured yet — train it to see where you stand.</p>'}
       </div>
+
+      ${traj}
 
       <div class="card">
         <div class="eyebrow">Why this matters</div>
