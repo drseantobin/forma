@@ -25,6 +25,10 @@
   --shadow-lg: 0 4px 12px rgba(27,28,40,.08), 0 24px 48px rgba(27,28,40,.10);
   --radius: 18px;
   --radius-sm: 12px;
+  /* One 8px spacing rhythm for padding + vertical gaps — consistent whitespace is the
+     cheapest "premium" signal. Cards run a touch roomier (22px) than the old tight 20px. */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --card-pad: 22px;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
   /* Measured values get a distinct SYSTEM-serif numeral so a score reads as a precise
      instrument readout, not UI chrome — coheres with the Georgia brandmark, no font
@@ -82,7 +86,7 @@ body {
   padding-bottom: 84px; /* room for tabbar */
 }
 
-#app { max-width: var(--maxw); margin: 0 auto; padding: calc(20px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 8px calc(18px + env(safe-area-inset-left)); }
+#app { max-width: var(--maxw); margin: 0 auto; padding: calc(24px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 8px calc(18px + env(safe-area-inset-left)); }
 .boot {
   min-height: 72vh;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -134,8 +138,8 @@ button { font-family: inherit; cursor: pointer; }
 /* ---------- cards ---------- */
 .card {
   background: var(--card); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
-  margin-bottom: 16px;
+  border-radius: var(--radius); padding: var(--card-pad); box-shadow: var(--shadow);
+  margin-bottom: var(--s4);
 }
 .card.flush { padding: 0; overflow: hidden; }
 
@@ -431,7 +435,7 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .row { display:flex; align-items:center; gap:10px; }
 .spacer { flex:1; }
-.stack > * + * { margin-top: 12px; }
+.stack > * + * { margin-top: var(--s3); }
 
 /* shared eyebrow label */
 .eyebrow { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700; }
