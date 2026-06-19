@@ -185,7 +185,10 @@ button { font-family: inherit; cursor: pointer; }
 .lesson-domain .dcount { margin-left:auto; color: var(--ink-faint); font-size:.85rem; }
 
 /* ---------- home / dashboard ---------- */
-.index-hero { text-align:center; padding: 8px 0 4px; }
+/* Depth hierarchy: the Formation Index is the one card that owns the screen, so it sits
+   on the higher elevation tier (--shadow-lg) with a touch more room — it visibly floats
+   above the secondary cards (which keep the regular --shadow). One number, one focus. */
+.index-hero { text-align:center; padding: var(--s4) 0 var(--s3); box-shadow: var(--shadow-lg); }
 .index-num { font-family: var(--font-num); font-size: var(--metric-1); font-weight: 600; letter-spacing:-.015em; line-height:1; font-variant-numeric: tabular-nums lining-nums; }
 /* Formation Index focal ring — the hero number gets a quiet progress arc (its own
    0–100 composite). Calm instrument, not a game: one hue, rounded cap, no fill, no spin. */
