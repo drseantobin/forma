@@ -3033,11 +3033,16 @@ async function completeSession() {
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
       </div>
       ${growthCard(s.exercise.domain)}
+      <button class="btn ghost" id="seedomain" style="margin-bottom:10px;">See your ${esc(getDomain(s.exercise.domain).name)} — trajectory & next step →</button>
       <button class="btn ghost" id="talkthrough" style="margin-bottom:10px;">${coachGlyph} Talk this through with the coach →</button>
       ${tomorrowNudge}
       <button class="btn amber" id="home">Done →</button>
     </div>`;
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };
+  document.getElementById('seedomain').onclick = () => {
+    // Into the full per-capacity view, where the just-updated trajectory + next-step live.
+    state.focusDomain = s.exercise.domain; state.focusDomainFrom = 'home'; state.session = null; go('domain');
+  };
   wireGrowthCommit();
   document.getElementById('talkthrough').onclick = () => {
     const ctx = {
