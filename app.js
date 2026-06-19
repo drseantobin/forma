@@ -659,7 +659,7 @@ const coachGlyph = '<svg class="binline" viewBox="0 0 24 24" fill="none" stroke=
 // flips with the theme (dark navy in light mode, light in dark), and the leaf is
 // var(--green), readable in both. Shown directly (no tile) — the wordmark "Forma" sits
 // beside it. Used everywhere the brand glyph renders.
-const formaMark = '<svg class="fmark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M14 5 C6.5 9 6.5 22 10.5 28 C12.5 20 12.5 12 14 5 Z" fill="var(--green)"/><path d="M13 5 H27 L25.5 9.5 H18 V14 H23.5 L22 18.5 H18 V28 H13 Z" fill="var(--ink)"/></svg>';
+const formaMark = '<img src="./brandmark.png" class="logo-img" alt="" aria-hidden="true">';
 
 // Dictation glyphs — same inline-SVG stroke system as the rest. micGlyph = a mic;
 // stopGlyph = a filled stop square (mid-recording). They replace the last mic/stop emoji in

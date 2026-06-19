@@ -4,7 +4,7 @@
 // SHELL must list EVERY src/*.js module — otherwise a freshly-installed user who
 // goes offline before that module is fetched at runtime hits a broken dynamic
 // import. Keep in sync with src/; the deploy step diffs SHELL against src/*.js.
-const CACHE = 'forma-v219';
+const CACHE = 'forma-v220';
 const SHELL = [
   './',
   './index.html',
@@ -12,6 +12,9 @@ const SHELL = [
   './app.js',
   './manifest.webmanifest',
   './icon.svg',
+  './icon-512.png',
+  './brandmark.png',
+  './wordmark-logo.png',
   './og-image.png',
   './src/domains.js',
   './src/assessments.js',

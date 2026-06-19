@@ -29,7 +29,8 @@
   <!-- Apply a saved Appearance preference (light/dark) BEFORE first paint, so an
        explicit choice never flashes the wrong theme. Absent → follow the OS (CSS @media). -->
   <script>try{var t=localStorage.getItem('forma_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
-  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon-512.png" />
+  <link rel="icon" type="image/png" href="icon-512.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Forma" />
@@ -39,7 +40,7 @@
   <main id="app" role="main" tabindex="-1">
     <!-- Rendered by app.js -->
     <div class="boot">
-      <div class="boot-logo" aria-hidden="true"><svg class="fmark" viewBox="0 0 32 32" fill="none"><path d="M14 5 C6.5 9 6.5 22 10.5 28 C12.5 20 12.5 12 14 5 Z" fill="var(--green)"/><path d="M13 5 H27 L25.5 9.5 H18 V14 H23.5 L22 18.5 H18 V28 H13 Z" fill="var(--ink)"/></svg></div>
+      <div class="boot-logo" aria-hidden="true"><img src="./brandmark.png" class="logo-img" alt="" /></div>
       <div class="boot-name">Forma</div>
       <div class="boot-tag">train what AI can’t replace</div>
     </div>

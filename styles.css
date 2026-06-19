@@ -96,8 +96,9 @@ body {
   text-align: center; gap: 8px; color: var(--ink-faint);
 }
 .boot-logo {
-  width: 80px; height: 80px;
+  width: 96px; height: 96px;
   display: grid; place-items: center;
+  background:#f6f5f1; border-radius:22px; padding:14px;
   animation: bootPulse 1.6s ease-in-out infinite;
 }
 .boot-name { font-weight: 800; font-size: 1.3rem; letter-spacing: .02em; color: var(--ink); margin-top: 6px; }
@@ -143,19 +144,18 @@ button { font-family: inherit; cursor: pointer; }
 .card.flush { padding: 0; overflow: hidden; }
 
 .brandmark { display:flex; align-items:center; gap:10px; margin-bottom: 18px; }
-/* The F+leaf mark is shown directly (no gradient tile) — the wordmark sits beside it. */
-.brandmark .logo { width: 38px; height: 38px; display:grid; place-items:center; }
+/* The brandmark is Sean's real logo image (brandmark.png, transparent). The navy mark
+   needs a light backing in BOTH themes, so it sits on a fixed off-white chip — invisible
+   against the light page, a clean badge in dark mode. */
+.logo-img { display:block; width:100%; height:100%; object-fit:contain; }
+.brandmark .logo { width: 42px; height: 42px; background:#f6f5f1; border-radius:9px; padding:4px; }
 .brandmark .name { font-weight: 800; letter-spacing:.02em; font-size:1.05rem; }
 .brandmark .tag { color: var(--ink-faint); font-size:.8rem; margin-left:auto; }
-/* Brandmark, sized per surface (the F flips with the theme; the leaf stays green). */
-.brandmark .logo .fmark { width:38px; height:38px; }
-.boot-logo .fmark { width:72px; height:72px; }
-.snaphead .logo .fmark { width:42px; height:42px; }
 
 /* ---------- onboarding ---------- */
 .hero { text-align:center; padding: 24px 6px 8px; }
 .hero .glyph { font-size: 3rem; line-height: 0; }
-.hero .glyph.fmarkglyph .fmark { width: 4.2rem; height: 4.2rem; }
+.hero .glyph.fmarkglyph { width:96px; height:96px; margin:0 auto; background:#f6f5f1; border-radius:20px; padding:14px; }
 .hero h1 { margin-top: .3em; }
 .hero p.lede { color: var(--ink-soft); font-size: 1.05rem; max-width: 30ch; margin: .2em auto 1.2em; }
 .pillrow { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom: 18px; }
@@ -345,7 +345,7 @@ button { font-family: inherit; cursor: pointer; }
 /* Capacity Snapshot (shareable credential) */
 .snapsheet { border:1px solid var(--line, #e6e4dd); }
 .snaphead { display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid var(--line, #e6e4dd); }
-.snaphead .logo { width:42px; height:42px; display:grid; place-items:center; }
+.snaphead .logo { width:44px; height:44px; background:#f6f5f1; border-radius:9px; padding:4px; }
 .snaptitle { font-weight:700; }
 /* Credential hero metrics get a financial-statement treatment: a bold top rule + an
    eyebrow label above the figure, tabular numerals, a hairline divider between them —
