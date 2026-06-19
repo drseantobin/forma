@@ -3040,7 +3040,8 @@ function renderProgress() {
             return `<div class="domain-row" style="align-items:center;">
               <div class="meta"><div class="dn">${esc(pr.name)}</div>
                 <div class="muted small">${pr.members.map((m) => esc(getDomain(m.domain) ? getDomain(m.domain).name : m.domain)).join(' · ')}</div>
-                <div class="muted small">${esc(cc.note)}</div></div>
+                <div class="bar"><div style="width:${pr.provisionalMean}%; background:${band.color}"></div></div>
+                <div class="muted small" style="margin-top:5px;">${esc(cc.note)}</div></div>
               <span class="sc" style="color:${band.color};">~${pr.provisionalMean}</span>
             </div>`;
           }).join('')}</div>
@@ -3084,7 +3085,8 @@ function renderProgress() {
             return `<div class="domain-row" style="align-items:center;">
               <span class="ico" aria-hidden="true">${d ? d.icon : '•'}</span>
               <div class="meta"><div class="dn">${d ? esc(d.name) : esc(sx.domain)}</div>
-                <div class="muted small">${dt.getMonth() + 1}/${dt.getDate()}</div></div>
+                <div class="muted small">${dt.getMonth() + 1}/${dt.getDate()}</div>
+                <div class="bar"><div style="width:${sx.rawScore}%; background:${band.color}"></div></div></div>
               <span class="sc" style="color:${band.color};">${sx.rawScore}</span>
             </div>`;
           }).join('')}
