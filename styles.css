@@ -477,8 +477,22 @@ button { font-family: inherit; cursor: pointer; }
   .welcome-stagger > *:nth-child(n+7) { animation-delay: .40s; }
 }
 @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-.spinner { width:18px; height:18px; border:2.5px solid var(--accent-soft); border-top-color: var(--accent); border-radius:50%; display:inline-block; animation: spin .7s linear infinite; vertical-align:middle; }
+/* Loader in the Formation-Index ring's vocabulary: a thin arc that fades from transparent
+   to accent and sweeps slowly — an instrument working, not a hard border spinner. Pure CSS
+   (conic-gradient + radial mask = a hollow ring), so all 6 .spinner usages upgrade at once. */
+.spinner {
+  width:18px; height:18px; border-radius:50%; display:inline-block; vertical-align:middle;
+  background: conic-gradient(from 0deg, transparent 8%, var(--accent));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+  animation: spin 1.05s linear infinite;
+}
 @keyframes spin { to { transform: rotate(360deg); } }
+/* Reduced-motion: don't rotate — a gentle opacity breath still signals "working". */
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: spinnerPulse 1.3s ease-in-out infinite; }
+}
+@keyframes spinnerPulse { 0%, 100% { opacity:.35; } 50% { opacity:.9; } }
 .row { display:flex; align-items:center; gap:10px; }
 .spacer { flex:1; }
 .stack > * + * { margin-top: var(--s3); }
