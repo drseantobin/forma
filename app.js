@@ -4088,6 +4088,12 @@ function renderMethods() {
         <p class="muted small" style="margin:0;">Forma’s exercises adapt established cognitive and psychological paradigms — the same families of task used in research on attention, memory, reasoning, and emotional skill. They’re tuned to track <strong>growth over time</strong>, as formation, not to diagnose or label. The point is a measurement you can trust because you can see what it rests on.</p>
       </div>
 
+      <div class="card" style="border-left:4px solid var(--green);">
+        <div class="eyebrow" style="color:var(--green);">What Forma is — and isn't</div>
+        <p class="muted small" style="margin:8px 0 0; line-height:1.55;"><strong>It is</strong> a formation instrument: established research paradigms, adapted to help you measure and strengthen human capacities over time, with the basis of every measure shown to you.</p>
+        <p class="muted small" style="margin:8px 0 0; line-height:1.55;"><strong>It isn't</strong> a clinical or diagnostic tool, a hiring or ranking instrument, or normed against a population — your bands are within-person growth, never a percentile. The measures are honest <em>adaptations</em> tuned for formation, not validated clinical tests; their reliability and validity are things Forma is built to <em>earn</em> with real use, not to claim up front.</p>
+      </div>
+
       <h2 style="font-size:1.05rem; margin:16px 0 8px;">The capacities, and why these</h2>
       <p class="muted small" style="margin:0 0 10px;">We group the measures into a few higher-order capacities that AI quietly erodes when we let it do our thinking and relating for us. Each is shown as a <strong>profile of its facets</strong> — never a single validated score, until enough real data earns one.</p>
       ${CONSTRUCTS.map((c) => `<div class="card" style="margin-bottom:10px;">
