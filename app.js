@@ -4085,7 +4085,8 @@ function renderMethods() {
       </div>`).join('')}
 
       <h2 style="font-size:1.05rem; margin:18px 0 8px;">The paradigm behind each measure</h2>
-      <p class="muted small" style="margin:0 0 10px;">Each capacity’s exercises are adapted from a specific, established research paradigm — the family of task used to study it in the literature. Here’s the lineage behind each, so a score always rests on something you can check, not on our say-so.</p>
+      <p class="muted small" style="margin:0 0 8px;">Each capacity’s exercises are adapted from a specific, established research paradigm — the family of task used to study it in the literature. Here’s the lineage behind each, so a score always rests on something you can check, not on our say-so.</p>
+      <p class="muted small" style="margin:0 0 10px;">These come in a few kinds: <strong>live performance tasks</strong> (scored on what you actually did), <strong>situational judgment</strong> (how you’d respond to a realistic scenario), and — for the more relational or interior capacities — <strong>honest self-report</strong>, because faking a test of presence or meaning would be less true, not more. Each capacity is matched to the method that fits what it really is.</p>
       ${rows}
       <p class="muted small center" style="margin-top:6px;">Measurement for formation — never a clinical diagnosis.</p>
     </div>`;
