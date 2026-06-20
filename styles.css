@@ -392,8 +392,28 @@ button { font-family: inherit; cursor: pointer; }
 .snaptable .snapsc { text-align:right; font-weight:800; font-size:1.05rem; font-variant-numeric: tabular-nums; }
 .snaptable .snapconf { text-align:right; white-space:nowrap; }
 .snapfoot { margin-top:14px; padding-top:10px; border-top:1px dashed var(--line, #e6e4dd); }
+/* Demo Mode banner — a calm, persistent "this is a sample" bar while the sample
+   profile is showing. Amber (warmth/attention), never red: honesty made quiet, not
+   a scare-bar. Sticky so it stays in normal flow (no manual body offset), keeps
+   content visible, and pins to the top on scroll above the tabbar (z 50). */
+.demo-banner { position: sticky; top: 0; z-index: 60; background: var(--amber-soft); color: var(--amber-ink); border-bottom: 1px solid var(--amber); padding: calc(8px + env(safe-area-inset-top, 0px)) 16px 8px; font-size: .82rem; line-height: 1.35; }
+.demo-banner-in { max-width: var(--maxw); margin: 0 auto; display: flex; align-items: center; gap: 14px; justify-content: space-between; }
+.demo-banner-txt { min-width: 0; }
+.demo-banner-exit { flex: none; background: none; border: none; color: var(--amber-ink); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px 2px; white-space: nowrap; border-radius: 6px; }
+.demo-banner-exit:hover { opacity: .82; }
+.demo-banner-exit:focus-visible { outline: 2px solid var(--amber-ink); outline-offset: 2px; }
+/* Self-contained sample marker inside the snapshot credential card, so a cropped
+   screenshot of just the card (which won't include the page banner) still says so. */
+.snapsample { background: var(--amber-soft); color: var(--amber-ink); border: 1px solid var(--amber); border-radius: 10px; padding: 7px 11px; font-size: .8rem; font-weight: 700; text-align: center; margin-bottom: 12px; }
+
 @media print {
   .tabbar, .skip-link, .no-print, .brandmark { display:none !important; }
+  /* Keep the sample disclaimer on the PRINTED page — a sample snapshot/credential
+     must never print as if it were real. Static so it lands in flow at the top, with
+     a hard border so it reads as a watermark even in grayscale. The exit button is
+     pointless on paper. */
+  .demo-banner { position: static !important; border: 1.5px solid #8a5e12 !important; margin-bottom: 10px; }
+  .demo-banner-exit { display: none !important; }
   /* Force the LIGHT palette for print/PDF — otherwise a dark-mode device prints near-white
      ink on the forced-white page (an invisible snapshot/credential). !important + the explicit
      dark selectors guarantee this beats the dark-mode token declarations regardless of source order. */

@@ -37,6 +37,7 @@ import { SVT_BANK, svtScore, svtReading, SVT_CAVEATS } from './src/svt.js';
 import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
+import { buildDemoProfile, SPEC as DEMO_SPEC } from './src/demo.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
 // The domains to display for the current user (adds Spiritual Life when the
@@ -46,10 +47,12 @@ function domainOrder() {
 }
 const app = document.getElementById('app');
 const tabbar = document.getElementById('tabbar');
+const demobanner = document.getElementById('demobanner');
 
 const state = {
   profile: Profile.loadProfile(),
   route: 'home',
+  demo: false, // true while the sample profile is showing (see enterDemo/save)
   // transient view state
   onboard: { step: 0, responses: {}, mode: null, showKey: false, faithTrack: false },
   diag: { messages: [], ready: false, busy: false, error: '' },
@@ -61,7 +64,75 @@ if (state.profile && state.profile.settings && state.profile.settings.faithTrack
   state.onboard.faithTrack = true;
 }
 
-function save() { Profile.saveProfile(state.profile); }
+// The single persistence chokepoint. CRITICAL for Demo Mode: while the sample
+// profile is showing, save() is a no-op — nothing the visitor does (navigating,
+// chatting with the coach, "completing" an exercise) ever reaches the real
+// profile in localStorage. The sample lives only in memory.
+function save() { if (state.demo) return; Profile.saveProfile(state.profile); }
+
+// ---- Demo Mode ---------------------------------------------------------------
+// A populated SAMPLE profile so investors / prospective users can tour the whole
+// app without doing the baseline. Non-destructive (see save() above): the real
+// profile is stashed in memory and restored on exit; reloading the page also
+// drops the sample and returns to the real profile (it was never saved).
+let _realProfile = null;
+function enterDemo() {
+  if (state.demo) return;
+  _realProfile = state.profile; // stash the real one in memory (not touched on disk)
+  state.profile = buildDemoProfile();
+  state.demo = true;
+  state.route = 'home';
+  render();
+  window.scrollTo(0, 0);
+}
+function exitDemo() {
+  if (!state.demo) return;
+  state.demo = false;
+  state.profile = _realProfile || Profile.loadProfile();
+  _realProfile = null;
+  // Land somewhere sensible: a returning real user goes Home; a brand-new
+  // visitor (no baseline) falls back to onboarding via render()'s own guard.
+  state.route = 'home';
+  render();
+  window.scrollTo(0, 0);
+  announce(DEMO_SPEC.exitToast);
+}
+
+// In demo mode, real-data management is meaningless — and the destructive ones
+// would hit the REAL profile (reset calls localStorage.removeItem directly,
+// bypassing save()'s no-op; export/import would move SAMPLE data through a real
+// backup path). Refuse them and point the visitor to exit the sample first.
+function blockedInDemo(verb) {
+  if (!state.demo) return false;
+  announce('Exit the sample first to ' + verb + ' your own data.');
+  return true;
+}
+
+// Paint/hide the persistent "sample data" banner. Called from render() so it's
+// correct on every view, including the snapshot/credential surface (the highest-
+// risk place to mistake sample for real — never suppressed there).
+function updateDemoBanner() {
+  if (!demobanner) return;
+  document.body.classList.toggle('has-demobanner', !!state.demo);
+  if (!state.demo) {
+    demobanner.hidden = true;
+    if (demobanner.dataset.on) { demobanner.innerHTML = ''; delete demobanner.dataset.on; }
+    return;
+  }
+  demobanner.hidden = false;
+  // Build ONCE on entry — not every render. The element is a role="status" live
+  // region, so re-setting innerHTML on each navigation would re-announce it to
+  // screen readers every time. It's persistent chrome; announce on entry only.
+  if (demobanner.dataset.on) return;
+  demobanner.dataset.on = '1';
+  demobanner.setAttribute('aria-label', DEMO_SPEC.bannerText + ' ' + DEMO_SPEC.honestyNote);
+  demobanner.innerHTML = `<div class="demo-banner-in">
+      <span class="demo-banner-txt">${esc(DEMO_SPEC.bannerText)}</span>
+      <button type="button" class="demo-banner-exit" id="exitdemo">${esc(DEMO_SPEC.exitCta)}</button>
+    </div>`;
+  const x = document.getElementById('exitdemo');
+  if (x) x.onclick = exitDemo;
+}
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
 // Shared view header for primary tabs: an eyebrow + title (+ optional lede and a
@@ -266,6 +337,7 @@ function render() {
   // baseline is done (and so nothing reads a null profile).
   state.profile = state.profile || Profile.createProfile();
   const onboarded = !!state.profile.baseline;
+  updateDemoBanner();
 
   // Tabs are always visible; highlight the active one.
   tabbar.hidden = false;
@@ -371,6 +443,10 @@ function renderOnboarding() {
           <button class="btn ghost" id="talk">Talk it through with the coach →</button>
         </div>
         <p class="muted small center" style="margin-top:12px;">The quick check is ${BASELINE_ITEMS.length} honest ratings across your capacities — a short self-assessment that works offline. The conversation is an adaptive interview that writes your profile — it uses your own API key (any provider), so it stays yours.</p>
+        <div style="text-align:center; margin-top:16px;">
+          <button class="btn ghost" id="seedemo" style="width:auto;">${esc(DEMO_SPEC.welcomeButton)} →</button>
+          <p class="muted small" style="margin:6px 0 0;">${esc(DEMO_SPEC.welcomeButtonSub)}</p>
+        </div>
         <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
           ${uiIcon('dove')}
           <div style="flex:1;">
@@ -401,6 +477,8 @@ function renderOnboarding() {
       render();
     };
     document.getElementById('start').onclick = () => { state.onboard.step = 1; render(); };
+    const sd = document.getElementById('seedemo');
+    if (sd) sd.onclick = enterDemo;
     document.getElementById('talk').onclick = () => {
       if (Coach.hasKey(state.profile)) startConversation();
       else { state.onboard.showKey = true; render(); }
@@ -944,6 +1022,7 @@ function renderHome() {
 // cleared browser is the real data-loss risk. Shows only once there's meaningful
 // data (>=5 sessions) AND no recent export, and stays quiet for 14 days if snoozed.
 function backupNudgeCard(p) {
+  if (state.demo) return ''; // backing up a SAMPLE is meaningless — never nudge it
   if ((p.sessions || []).length < 5) return '';
   const now = todayStr();
   const snooze = p.settings && p.settings.backupSnoozeUntil;
@@ -965,6 +1044,9 @@ function backupNudgeCard(p) {
 // Download the full local profile as a JSON backup, and stamp lastExportAt so the
 // nudge can tell when a backup was last taken. Shared by Home and Settings.
 function downloadBackup() {
+  // The single export chokepoint — guarding HERE protects every caller (Home nudge +
+  // Settings) so a sample can never leave through the backup path.
+  if (blockedInDemo('export')) return;
   const p = state.profile;
   const blob = new Blob([Profile.exportProfile(p)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -4017,6 +4099,7 @@ function renderSnapshot() {
         <button class="btn ghost sm" id="back" style="width:auto;">← Progress</button></div>
 
       <div class="card snapsheet">
+        ${state.demo ? `<div class="snapsample">Sample — illustrative only. “${esc(DEMO_SPEC.persona.name)}” is fictional; not a real measurement.</div>` : ''}
         <div class="snaphead">
           <div class="logo" aria-hidden="true">${formaMark}</div>
           <div>
@@ -5040,7 +5123,7 @@ function renderSettings() {
         </div>
       </div>
 
-      <div class="card">
+      ${state.demo ? '' : `<div class="card">
         <div class="row">
           ${uiIcon('dove')}
           <div style="flex:1;">
@@ -5049,7 +5132,7 @@ function renderSettings() {
           </div>
           <button class="opt ${p.settings.faithTrack ? 'selected' : ''}" id="faith" aria-pressed="${!!p.settings.faithTrack}" aria-label="Spiritual Life track" style="width:auto; padding:8px 16px; font-weight:700;">${p.settings.faithTrack ? 'On' : 'Off'}</button>
         </div>
-      </div>
+      </div>`}
 
       <div class="card">
         <h2 style="font-size:1.05rem;">Live AI coaching</h2>
@@ -5100,6 +5183,14 @@ function renderSettings() {
           <button class="btn ghost sm" id="toteam" style="width:auto;">Preview →</button>
         </div>
       </div>
+
+      ${state.demo ? '' : `<div class="card">
+        <div class="row">${uiIcon('spark')}
+          <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Sample profile</h2>
+            <p class="muted small" style="margin:2px 0 0;">${esc(DEMO_SPEC.settingsHelp)}</p></div>
+          <button class="btn ghost sm" id="opendemo" style="width:auto;">${esc(DEMO_SPEC.settingsLabel)} →</button>
+        </div>
+      </div>`}
 
       <div class="card">
         <h2 style="font-size:1.05rem;">Your data</h2>
@@ -5214,7 +5305,11 @@ function renderSettings() {
   });
   const tt = document.getElementById('toteam'); if (tt) tt.onclick = () => go('team');
   const tm = document.getElementById('tomethods'); if (tm) tm.onclick = () => go('methods');
-  document.getElementById('faith').onclick = () => {
+  const od = document.getElementById('opendemo'); if (od) od.onclick = enterDemo;
+  // The faith-track card is hidden in demo (the interior wall must stay closed on a
+  // sample), so the toggle may not exist — bind null-safely.
+  const fb = document.getElementById('faith');
+  if (fb) fb.onclick = () => {
     state.profile = p.settings.faithTrack ? Profile.disableFaithTrack(p) : Profile.enableFaithTrack(p);
     // Regenerate the plan so the change takes effect immediately.
     state.profile.plan = Planner.generatePlan(state.profile);
@@ -5271,6 +5366,7 @@ function renderSettings() {
     }
   };
   document.getElementById('savecontact').onclick = () => {
+    if (blockedInDemo('manage reminders for')) return;
     const err = document.getElementById('contacterr');
     err.style.display = 'none';
     try {
@@ -5284,11 +5380,12 @@ function renderSettings() {
     }
   };
   const withdrawC = document.getElementById('withdrawcontact');
-  if (withdrawC) withdrawC.onclick = () => { state.profile = Contact.clearContact(p); save(); render(); };
+  if (withdrawC) withdrawC.onclick = () => { if (blockedInDemo('manage reminders for')) return; state.profile = Contact.clearContact(p); save(); render(); };
   // Release-of-information (employer): the individual's own choice. Authorize freezes
   // a copy of the interior-excluded snapshot for a NAMED recipient; withdraw deletes it.
   const optR = document.getElementById('optrelease');
   if (optR) optR.onclick = () => {
+    if (blockedInDemo('authorize a release of')) return;
     const err = document.getElementById('releaseerr');
     const recipient = (document.getElementById('releaserecipient').value || '').trim();
     try {
@@ -5299,6 +5396,7 @@ function renderSettings() {
   };
   const wR = document.getElementById('withdrawrelease');
   if (wR) wR.onclick = () => {
+    if (blockedInDemo('authorize a release of')) return;
     state.profile = Release.clearRelease(p); save(); render();
     announce('Authorization withdrawn and deleted.');
   };
@@ -5306,14 +5404,15 @@ function renderSettings() {
   // deletes the queue). Re-renders directly, so announce + refocus (v157 pattern).
   const rt = document.getElementById('researchtoggle');
   if (rt) rt.onclick = () => {
+    if (blockedInDemo('change research sharing for')) return;
     const turningOn = !(p.research && p.research.consent);
     Research.setConsent(p, turningOn); // off → also deletes the shared queue
     save(); render();
     announce(turningOn ? 'Anonymous research sharing on.' : 'Sharing off — your shared data was deleted.');
     const again = document.getElementById('researchtoggle'); if (again) again.focus(); else focusViewHeading();
   };
-  document.getElementById('export').onclick = () => { downloadBackup(); };
-  document.getElementById('import').onclick = () => document.getElementById('importfile').click();
+  document.getElementById('export').onclick = () => { if (blockedInDemo('export')) return; downloadBackup(); };
+  document.getElementById('import').onclick = () => { if (blockedInDemo('restore')) return; document.getElementById('importfile').click(); };
   document.getElementById('importfile').onchange = (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -5356,6 +5455,9 @@ function renderSettings() {
     }
   };
   document.getElementById('reset').onclick = () => {
+    // Hard guard: this writes localStorage DIRECTLY, bypassing save()'s demo
+    // no-op. In the sample it would erase the visitor's REAL profile.
+    if (blockedInDemo('erase')) return;
     if (confirm('Erase all Forma data on this device and start over? This cannot be undone.')) {
       localStorage.removeItem(Profile.STORAGE_KEY);
       Profile.clearOnboard();

@@ -37,6 +37,13 @@
 </head>
 <body>
   <a class="skip-link" href="#app">Skip to content</a>
+
+  <!-- Demo Mode banner. Lives OUTSIDE #app (which app.js re-renders wholesale on
+       every view swap) so it stays pinned and never flickers. Hidden until the
+       sample profile is loaded; app.js fills + toggles it. Calm amber, never red —
+       honesty made quiet, not a scare-bar. -->
+  <div id="demobanner" class="demo-banner" role="status" hidden></div>
+
   <main id="app" role="main" tabindex="-1">
     <!-- Rendered by app.js -->
     <div class="boot">

@@ -459,6 +459,9 @@ export function exportProfile(profile) {
   // API key is excluded from exports so a shared backup never leaks a secret.
   const copy = clone(profile);
   if (copy.settings) copy.settings.apiKey = '';
+  // The Demo Mode sample marker must never ride out in a backup — a re-imported
+  // file should become a real profile, not a phantom sample.
+  delete copy.demo;
   return JSON.stringify(copy, null, 2);
 }
 
@@ -488,6 +491,9 @@ export function importProfile(jsonString) {
 
 function migrate(p) {
   if (!p.version) p.version = VERSION;
+  // Defense-in-depth: a restored backup is real data — never an in-memory sample.
+  // Strips the marker off any older/leaked export that predates the exportProfile fix.
+  delete p.demo;
   // Defensive defaults for older / partial / foreign saves. Coerce by TYPE, not
   // just truthiness: a structurally-valid stored object with a wrong-typed field
   // (e.g. sessions:{} from a partial or foreign write) is truthy, so a falsy-only

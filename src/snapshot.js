@@ -81,6 +81,9 @@ export function buildSnapshot(profile, today = todayStr()) {
 
   return {
     name: (profile.settings && profile.settings.name) || null,
+    // True only for the in-memory Demo Mode sample — so snapshotText() can self-label
+    // the credential. The real profile never carries `demo`, so real copies are unchanged.
+    sample: !!(profile && profile.demo),
     since,
     generated: today, // when this credential was produced — so a stale copy isn't passed off as current
     days: since ? daysBetween(since, today) : 0,
@@ -99,6 +102,9 @@ export function buildSnapshot(profile, today = todayStr()) {
 // be pasted into an email or application. Honest, compact, self-generated.
 export function snapshotText(snap) {
   const lines = [];
+  // A sample credential must self-identify in EVERY channel it can leave through —
+  // the on-screen banner can't travel with copied/pasted text, so stamp it here too.
+  if (snap.sample) { lines.push('SAMPLE — illustrative only. “Daniel R.” is fictional; these numbers are not a real measurement.'); lines.push(''); }
   lines.push(`FORMA — Capacity Snapshot${snap.name ? ' · ' + snap.name : ''}`);
   if (snap.since) lines.push(`${snap.sessionCount} session${snap.sessionCount === 1 ? '' : 's'} over ${snap.days} day${snap.days === 1 ? '' : 's'}`);
   if (snap.generated) lines.push(`Generated ${snap.generated}`);
