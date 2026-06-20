@@ -205,7 +205,7 @@ export function recentReflections(profile, limit = 6) {
   return out.slice(-limit);
 }
 
-export function profileSummary(profile) {
+export function profileSummary(profile, focusDomain = null) {
   const lines = [];
   const name = profile.settings?.name;
   if (name) lines.push(`Name: ${name}`);
@@ -253,6 +253,38 @@ export function profileSummary(profile) {
       if (r.text) bits.push(`reflected: ${clip(r.text)}`);
       if (bits.length) lines.push(`  - ${r.date} (${domainName(r.domain)}): ${bits.join('; ')}`);
     }
+  }
+  // Per-capacity TRAJECTORY — the actual measurements over time, so the coach has their overall
+  // record and can speak to growth or a dip in a specific area, not just the latest number.
+  // (Interior + secondary-credit rows excluded, same walls as everything else.)
+  const trajById = {};
+  for (const h of (profile.history || [])) {
+    if (h.domain === 'interior' || String(h.exerciseType || '').endsWith('-secondary') || h.rawScore == null) continue;
+    (trajById[h.domain] || (trajById[h.domain] = [])).push(h.rawScore);
+  }
+  const trajIds = Object.keys(trajById).filter((id) => trajById[id].length >= 2);
+  if (trajIds.length) {
+    lines.push('Measurement trajectory by capacity (their own scores, oldest → newest):');
+    for (const id of trajIds) lines.push(`  - ${domainName(id)}: ${trajById[id].slice(-6).join(' → ')}`);
+  }
+  // FOCUSED deep-dive: a per-domain coach thread is ABOUT one capacity — give the coach that
+  // capacity's fuller record so it can track and grow it over time. (focusDomain is never interior.)
+  if (focusDomain && focusDomain !== 'interior') {
+    const dn = domainName(focusDomain);
+    const fl = [`--- THIS CONVERSATION IS ABOUT: ${dn.toUpperCase()} ---`];
+    if (scores[focusDomain] != null) fl.push(`Current ${dn}: ${scores[focusDomain]} [${bandFor(scores[focusDomain]).label}].`);
+    if (trajById[focusDomain]) fl.push(`${dn} over time: ${trajById[focusDomain].join(' → ')}.`);
+    const dRefl = recentReflections(profile, 50).filter((r) => r.domain === focusDomain).slice(-6);
+    for (const r of dRefl) {
+      const bits = [];
+      if (r.value) bits.push(`named “${clip(r.value)}”`);
+      if (r.action) bits.push(`chose to: ${clip(r.action)}`);
+      if (r.note) bits.push(`wrote: “${clip(r.note)}”`);
+      if (r.text) bits.push(`reflected: “${clip(r.text)}”`);
+      if (bits.length) fl.push(`  - ${r.date}: ${bits.join('; ')}`);
+    }
+    fl.push(`Stay with ${dn}: refer to this trajectory and their own words, help them notice what's working, and grow it over time. This thread is the running record of that.`);
+    lines.push(fl.join('\n'));
   }
   if (profile.streak?.current) lines.push(`Current streak: ${profile.streak.current} day(s).`);
   const openGoals = (profile.goals || []).filter((g) => !g.done);
@@ -392,31 +424,36 @@ export function buildCoachMessages(coachLog, userText) {
   return [...cleaned, { role: 'user', content: userText }];
 }
 
-export async function coachReply(userText, profile) {
+export async function coachReply(userText, profile, opts = {}) {
   // Safety first, before anything else — and before any network call.
   if (looksLikeDistress(userText)) {
     return { text: ESCALATION_MESSAGE, live: false, escalated: true };
   }
+  // opts.log = the active THREAD's messages (general = coachLog, or a per-domain thread);
+  // opts.focusDomain = the capacity this thread is about, so the context is focused on it.
+  // Interior is NEVER a valid coach focus (the faith track is walled from the API).
+  const log = opts.log || profile.coachLog;
+  const focusDomain = (opts.focusDomain && opts.focusDomain !== 'interior') ? opts.focusDomain : null;
 
   if (!hasKey(profile)) {
     return {
-      text: offlineCoachReply(userText, profile),
+      text: offlineCoachReply(userText, profile, { log, focusDomain }),
       live: false,
     };
   }
   try {
-    const messages = buildCoachMessages(profile.coachLog, userText);
+    const messages = buildCoachMessages(log, userText);
     const text = await callLLM(profile, {
-      system: `${FORMA_SYSTEM}\n\n--- THE PERSON YOU ARE COACHING ---\n${profileSummary(profile)}`,
+      system: `${FORMA_SYSTEM}\n\n--- THE PERSON YOU ARE COACHING ---\n${profileSummary(profile, focusDomain)}`,
       maxTokens: 1024,
       messages,
     });
-    return { text: text || offlineCoachReply(userText, profile), live: !!text };
+    return { text: text || offlineCoachReply(userText, profile, { log, focusDomain }), live: !!text };
   } catch (e) {
     // Surface the plain-language reason (not the raw body) so the person can
     // actually fix it — e.g. the API-billing-vs-Max case.
     return {
-      text: `Live coaching couldn't reach your AI provider: ${friendlyApiError(e.message)}\n\nIn the meantime, here's what Forma sees in your own data:\n\n${offlineCoachReply(userText, profile)}`,
+      text: `Live coaching couldn't reach your AI provider: ${friendlyApiError(e.message)}\n\nIn the meantime, here's what Forma sees in your own data:\n\n${offlineCoachReply(userText, profile, { log, focusDomain })}`,
       live: false,
       error: e.message,
     };
@@ -458,9 +495,13 @@ function lowestScoredDomain(scores) {
 // actually RESPONDS to what the person said — reflecting, then asking the kind of
 // question a solution-focused coach would, anchored in their own data. It never
 // pretends to be the live AI; a key deepens it, but this still earns the chat.
-export function offlineCoachReply(userText, profile) {
+export function offlineCoachReply(userText, profile, opts = {}) {
   const t = (userText || '').toLowerCase();
   const scores = (profile && profile.domainScores) || {};
+  // In a per-domain coach thread, opts.focusDomain biases the open-ended fallback toward that
+  // capacity; opts.log is the active thread (so mid-conversation detection reads the right history).
+  const focusDomain = (opts.focusDomain && opts.focusDomain !== 'interior') ? opts.focusDomain : null;
+  const threadLog = opts.log || (profile && profile.coachLog) || [];
 
   // 0) RECALL — "what did I say/write/name about X", "remind me what I said". Even offline, the
   // coach should be able to read back the person's OWN recorded reflections (the value they named,
@@ -579,7 +620,7 @@ export function offlineCoachReply(userText, profile) {
   // genuinely mid-conversation (a prior coach turn exists in coachLog) and the reply
   // matched none of the richer branches above (named-domain, work-on, I-don't-know,
   // pushback, struggle, win). Carry the thread forward; no API, no echoing prior text.
-  const lastCoach = (profile.coachLog || []).slice().reverse().find((m) => m && m.role === 'assistant');
+  const lastCoach = threadLog.slice().reverse().find((m) => m && m.role === 'assistant');
   if (lastCoach && t.length <= 24) {
     if (/^(yes|yeah|yep|sure|ok|okay|i think so|kind of|sort of|exactly|right|true|it did|i did)\b/.test(t)) {
       return `Good — stay with that. What did it look like, concretely, the last time it happened?`;
@@ -600,9 +641,19 @@ export function offlineCoachReply(userText, profile) {
       + `Think of a moment this week it went even a little the way you wanted — what was different then? We build from that, not from pressure.`;
   }
 
-  // 6) Default → reflect, ask one solution-focused question, ground in real data.
+  // 6) Default → reflect, ask one solution-focused question, ground in real data. In a per-domain
+  // thread, anchor on THAT capacity so the conversation stays about the area they came to discuss.
   const patterns = weeklyPatterns(profile);
   const one = patterns && patterns.length ? patterns[0] : null;
+  if (focusDomain) {
+    const fd = DOMAINS.find((d) => d.id === focusDomain);
+    const fname = fd ? fd.name.toLowerCase() : 'this';
+    const g = growthFor(focusDomain);
+    const lever = g ? ` If you want one concrete place to start: **${g[0].title}** — ${g[0].how}` : '';
+    return `Let's stay with your ${fname}. Forget the number for a second — when has it gone even a little better than usual lately, and what was different that day? We build from that.${lever}`
+      + (one ? `\n\nOne thing Forma already notices: ${one}` : '')
+      + `\n\n(Add your own Claude API key in Settings and I can talk this through live — reading your full record for this capacity.)`;
+  }
   return `I'm here — tell me a bit more about what's on your mind. `
     + `And a solution-focused place to begin: when did this last go even slightly the way you'd want it to?`
     + (one ? `\n\nOne thing Forma already notices in your data: ${one}` : '')

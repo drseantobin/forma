@@ -32,7 +32,11 @@ export function createProfile() {
     plan: null, // the active weekly Formation Plan (see planner.js)
     goals: [], // [{id, domain, text, createdAt, done}]
     streak: { current: 0, longest: 0, lastDate: null },
-    coachLog: [], // [{role, content, ts}]
+    coachLog: [], // [{role, content, ts}] — the GENERAL coach thread
+    // Per-domain coach threads, keyed by domain id (like separate chats — one space per
+    // capacity, so the coach can track a conversation about that area over time). The
+    // general thread stays in coachLog (above). { [domainId]: [{role, content, ts}] }.
+    coachThreads: {},
     // Consented, de-identified research/improvement data (see research.js). Off by
     // default — captures nothing until the user explicitly opts in. No name/contact
     // ever lives here; interior content is never collected.
@@ -341,6 +345,7 @@ export function removeGoal(profile, goalId) {
 export function clearCoachLog(profile) {
   const p = clone(profile);
   p.coachLog = [];
+  p.coachThreads = {}; // clear every per-domain thread too, not just the general one
   return p;
 }
 
@@ -476,6 +481,12 @@ function migrate(p) {
   // Backfill the check-in log on commitments saved before tracking existed.
   p.goals.forEach((g) => { if (g && typeof g === 'object' && !Array.isArray(g.checkins)) g.checkins = []; });
   p.coachLog = arr(p.coachLog);
+  // Per-domain coach threads — sanitize to an object of capped message arrays.
+  p.coachThreads = (p.coachThreads && typeof p.coachThreads === 'object' && !Array.isArray(p.coachThreads)) ? p.coachThreads : {};
+  for (const k of Object.keys(p.coachThreads)) {
+    p.coachThreads[k] = arr(p.coachThreads[k]);
+    if (p.coachThreads[k].length > 200) p.coachThreads[k] = p.coachThreads[k].slice(-200);
+  }
   p.streak = obj(p.streak);
   if (p.streak.current == null) p.streak.current = 0;
   if (p.streak.longest == null) p.streak.longest = 0;

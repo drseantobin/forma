@@ -107,17 +107,21 @@ function raceTimeout(promise, ms, fallback) {
 async function talkThrough(ctx) {
   state.profile = state.profile || Profile.createProfile();
   const p = state.profile;
-  p.coachLog = p.coachLog || [];
+  // Route to the per-domain thread when this is about a specific (non-interior) capacity, so the
+  // conversation lands in that area's running chat; baseline / multi-domain contexts go to General.
+  const dkey = (ctx && ctx.domain && getDomain(ctx.domain) && ctx.domain !== 'interior') ? ctx.domain : 'general';
+  state.coachThread = dkey;
+  const log = coachThreadLog(p, dkey);
   // Drop the rule-based opener in immediately so the Coach is never blank...
   const opener = { role: 'assistant', content: Coach.solutionFocusedOpener(p, ctx), ts: Date.now(), opener: true };
-  p.coachLog.push(opener);
+  log.push(opener);
   save();
   go('coach');
   // ...then, with a key, replace it with a live opener tied to this exact
   // session + insight — but only if the person hasn't already started talking.
   if (Coach.hasKey(p)) {
     const live = await raceTimeout(Coach.sessionOpener(p, ctx), 9000, null);
-    const last = p.coachLog[p.coachLog.length - 1];
+    const last = log[log.length - 1];
     if (live && live.live && live.text && state.route === 'coach' && last === opener) {
       opener.content = live.text;
       opener.live = true;
@@ -310,7 +314,11 @@ function renderRoute() {
 
 tabbar.addEventListener('click', (e) => {
   const t = e.target.closest('.tab');
-  if (t) go(t.dataset.route);
+  if (!t) return;
+  // Tapping the Coach TAB is the OPEN/general space (a per-domain thread is entered from a
+  // capacity's "talk about it", not from the tab).
+  if (t.dataset.route === 'coach') state.coachThread = 'general';
+  go(t.dataset.route);
 });
 
 // ---------------- onboarding ----------------
@@ -1543,11 +1551,14 @@ function renderDomainDetail() {
 
       ${id === 'interior' ? '' : practiceCard}
 
+      ${id === 'interior' ? '' : `<button class="btn ghost" id="tocoachdomain" style="margin-bottom:10px;">Talk about your ${esc(d.name.toLowerCase())} with the coach →</button>`}
       <button class="btn amber" id="train">Train it now →</button>
       <p class="muted small center" style="margin-top:10px;">A few minutes. Formation, measured over weeks — never a verdict.</p>
     </div>`;
   document.getElementById('back').onclick = () => go(from);
   document.getElementById('train').onclick = () => startDomainSession(id);
+  const tcd = document.getElementById('tocoachdomain');
+  if (tcd) tcd.onclick = () => { state.coachThread = id; go('coach'); };
   const gp = document.getElementById('guidedpractice');
   if (gp && guidedOpt) gp.onclick = () => startGuidedSession(guidedOpt.module);
   const tl = document.getElementById('tolens');
@@ -4702,35 +4713,78 @@ function originableCapacity(p) {
   return best ? best.id : null;
 }
 
+// Coach THREADS: the general space lives in coachLog; each capacity has its own thread in
+// coachThreads[domainId] (like separate chats). These helpers abstract "the active thread".
+function coachThreadLog(p, key) {
+  if (key === 'general') return (p.coachLog = p.coachLog || []);
+  p.coachThreads = p.coachThreads || {};
+  return (p.coachThreads[key] = p.coachThreads[key] || []);
+}
+function coachThreadChips(p, activeKey) {
+  const ct = p.coachThreads || {};
+  const domainKeys = Object.keys(ct).filter((k) => ct[k] && ct[k].length && getDomain(k) && k !== 'interior');
+  const keys = ['general', ...domainKeys];
+  if (activeKey !== 'general' && !keys.includes(activeKey)) keys.push(activeKey); // current (maybe still empty) thread
+  return keys;
+}
+function domainCoachGreeting(p, id) {
+  const d = getDomain(id);
+  const sc = (p.domainScores || {})[id];
+  const band = sc != null ? bandFor(sc) : null;
+  const where = band ? ` You're in the ${band.label.toLowerCase()} range here right now — a starting line, not a verdict.` : '';
+  return `Let's talk about your ${d.name.toLowerCase()}.${where} What's on your mind about it — something that's been hard, or a place you'd like it to grow?`;
+}
+
 function renderCoach() {
   const p = state.profile;
   const live = Coach.hasKey(p);
   const provName = Coach.providerName(p);
-  const log = p.coachLog || [];
-  // Directive starter prompts on a cold open — turn a blank box into guided entry into a
-  // growth-focused conversation. One is personalized to the person's focus capacity.
+  // Active thread: 'general' (the open space) or a capacity id. Interior is never a coach thread
+  // (the faith track is walled from the API), so fall back to general if asked.
+  let tkey = state.coachThread || 'general';
+  if (tkey !== 'general' && (!getDomain(tkey) || tkey === 'interior')) tkey = 'general';
+  const isDomain = tkey !== 'general';
+  const dom = isDomain ? getDomain(tkey) : null;
+  const log = coachThreadLog(p, tkey);
+
+  const chips = coachThreadChips(p, tkey);
+  const threadBar = chips.length > 1 ? `<div class="chip-row coach-threads" style="margin:8px 0 12px;">${chips.map((k) =>
+    `<button class="chip ${k === tkey ? 'sel' : ''}" data-thread="${esc(k)}" aria-pressed="${k === tkey}">${k === 'general' ? 'General' : esc(getDomain(k).name)}</button>`).join('')}</div>` : '';
+
+  // Starter prompts on a cold open — thread-specific so the entry is guided.
   const focus = Planner.focusForToday(p) || recommendFocus(p);
   const fname = getDomain(focus) ? getDomain(focus).name.toLowerCase() : null;
-  const starters = log.length ? [] : [
-    { label: 'Where should I focus right now?' },
-    { label: fname ? `How do I grow my ${fname}?` : 'How do I grow a capacity?' },
-    { label: 'What’s one small step I could take this week?' },
-  ];
-  // Coach ORIGINATES a commitment: if a measured capacity has genuinely slipped and has no
-  // commitment, OFFER (opt-in) to start one. The chip copy is generic + growth-framed; the
-  // capacity is named ONLY in the message it sends, inside the conversation the person chooses
-  // to start — so the cold-open screen never displays a "you dipped" verdict (forma-validity v249).
-  const originId = log.length ? null : originableCapacity(p);
-  if (originId) {
-    starters.unshift({ label: 'Help me pick one capacity to commit to.', send: `Help me set one small commitment for my ${getDomain(originId).name}.` });
+  let starters = [];
+  if (!log.length) {
+    if (isDomain) {
+      const dn = dom.name.toLowerCase();
+      starters = [
+        { label: `How do I grow my ${dn}?` },
+        { label: `When has it gone better?`, send: `When has my ${dn} gone better than usual, and what was different that day?` },
+        { label: `One small step this week?`, send: `What's one small step I could take this week for my ${dn}?` },
+      ];
+    } else {
+      starters = [
+        { label: 'Where should I focus right now?' },
+        { label: fname ? `How do I grow my ${fname}?` : 'How do I grow a capacity?' },
+        { label: 'What’s one small step I could take this week?' },
+      ];
+      // Coach ORIGINATES a commitment (opt-in) for a slipped capacity — general space only.
+      const originId = originableCapacity(p);
+      if (originId) starters.unshift({ label: 'Help me pick one capacity to commit to.', send: `Help me set one small commitment for my ${getDomain(originId).name}.` });
+    }
   }
+  const hasMsgs = log.length > 0;
+  const greeting = isDomain ? domainCoachGreeting(p, tkey) : Coach.coachGreeting(p);
   app.innerHTML = `
     <div class="fade-in">
-      <div class="row"><h1 style="margin:0;">Coach</h1><span class="spacer"></span>
+      <div class="row"><h1 style="margin:0;">Coach</h1>${isDomain ? `<span class="tagchip" style="margin-left:8px;">${esc(dom.name)}</span>` : ''}<span class="spacer"></span>
         <span class="trendpill ${live ? 'up' : 'flat'}">${live ? `live · ${esc(provName)}` : 'offline mode'}</span></div>
+      ${isDomain ? `<p class="muted small" style="margin:2px 0 0;">A thread about your ${esc(dom.name.toLowerCase())} — it keeps the running conversation about this one area, so growth here is easier to follow. Tap “General” for the open space.</p>` : ''}
       ${!live ? `<p class="muted small">Add your API key in <button id="tosettings" class="inlinelink">Settings</button> — bring your own from any provider — for live, personalized coaching. Until then, the coach reads from your own data.</p>` : ''}
+      ${threadBar}
       <div class="chat" id="chat" role="log" aria-live="polite">
-        ${log.length ? log.map(bubble).join('') : `<div class="bubble coach">${esc(Coach.coachGreeting(p))}</div>`}
+        ${hasMsgs ? log.map(bubble).join('') : `<div class="bubble coach">${esc(greeting)}</div>`}
       </div>
       ${starters.length ? `<div id="starters" class="chiprow" style="margin:2px 0 10px;">${starters.map((c) => `<button class="chip starter" data-p="${esc(c.send || c.label)}">${esc(c.label)}</button>`).join('')}</div>` : ''}
       <div class="composer">
@@ -4738,10 +4792,18 @@ function renderCoach() {
         <input id="ci" placeholder="Ask your coach…" autocomplete="off" aria-label="Message your coach" />
         <button class="btn" id="send">Send</button>
       </div>
+      ${hasMsgs ? `<p class="center" style="margin-top:8px;"><button class="btn ghost sm" id="clearthread" style="width:auto;">Clear this chat</button></p>` : ''}
       ${micPrivacyNote()}
     </div>`;
   const tos = document.getElementById('tosettings');
   if (tos) tos.onclick = () => go('settings');
+  app.querySelectorAll('[data-thread]').forEach((b) => b.onclick = () => { state.coachThread = b.dataset.thread; renderCoach(); });
+  const clr = document.getElementById('clearthread');
+  if (clr) clr.onclick = () => {
+    if (tkey === 'general') p.coachLog = [];
+    else if (p.coachThreads) p.coachThreads[tkey] = [];
+    save(); renderCoach();
+  };
   const ci = document.getElementById('ci');
   const sendBtn = document.getElementById('send');
   attachMicButton(document.getElementById('cmic'), ci);
@@ -4753,21 +4815,20 @@ function renderCoach() {
     const st = document.getElementById('starters'); if (st) st.remove();
     ci.value = '';
     ci.disabled = true; sendBtn.disabled = true;
-    p.coachLog = p.coachLog || [];
     appendBubble({ role: 'user', content: text });
     const typing = appendBubble({ role: 'assistant', content: '…', typing: true });
     let reply;
     try {
-      reply = await Coach.coachReply(text, p);
+      reply = await Coach.coachReply(text, p, { log, focusDomain: isDomain ? tkey : null });
     } finally {
       busy = false;
     }
     if (typing) typing.remove();
     ci.disabled = false; sendBtn.disabled = false;
     if (state.profile !== p) return; // profile was reset/replaced mid-flight
-    // Record the exchange only now — so coachReply saw clean prior history.
-    p.coachLog.push({ role: 'user', content: text, ts: Date.now() });
-    p.coachLog.push({ role: 'assistant', content: reply.text, ts: Date.now() });
+    // Record the exchange in THIS thread only now — so coachReply saw clean prior history.
+    log.push({ role: 'user', content: text, ts: Date.now() });
+    log.push({ role: 'assistant', content: reply.text, ts: Date.now() });
     save();
     appendBubble({ role: 'assistant', content: reply.text, assertive: !!reply.escalated });
     if (document.getElementById('ci')) document.getElementById('ci').focus();
@@ -5275,7 +5336,9 @@ render();
   // person takes manual control (an arrow / a key), auto-advance stops for good
   // so it never fights them — they drive from there.
   const SCENE_MS = 8000;
-  const caps = DOMAINS.slice(0, 7).map((d) => `<span class="pill">${d.icon} ${esc(d.name)}</span>`).join('');
+  // Show ALL the capacities — same source as the welcome pillrow and the science page,
+  // so a visitor never sees a different count in the promo than on the page behind it.
+  const caps = DOMAINS.map((d) => `<span class="pill">${d.icon} ${esc(d.name)}</span>`).join('');
   // Each scene is a builder → innerHTML for the stage. The last scene is the CTA
   // and does NOT auto-advance; it waits for the person to choose.
   const scenes = [
