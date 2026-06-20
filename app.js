@@ -483,9 +483,15 @@ async function finishBaseline() {
 
 async function renderBaselineResult() {
   const p = state.profile;
+  const fi = formationIndex(p.domainScores);
   app.innerHTML = `
     <div class="fade-in">
       <div class="brandmark"><div class="logo">${formaMark}</div><div class="name">Forma</div><div class="tag">Your starting line</div></div>
+      <div class="card index-hero">
+        ${indexRing(fi, { numId: 'baselineidx', start: 0 })}
+        <div class="index-label">Formation Index — your starting line</div>
+        <p class="muted small" style="margin-top:6px;">One read across all your capacities. Not a grade — the line you move from.</p>
+      </div>
       ${radarCard(p.domainScores)}
       <div class="card" id="interp">
         <div class="row"><span class="spinner"></span> <span class="muted">Reading your profile…</span></div>
@@ -543,6 +549,10 @@ async function renderBaselineResult() {
   // research.consent at its false default (capture stays inert). The de-identified
   // demographics form is revealed ONLY when the box is checked (progressive
   // disclosure) and every field is blank-first, so a silent Start stores nothing.
+  // Animate the headline number in — the FIRST score a new person sees should land as a calm
+  // instrument settling to a reading (the same reveal as a session score), not a static digit.
+  countUp(document.getElementById('baselineidx'), fi, 900);
+  drawRing();
   const consentBox = document.getElementById('researchconsent');
   const demoBlock = document.getElementById('research-demo');
   if (consentBox && demoBlock) consentBox.onchange = () => { demoBlock.hidden = !consentBox.checked; };
@@ -1525,7 +1535,7 @@ function renderDomainDetail() {
 
       <div class="card index-hero">
         ${score != null
-          ? `${indexRing(score, { label: d.name })}<div class="index-label">${esc(band.label)}</div>`
+          ? `${indexRing(score, { label: d.name, numId: 'domainidx', start: 0 })}<div class="index-label">${esc(band.label)}</div>`
           : '<p class="muted" style="margin:8px 0;">Not measured yet — train it to see where you stand.</p>'}
       </div>
 
@@ -1557,6 +1567,7 @@ function renderDomainDetail() {
     </div>`;
   document.getElementById('back').onclick = () => go(from);
   document.getElementById('train').onclick = () => startDomainSession(id);
+  if (score != null) countUp(document.getElementById('domainidx'), score, 800); // ring already draws via render()'s drawRing()
   const tcd = document.getElementById('tocoachdomain');
   if (tcd) tcd.onclick = () => { state.coachThread = id; go('coach'); };
   const gp = document.getElementById('guidedpractice');
