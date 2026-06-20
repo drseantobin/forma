@@ -44,11 +44,24 @@ export function dailyInsight(session, profile) {
   const totalSessions = (profile.sessions || []).length;
   const returnedAfterLapse = streak === 1 && totalSessions > 1;
 
+  // Lead with CONNECTION + encouragement before any numbers (Sean): meet the person and
+  // honour the rep first; the score is context that follows, never the opening verdict.
   if (returnedAfterLapse) {
     lines.push('You came back. That’s the part most people skip — not the streak, the return. Today counts double for being the harder rep.');
   } else if ([3, 7, 14, 30, 50, 100].includes(streak)) {
     // Streak milestone is the retention moment.
     lines.push(`That's ${streak} days in a row. The streak isn't the point — but the person who shows up ${streak} days running is already becoming someone different.`);
+  } else {
+    // The everyday case: a warm, varied opener that acknowledges the person and the effort
+    // BEFORE the score, so the insight never leads with a number. Deterministic (keyed to
+    // session count) so it's stable, not random.
+    const openers = [
+      `Good — you gave ${name} a few real minutes just now. That choice, made again and again, is the formation itself.`,
+      `Nice work showing up for ${name} today. Before any number: the doing is the point, and you did it.`,
+      `That’s a genuine rep on ${name}. Most people mean to and don’t — you’re here, and that’s what compounds.`,
+      `You turned toward ${name} on purpose today. Hold that for a moment — it matters more than where the score lands.`,
+    ];
+    lines.push(openers[totalSessions % openers.length]);
   }
 
   if (rawScore == null) {
