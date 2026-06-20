@@ -339,9 +339,11 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- coach ---------- */
 .chat { display:flex; flex-direction:column; gap:12px; padding-bottom: 10px; }
-/* On a cold-open coach thread (greeting bubble only) the log is short, so the sticky composer
-   has nothing to anchor against and floats mid-screen. Give ONLY the live log a min-height so it
-   fills the space above the composer; the .earlier archives + onboarding #dchat are untouched. */
+/* On a cold-open thread (greeting bubble only) the log is short, so the sticky composer has
+   nothing to anchor against and floats mid-screen. Give the live log a min-height so it fills the
+   space above the composer. This intentionally matches BOTH role="log" logs — the coach thread
+   (#chat) and the onboarding interview (#dchat) — which both have sticky composers. The static
+   .earlier archives have no role="log" and are untouched. */
 .chat[role="log"] { min-height: 38vh; }
 .bubble { max-width: 86%; padding:12px 15px; border-radius:16px; white-space:pre-wrap; font-size:.97rem; }
 .bubble.coach { background: var(--card); border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:5px; }
@@ -400,6 +402,7 @@ button { font-family: inherit; cursor: pointer; }
     --bg:#fff !important; --card:#fff !important; --line:#e7e5dd !important;
     --green-ink:#2f6b54 !important; --red-ink:#a83833 !important; --amber-ink:#8a5e12 !important;
     --green-soft:#e2f0ea !important; --red-soft:#f9e7e6 !important; --amber-soft:#fbeed7 !important;
+    --accent:#4c5fd5 !important; --green:#3d8b6e !important; --amber:#e8a13a !important; --red:#d2706b !important;
   }
   body, #app { background:#fff !important; color:#1b1c28 !important; }
   .snapsheet { border:none; box-shadow:none; }
@@ -425,6 +428,7 @@ button { font-family: inherit; cursor: pointer; }
   background:var(--card); color:var(--green); font-size:.8rem; line-height:1; cursor:pointer; padding:0;
 }
 .goalcheck:hover { border-color:var(--green); }
+.goalcheckico { width:0.9rem; height:0.9rem; display:block; margin:auto; } /* inherits the button's green via currentColor */
 .goalrow .goaltext { flex:1; }
 .goalcheck.on { border-color:var(--green); background:var(--green-soft); color:var(--green-ink); }
 .goalicon { background:none; border:0; cursor:pointer; font-size:.95rem; line-height:1; padding:6px; border-radius:8px; opacity:.55; flex:none; }
@@ -536,7 +540,7 @@ details.disclosure[open] > summary::after { content:'–'; }
 .seg.on { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
 .field { margin-bottom: 16px; }
 .field label { display:block; font-weight:600; margin-bottom:6px; font-size:.92rem; }
-.field input, .field select { width:100%; border:1.5px solid var(--line); border-radius:12px; padding:11px 13px; font-size:1rem; font-family:inherit; }
+.field input, .field select { width:100%; border:1.5px solid var(--line); border-radius:12px; padding:11px 13px; font-size:1rem; font-family:inherit; background:var(--card); color:var(--ink); }
 .notice { font-size:.85rem; color: var(--ink-soft); background: var(--green-soft); border-radius:12px; padding:12px 14px; }
 .divider { height:1px; background: var(--line); margin: 20px 0; }
 

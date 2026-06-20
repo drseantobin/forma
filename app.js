@@ -611,7 +611,7 @@ function renderConversationalOnboarding() {
   app.innerHTML = `
     <div class="fade-in">
       <div class="brandmark"><div class="logo">${formaMark}</div><div class="name">Forma</div><div class="tag">Getting to know you</div></div>
-      <div class="chat" id="dchat" role="log" aria-live="polite" aria-atomic="false">
+      <div class="chat" id="dchat" role="log">
         <div class="bubble coach">${esc(Diagnostic.OPENING)}</div>
         ${d.messages.map((m) => `<div class="bubble ${m.role === 'user' ? 'me' : 'coach'}">${esc(m.content)}</div>`).join('')}
         ${d.busy ? '<div class="bubble coach typing"><span class="typing-dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="sr-only">Coach is composing a reply</span></div>' : ''}
@@ -663,6 +663,7 @@ function renderConversationalOnboarding() {
     }
     d.busy = false;
     render();
+    const el = document.getElementById('dci'); if (el) el.focus(); // the re-render destroyed the input; return focus to it
   };
   if (dci) dci.onkeydown = (e) => { if (e.key === 'Enter') sendTurn(); };
   const ds = document.getElementById('dsend');
@@ -880,6 +881,8 @@ function renderHome() {
         <div class="k">Today's insight</div>
         <div style="margin-top:6px; white-space:pre-wrap;">${esc(lastInsight.text)}</div></div></div>` : ''}
 
+      <h2 class="section-head">Today</h2>
+
       <div class="card">
         <div class="row" style="margin-bottom:10px;">
           <strong>${doneToday ? "Today's session complete" : "Today's focus"}</strong>
@@ -1042,7 +1045,7 @@ function domainRow(id, score) {
   if (score == null) return '';
   const band = bandFor(score);
   return `
-    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="${esc(d.name)} — how to grow it">
+    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="${esc(d.name)}, ${score} out of 100, ${esc(band.label)} — how to grow it">
       <span class="ico">${d.icon}</span>
       <div class="meta">
         <div class="dn">${esc(d.name)} <span class="muted" style="font-weight:500; font-size:.82rem;">· ${esc(band.label)}</span></div>
@@ -1216,7 +1219,7 @@ function todaysPracticeCard(p) {
       <div class="card practice-card">
         <div class="k">Today’s practice · ${esc(d.name)}</div>
         <div class="practice-commit">
-          <button class="goalcheck ${done ? 'on' : ''}" data-practicecheck="${esc(commit.id)}" aria-pressed="${done}" aria-label="${done ? 'Done today — tap to undo' : 'Mark done today'}: “${esc(commit.text)}”">${done ? '✓' : '○'}</button>
+          <button class="goalcheck ${done ? 'on' : ''}" data-practicecheck="${esc(commit.id)}" aria-pressed="${done}" aria-label="${done ? 'Done today — tap to undo' : 'Mark done today'}: “${esc(commit.text)}”">${done ? uiIcon('check', 'goalcheckico') : ''}</button>
           <div class="practice-commit-body">
             <div class="practice-commit-text">${esc(commit.text)}</div>
             ${c ? `<p class="muted small" style="margin:4px 0 0;">If ${esc(c.when)}, I’ll ${esc(c.then)}.</p>` : ''}
@@ -1318,7 +1321,7 @@ function commitmentsCard(p) {
     const c = g.coping;
     return `<div class="goalitem">
       <div class="goalrow">
-        <button class="goalcheck ${done ? 'on' : ''}" data-track="${esc(g.id)}" aria-pressed="${done}" aria-label="${done ? 'Kept today — tap to undo' : 'Mark kept today'}: “${esc(g.text)}”">${done ? '✓' : '○'}</button>
+        <button class="goalcheck ${done ? 'on' : ''}" data-track="${esc(g.id)}" aria-pressed="${done}" aria-label="${done ? 'Kept today — tap to undo' : 'Mark kept today'}: “${esc(g.text)}”">${done ? uiIcon('check', 'goalcheckico') : ''}</button>
         <span class="ico" aria-hidden="true">${d ? d.icon : '•'}</span>
         <span class="goaltext">${esc(g.text)}${n ? ` <span class="goalkept muted small">· kept ${n}×</span>` : ''}</span>
         <button class="goalicon" data-edit="${esc(g.id)}" aria-label="Edit “${esc(g.text)}”">${uiIcon('pencil', 'miniico')}</button>
@@ -3832,8 +3835,7 @@ function renderPlan() {
 
   app.innerHTML = `
     <div class="fade-in">
-      <div class="row"><h1 style="margin:0;">This Week</h1><span class="spacer"></span>
-        <button class="btn ghost sm" id="back" style="width:auto;">← Home</button></div>
+      ${viewHead('This week', 'This Week', '', '<button class="btn ghost sm" id="back" style="width:auto;">← Home</button>')}
       <div class="card" style="border-left:4px solid ${getDomain(plan.theme).color};">
         <div class="k">Focus capacity</div>
         <div class="row" style="margin-top:4px;"><span class="ico" style="font-size:1.4rem;">${getDomain(plan.theme).icon}</span>
@@ -4021,7 +4023,7 @@ function renderSnapshot() {
     return;
   }
   const band = (n) => bandFor(n).color;
-  const deltaTag = (d) => d > 0 ? `<span class="trendpill up">+${d}</span>` : d < 0 ? `<span class="trendpill down">${d}</span>` : '<span class="trendpill">±0</span>';
+  const deltaTag = (d) => d > 0 ? `<span class="trendpill up">+${d}</span>` : d < 0 ? `<span class="trendpill down">${d}</span>` : '<span class="trendpill flat">±0</span>';
   // A short, deterministic, NON-identifying reference for the credential — derived only
   // from the snapshot's own public figures (index/sessions/days), so the same snapshot
   // always shows the same code, and it carries no personal data. It's a self-generated
@@ -4052,6 +4054,13 @@ function renderSnapshot() {
         </div>
         ${snap.coverage && snap.coverage.thin ? `<p class="muted small center" style="margin:2px 0 0;">${esc(snap.coverage.note)} — still early; the composite settles as more capacities are practiced.</p>` : ''}
         <table class="snaptable">
+          <caption class="sr-only">Your formation snapshot: capacity, confidence, change since last, and score out of 100</caption>
+          <thead><tr>
+            <th scope="col" class="sr-only">Capacity</th>
+            <th scope="col" class="sr-only">Confidence</th>
+            <th scope="col" class="sr-only">Change</th>
+            <th scope="col" class="sr-only">Score</th>
+          </tr></thead>
           <tbody>
           ${snap.domains.map((d) => `<tr>
             <td><span class="snapdot" style="background:${band(d.score)};"></span>${esc(d.name)}</td>
@@ -4100,8 +4109,7 @@ function renderMethods() {
   }).join('');
   app.innerHTML = `
     <div class="fade-in">
-      <div class="row"><h1 style="margin:0;">The science behind your measures</h1><span class="spacer"></span>
-        <button class="btn ghost sm" id="back" style="width:auto;">← Settings</button></div>
+      ${viewHead('Settings', 'The science behind your measures', '', '<button class="btn ghost sm" id="back" style="width:auto;">← Settings</button>')}
       <div class="card" style="background:linear-gradient(180deg,var(--card),var(--bg)); border-left:4px solid var(--accent);">
         <p class="muted small" style="margin:0;">Forma’s exercises adapt established cognitive and psychological paradigms — the same families of task used in research on attention, memory, reasoning, and emotional skill. They’re tuned to track <strong>growth over time</strong>, as formation, not to diagnose or label. The point is a measurement you can trust because you can see what it rests on.</p>
       </div>
@@ -4112,7 +4120,7 @@ function renderMethods() {
         <p class="muted small" style="margin:8px 0 0; line-height:1.55;"><strong>It isn't</strong> a clinical or diagnostic tool, a hiring or ranking instrument, or normed against a population — your bands are within-person growth, never a percentile. The measures are honest <em>adaptations</em> tuned for formation, not validated clinical tests; their reliability and validity are things Forma is built to <em>earn</em> with real use, not to claim up front.</p>
       </div>
 
-      <h2 style="font-size:1.05rem; margin:16px 0 8px;">The capacities, and why these</h2>
+      <h2 class="section-head">The capacities, and why these</h2>
       <p class="muted small" style="margin:0 0 10px;">We group the measures into a few higher-order capacities that AI quietly erodes when we let it do our thinking and relating for us. Each is shown as a <strong>profile of its facets</strong> — never a single validated score, until enough real data earns one.</p>
       ${CONSTRUCTS.map((c) => `<div class="card" style="margin-bottom:10px;">
         <div class="row"><strong>${esc(c.name)}</strong>${c.track === 'self-report' ? '<span class="spacer"></span><span class="muted small">self-report · never shown to employers</span>' : ''}</div>
@@ -4121,7 +4129,7 @@ function renderMethods() {
         <div class="eyebrow" style="margin-top:8px;">${c.facets.map((f) => esc(f.name)).join(' · ')}</div>
       </div>`).join('')}
 
-      <h2 style="font-size:1.05rem; margin:18px 0 8px;">Self-knowledge instruments</h2>
+      <h2 class="section-head">Self-knowledge instruments</h2>
       <p class="muted small" style="margin:0 0 10px;">Optional checks in the Tools tab, each adapted from an established research paradigm — the same honesty: a mirror you can see the basis of, never a verdict.</p>
       ${INSTRUMENT_BASIS.map((b) => `<div class="card" style="margin-bottom:10px;">
         <div class="row"><span class="ico" aria-hidden="true">${b.icon}</span>
@@ -4130,7 +4138,7 @@ function renderMethods() {
         <p class="muted small" style="margin-top:6px;">${esc(b.detail)}</p>
       </div>`).join('')}
 
-      <h2 style="font-size:1.05rem; margin:18px 0 8px;">The paradigm behind each measure</h2>
+      <h2 class="section-head">The paradigm behind each measure</h2>
       <p class="muted small" style="margin:0 0 8px;">Each capacity’s exercises are adapted from a specific, established research paradigm — the family of task used to study it in the literature. Here’s the lineage behind each, so a score always rests on something you can check, not on our say-so.</p>
       <p class="muted small" style="margin:0 0 10px;">These come in a few kinds: <strong>live performance tasks</strong> (scored on what you actually did), <strong>situational judgment</strong> (how you’d respond to a realistic scenario), and — for the more relational or interior capacities — <strong>honest self-report</strong>, because faking a test of presence or meaning would be less true, not more. Each capacity is matched to the method that fits what it really is.</p>
       ${rows}
@@ -4155,7 +4163,7 @@ function renderTeam() {
       <div class="card index-hero">
         ${indexRing(agg.avgIndex, { label: 'Team Formation Index' })}
         <div class="index-label">Team Formation Index</div>
-        <div class="streakchip" style="margin-top:8px;">${uiIcon('bolt', 'chipico')} AI-readiness ${agg.aiReadiness}</div>
+        <div class="streakchip" style="margin-top:8px;">${uiIcon('bolt', 'chipico')} AI-readiness ${agg.aiReadiness}<span class="snapof"> / 100</span></div>
       </div>
 
       <div class="card">
@@ -4176,9 +4184,10 @@ function renderTeam() {
             const dist = Team.bandDistribution(cohort, id);
             const segs = BANDS.map((b) => dist[b.key]
               ? `<span class="distseg" title="${dist[b.key]} ${b.label}" style="flex:${dist[b.key]}; background:${b.color};"></span>` : '').join('');
+            const spread = BANDS.filter((b) => dist[b.key]).map((b) => `${dist[b.key]} ${b.label.toLowerCase()}`).join(', ');
             return `<div class="domain-row"><span class="ico">${d.icon}</span>
               <div class="meta"><div class="dn">${esc(d.name)}</div>
-              <div class="distbar">${segs}</div></div>
+              <div class="distbar" role="img" aria-label="${esc(d.name)} spread across bands: ${esc(spread)}">${segs}</div></div>
               <span class="sc">${sc}</span></div>`;
           }).join('')}
         </div>
@@ -4188,8 +4197,7 @@ function renderTeam() {
       </div>`;
   app.innerHTML = `
     <div class="fade-in snapshot">
-      <div class="row"><h1 style="margin:0;">Team</h1><span class="spacer"></span>
-        <button class="btn ghost sm no-print" id="back" style="width:auto;">← Settings</button></div>
+      ${viewHead('For employers · preview', 'Team', '', '<button class="btn ghost sm no-print" id="back" style="width:auto;">← Settings</button>')}
       <p class="muted small">Preview · a sample cohort of ${agg.n}${agg.generated ? `, generated ${esc(agg.generated)}` : ''}. In production, an employer would see only <strong>aggregated development signals</strong> across a team — never an individual's raw data, scores, or reflections, and never the Spiritual Life track. Signals appear only at <strong>${Team.MIN_COHORT} or more members</strong>, so no one can be identified from an aggregate.</p>
 
       ${signalCards}
@@ -4222,8 +4230,7 @@ function renderProof() {
   const m = Proof.proofMetrics(p);
   app.innerHTML = `
     <div class="fade-in">
-      <div class="row"><h1 style="margin:0;">90-Day Proof</h1><span class="spacer"></span>
-        <button class="btn ghost sm" id="back" style="width:auto;">← Progress</button></div>
+      ${viewHead('Progress', '90-Day Proof', '', '<button class="btn ghost sm" id="back" style="width:auto;">← Progress</button>')}
       <p class="muted small">Day ${m.daysElapsed} of 90. These are the claims Forma is willing to be measured on — checked against your own data, not our marketing.</p>
 
       ${proofClaimCard('① Deeper reading comprehension', 'Sustained reading-comprehension retention should rise.', m.reading, m.daysElapsed, 'reading')}
@@ -4381,8 +4388,7 @@ function renderBreathCount() {
   if (b.phase === 'intro') {
     app.innerHTML = `
     <div class="fade-in">
-      <div class="row"><h1 style="margin:0;">Breath counting</h1><span class="spacer"></span>
-        <button class="btn ghost sm" id="back" style="width:auto;">← Tools</button></div>
+      ${viewHead('Tools', 'Breath counting', '', '<button class="btn ghost sm" id="back" style="width:auto;">← Tools</button>')}
       <div class="card">
         <p><strong>Count your breaths, silently, in your head.</strong></p>
         <p>Breathe naturally. With each breath, tap <strong>Breath</strong>. On every <strong>ninth</strong> breath, tap <strong>Ninth</strong> instead — then start again at one.</p>
@@ -4556,8 +4562,7 @@ function renderEpistemicCheck() {
   if (!e.revealed) {
     app.innerHTML = `
     <div class="fade-in">
-      <div class="row"><h1 style="margin:0;">Epistemic check</h1><span class="spacer"></span>
-        <button class="btn ghost sm" id="back" style="width:auto;">← Tools</button></div>
+      ${viewHead('Tools', 'Epistemic check', '', '<button class="btn ghost sm" id="back" style="width:auto;">← Tools</button>')}
       <p class="muted">Tick the ones you genuinely recognize — no pressure to tick many.</p>
       <div class="likert-opts">
         ${e.items.map((it, i) => `<button class="opt ${e.selected.has(it.t) ? 'selected' : ''}" data-i="${i}" aria-pressed="${e.selected.has(it.t)}">${esc(it.t)}</button>`).join('')}
@@ -4601,8 +4606,7 @@ function renderFocusCheck() {
   if (fcState.phase === 'intro') {
     app.innerHTML = `
       <div class="fade-in">
-        <div class="row"><h1 style="margin:0;">Focus Check</h1><span class="spacer"></span>
-          <button class="btn ghost sm" id="back" style="width:auto;">← Back</button></div>
+        ${viewHead('Tools', 'Focus Check', '', '<button class="btn ghost sm" id="back" style="width:auto;">← Back</button>')}
         <div class="card">
           <p>${TRIALS} quick rounds. Each round the panel will say <strong>Wait…</strong>, then turn <strong>green</strong> after a moment. Tap the panel the instant it turns green — not before.</p>
           <p class="muted small">It measures how quickly and steadily you respond. Faster, steadier taps = a higher focus score.</p>
@@ -4692,7 +4696,7 @@ function progressRow(id) {
   const sign = t.delta > 0 ? '+' : '';
   const conf = confidenceTag(p, id);
   return `
-    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="${esc(d.name)} — how to grow it" style="align-items:center;">
+    <div class="domain-row tappable" data-domain="${id}" role="button" tabindex="0" aria-label="${esc(d.name)}, ${score} out of 100, ${esc(bandFor(score).label)}, trend ${dir === 'flat' ? 'no change' : sign + t.delta} — how to grow it" style="align-items:center;">
       <span class="ico">${d.icon}</span>
       <div class="meta">
         <div class="row"><span class="dn">${esc(d.name)}</span>
@@ -4837,9 +4841,7 @@ function renderCoach() {
   const greeting = isDomain ? domainCoachGreeting(p, tkey) : Coach.coachGreeting(p);
   app.innerHTML = `
     <div class="fade-in">
-      <div class="row"><h1 style="margin:0;">Coach</h1>${isDomain ? `<span class="tagchip" style="margin-left:8px;">${esc(dom.name)}</span>` : ''}<span class="spacer"></span>
-        <span class="trendpill ${live ? 'up' : 'flat'}">${live ? `live · ${esc(provName)}` : 'offline mode'}</span></div>
-      ${isDomain ? `<p class="muted small" style="margin:2px 0 0;">A thread about your ${esc(dom.name.toLowerCase())} — it keeps the running conversation about this one area, so growth here is easier to follow. Tap “General” for the open space.</p>` : ''}
+      ${viewHead('Coach', isDomain ? dom.name : 'Coach', isDomain ? `A thread about your ${dom.name.toLowerCase()} — it keeps the running conversation about this one area, so growth here is easier to follow. Tap “General” for the open space.` : '', `<span class="trendpill ${live ? 'up' : 'flat'}">${live ? `live · ${esc(provName)}` : 'offline mode'}</span>`)}
       ${!live ? `<p class="muted small">Add your API key in <button id="tosettings" class="inlinelink">Settings</button> — bring your own from any provider — for live, personalized coaching. Until then, the coach reads from your own data.</p>` : ''}
       ${threadBar}
       ${threadHist.length ? `<details class="coach-earlier"><summary class="muted small">Earlier in this chat (${threadHist.length}) — your coach still remembers these</summary><div class="chat earlier" style="margin-top:8px;">${threadHist.slice(-12).map(bubble).join('')}</div></details>` : ''}
@@ -4931,9 +4933,7 @@ function renderCoachHistory(p) {
   }).join('');
   app.innerHTML = `
     <div class="fade-in">
-      <div class="row"><h1 style="margin:0;">Coach</h1><span class="tagchip" style="margin-left:8px;">History</span><span class="spacer"></span>
-        <button class="btn ghost sm" id="backtocoach" style="width:auto;">← Today</button></div>
-      <p class="muted small" style="margin:2px 0 12px;">Earlier conversations, kept so nothing is lost. Your live chats stay fresh each day, and your coach still draws on these.</p>
+      ${viewHead('Coach', 'History', 'Earlier conversations, kept so nothing is lost. Your live chats stay fresh each day, and your coach still draws on these.', '<button class="btn ghost sm" id="backtocoach" style="width:auto;">← Today</button>')}
       ${sections || '<p class="muted small">No archived conversations yet.</p>'}
     </div>`;
   document.getElementById('backtocoach').onclick = () => { state.coachThread = 'general'; renderCoach(); announce('Back to today’s chat.'); focusViewHeading(); };
@@ -5106,7 +5106,7 @@ function renderSettings() {
           </ol>
           <a class="btn ghost sm" href="${esc(prov.howTo.url)}" target="_blank" rel="noopener noreferrer" style="width:auto; display:inline-block;">Open the ${esc(prov.label)} console →</a>
         </div>
-        <p id="testresult" class="small" style="margin-top:10px;"></p>
+        <p id="testresult" class="small" role="status" style="margin-top:10px;"></p>
       </div>
 
       <div class="card">
@@ -5277,16 +5277,21 @@ function renderSettings() {
     p.settings.model = document.getElementById('model').value;
     save();
     const r = document.getElementById('testresult');
-    if (!p.settings.apiKey) { r.style.color = 'var(--red)'; r.textContent = 'Add a key first.'; return; }
+    if (!p.settings.apiKey) { r.style.color = 'var(--red)'; r.textContent = 'Add a key first.'; announce('Add a key first.'); return; }
     r.style.color = 'var(--ink-faint)';
     r.textContent = 'Testing…';
+    announce('Testing the connection…');
     try {
       const txt = await Coach.complete(p, { system: 'Reply with exactly: ok', messages: [{ role: 'user', content: 'ping' }], maxTokens: 8 });
       r.style.color = 'var(--green)';
-      r.textContent = txt ? `✓ Connected — live coaching is on (model: ${p.settings.model}).` : '✓ Connected.';
+      const okMsg = txt ? `Connected — live coaching is on (model: ${p.settings.model}).` : 'Connected.';
+      r.textContent = `✓ ${okMsg}`;
+      announce(okMsg);
     } catch (e) {
       r.style.color = 'var(--red)';
-      r.textContent = `✗ ${Coach.friendlyApiError(e.message)}`;
+      const errMsg = Coach.friendlyApiError(e.message);
+      r.textContent = `✗ ${errMsg}`;
+      announce(`Connection failed: ${errMsg}`);
     }
   };
   document.getElementById('savecontact').onclick = () => {
@@ -5473,6 +5478,8 @@ render();
       <audio id="promoAudio" src="./forma-promo-vo.mp3" preload="none"></audio>
     </div>`;
   document.body.appendChild(overlay);
+  // Move focus INTO the modal so keyboard/AT users aren't stranded on the page behind it.
+  try { overlay.querySelector('#promoClose').focus(); } catch (e) { /* noop */ }
 
   const stage = overlay.querySelector('#promoStage');
   const rail = [...overlay.querySelectorAll('.promo-rail span')];
@@ -5526,6 +5533,15 @@ render();
   }
   function onKey(e) {
     if (e.key === 'Escape') { e.preventDefault(); dismiss(); }
+    else if (e.key === 'Tab') {
+      // Keep Tab cycling inside the modal (aria-modal claims the page beneath is inert). The
+      // visible button set changes per scene, so filter by actual visibility (offsetParent).
+      const f = [...overlay.querySelectorAll('button')].filter((b) => !b.disabled && b.offsetParent !== null);
+      if (!f.length) return;
+      const first = f[0], lastEl = f[f.length - 1], active = document.activeElement;
+      if (e.shiftKey && (active === first || !overlay.contains(active))) { e.preventDefault(); lastEl.focus(); }
+      else if (!e.shiftKey && (active === lastEl || !overlay.contains(active))) { e.preventDefault(); first.focus(); }
+    }
     else if ((e.key === 'ArrowRight' || e.key === ' ') && i < last) { e.preventDefault(); show(i + 1, true); }
     else if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); show(i - 1, true); }
   }
