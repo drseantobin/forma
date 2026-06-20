@@ -15,9 +15,12 @@ import * as Diagnostic from './src/diagnostic.js';
 import * as Proof from './src/proof.js';
 import * as Planner from './src/planner.js';
 import { bandAscension, ascensionLine, streakMilestone, nextStreakMark } from './src/milestones.js';
-import { confidenceTag, confidence, milestoneEligible, indexConfidence, scaleFreshness, constructConfidence } from './src/reliability.js';
+import { confidenceTag, confidence, milestoneEligible, indexConfidence, scaleFreshness } from './src/reliability.js';
 import { basisFor, INSTRUMENT_BASIS } from './src/methods.js';
-import { CONSTRUCTS, constructProfile } from './src/constructs.js';
+// constructs.js (the higher-order "families" model) is intentionally NOT imported here anymore:
+// the families were demoted to a single sentence on the science page (they duplicated the 10
+// capacities + carried a premature provisional score). The module stays for the eventual
+// data-backed construct view after the cohort proves the facets cohere.
 import { growthFor } from './src/growth.js';
 import { practiceFor } from './src/practice.js';
 import { buildSnapshot, snapshotText } from './src/snapshot.js';
@@ -3734,27 +3737,6 @@ function renderProgress() {
         </div>
       </div>
 
-      <h2 class="section-head">By capacity</h2>
-      <p class="muted small" style="margin:0 0 8px;">Your scales grouped into the capacities AI erodes. Each is a <strong>profile of its facets</strong>, shown only while it’s measured — not a single validated score.</p>
-      <div class="card">
-        ${(() => {
-          const profs = constructProfile(p.domainScores);
-          if (!profs.length) return emptyState('Once you’ve measured a few capacities, they group here — by the construct each one belongs to.');
-          return `<div class="domain-list">${profs.map((pr) => {
-            const cc = constructConfidence(p, pr.id);
-            const band = bandFor(pr.provisionalMean);
-            return `<div class="domain-row" style="align-items:center;">
-              <div class="meta"><div class="dn">${esc(pr.name)}</div>
-                <div class="muted small">${pr.members.map((m) => esc(getDomain(m.domain) ? getDomain(m.domain).name : m.domain)).join(' · ')}</div>
-                <div class="bar"><div style="width:${pr.provisionalMean}%; background:${band.color}"></div></div>
-                <div class="muted small" style="margin-top:5px;">${esc(cc.note)}</div></div>
-              <span class="sc" style="color:${band.color};">~${pr.provisionalMean}</span>
-            </div>`;
-          }).join('')}</div>
-          <p class="muted small" style="margin-top:8px;">The “~” marks a provisional profile average — it becomes a real construct score only once enough data confirms the facets hold together.</p>`;
-        })()}
-      </div>
-
       <div class="card" style="background:linear-gradient(180deg,var(--card),var(--bg)); border-left:4px solid var(--green);">
         <div class="row"><strong>Your 90-day proof</strong><span class="spacer"></span><span class="trendpill up">auditable</span></div>
         <p class="muted small" style="margin-top:6px;">Forma stakes itself on three measurable claims over 90 days. See the receipts — your own numbers, moving.</p>
@@ -4125,19 +4107,7 @@ function renderMethods() {
       <p class="muted small" style="margin:0 0 10px;">These come in a few kinds: <strong>live performance tasks</strong> (scored on what you actually did), <strong>situational judgment</strong> (how you’d respond to a realistic scenario), and — for the more relational or interior capacities — <strong>honest self-report</strong>, because faking a test of presence or meaning would be less true, not more. Each capacity is matched to the method that fits what it really is.</p>
       ${rows}
 
-      <h2 class="section-head">How they group into families</h2>
-      <p class="muted small" style="margin:0 0 10px;">Underneath, those capacities roll up into a few higher-order families — the broader human faculties AI quietly erodes when we let it do our thinking and relating for us. Each is shown as a <strong>profile of its facets</strong>, never a single validated score, until enough real data earns one.</p>
-      ${CONSTRUCTS.map((c) => {
-        const members = c.facets.map((f) => (f.domains && f.domains.length)
-          ? f.domains.map((did) => (getDomain(did) ? getDomain(did).name : did)).join(' + ')
-          : f.name).join(' · ');
-        return `<div class="card" style="margin-bottom:10px;">
-        <div class="row"><strong>${esc(c.name)}</strong>${c.track === 'self-report' ? '<span class="spacer"></span><span class="muted small">self-report · never shown to employers</span>' : ''}</div>
-        <p class="muted small" style="margin:6px 0 0;">${esc(c.definition)}</p>
-        <p class="muted small" style="margin:6px 0 0;"><em>What AI offloads:</em> ${esc(c.atrophy)}</p>
-        <div class="eyebrow" style="margin-top:8px;">Groups: ${esc(members)}</div>
-      </div>`;
-      }).join('')}
+      <p class="muted small" style="margin:14px 0 0;">Underneath, these capacities map onto a few higher-order human faculties — <strong>attention, reasoning, relating, metacognition, self-regulation, and purpose</strong> — the things AI quietly erodes when we let it do our thinking and relating for us. Forma measures each capacity on its own; whether they roll up into validated higher-order scores is exactly what real data will tell us.</p>
 
       <h2 class="section-head">Self-knowledge instruments</h2>
       <p class="muted small" style="margin:0 0 10px;">Optional checks in the Tools tab, each adapted from an established research paradigm — the same honesty: a mirror you can see the basis of, never a verdict.</p>
