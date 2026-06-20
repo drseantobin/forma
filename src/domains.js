@@ -89,7 +89,7 @@ export const DOMAINS = [
   },
   {
     id: 'communication',
-    name: 'Communication & EI',
+    name: 'Communication & Empathy',
     short: 'Reading and responding to emotion',
     icon: '🗣️',
     color: '#C2608A',
