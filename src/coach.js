@@ -87,7 +87,7 @@ export function coachGreeting(profile) {
 
   const close = hasKey(profile)
     ? `What's on your mind — a day that didn't go how you wanted, or where to put your effort next?`
-    : `What's on your mind today? (Offline for now — I'll read your own data back to you; add a Claude key in Settings for the full conversation.)`;
+    : `What's on your mind today? (Offline for now — I'll read your own data back to you; add your own API key (any provider) in Settings for the full conversation.)`;
   return [hi, signal, close].filter(Boolean).join(' ');
 }
 
@@ -677,12 +677,12 @@ export function offlineCoachReply(userText, profile, opts = {}) {
     const lever = g ? ` If you want one concrete place to start: **${g[0].title}** — ${g[0].how}` : '';
     return `Let's stay with your ${fname}. Forget the number for a second — when has it gone even a little better than usual lately, and what was different that day? We build from that.${lever}`
       + (one ? `\n\nOne thing Forma already notices: ${one}` : '')
-      + `\n\n(Add your own Claude API key in Settings and I can talk this through live — reading your full record for this capacity.)`;
+      + `\n\n(Add your own API key (any provider) in Settings and I can talk this through live — reading your full record for this capacity.)`;
   }
   return `I'm here — tell me a bit more about what's on your mind. `
     + `And a solution-focused place to begin: when did this last go even slightly the way you'd want it to?`
     + (one ? `\n\nOne thing Forma already notices in your data: ${one}` : '')
-    + `\n\n(Add your own Claude API key in Settings and I can talk this through live — reading your full history.)`;
+    + `\n\n(Add your own API key (any provider) in Settings and I can talk this through live — reading your full history.)`;
 }
 
 // --- Vignette scoring (the AI-scored communication/EI exercise) ---

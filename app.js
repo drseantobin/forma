@@ -106,6 +106,12 @@ function raceTimeout(promise, ms, fallback) {
 // Coach — so coaching is embedded right where the person sees their result.
 async function talkThrough(ctx) {
   state.profile = state.profile || Profile.createProfile();
+  // Fold the prior day FIRST so the opener we seed below survives renderCoach's new-day fold
+  // (which would otherwise archive the freshly-seeded opener on the first coach-touch of a new day).
+  if (state.profile.coachDay !== todayStr()) {
+    state.profile = Profile.foldCoachHistory(state.profile, todayStr());
+    save();
+  }
   const p = state.profile;
   // Route to the per-domain thread when this is about a specific (non-interior) capacity, so the
   // conversation lands in that area's running chat; baseline / multi-domain contexts go to General.
@@ -361,18 +367,19 @@ function renderOnboarding() {
           <button class="btn amber" id="start">Quick check · ~${Math.max(3, Math.round(BASELINE_ITEMS.length * 7 / 60))} min →</button>
           <button class="btn ghost" id="talk">Talk it through with the coach →</button>
         </div>
-        <p class="muted small center" style="margin-top:12px;">The quick check is ${BASELINE_ITEMS.length} honest ratings across your capacities — a short self-assessment that works offline. The conversation is an adaptive interview that writes your profile — it uses your own AI key (any provider), so it stays yours.</p>
+        <p class="muted small center" style="margin-top:12px;">The quick check is ${BASELINE_ITEMS.length} honest ratings across your capacities — a short self-assessment that works offline. The conversation is an adaptive interview that writes your profile — it uses your own API key (any provider), so it stays yours.</p>
         <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
           ${uiIcon('dove')}
           <div style="flex:1;">
             <div style="font-weight:600; font-size:.95rem;">Spiritual Life track <span class="muted small">· optional</span></div>
             <div class="muted small">Bring prayer, silence, and the spiritual life into your formation — tended alongside the rest, kept private, and never shown to anyone but you.</div>
           </div>
-          <button class="opt ${state.onboard.faithTrack ? 'selected' : ''}" id="faithtoggle" style="width:auto; padding:8px 14px; font-weight:700;">${state.onboard.faithTrack ? 'On' : 'Off'}</button>
+          <button class="opt ${state.onboard.faithTrack ? 'selected' : ''}" id="faithtoggle" aria-pressed="${!!state.onboard.faithTrack}" aria-label="Spiritual Life track" style="width:auto; padding:8px 14px; font-weight:700;">${state.onboard.faithTrack ? 'On' : 'Off'}</button>
         </div>
         ${needKey ? `
           <div class="card" style="margin-top:12px;">
-            <p class="small"><strong>The conversation needs an AI key.</strong> Bring your own from any provider — Claude, GPT, Gemini, OpenRouter (pick the provider in Settings). Paste it to talk it through, or just use the quick check above. Your key stays on this device.</p>
+            <p class="small"><strong>The conversation needs an API key.</strong> Bring your own from any provider — Claude, GPT, Gemini, OpenRouter. Pick yours below and paste the key to talk it through, or just use the quick check above. Your key stays on this device.</p>
+            <div class="field"><label for="inlineprovider">Provider</label><select id="inlineprovider">${Object.values(PROVIDERS).map((pv) => `<option value="${esc(pv.id)}" ${(state.profile?.settings?.provider || 'anthropic') === pv.id ? 'selected' : ''}>${esc(pv.label)}</option>`).join('')}</select></div>
             <div class="field"><input id="inlinekey" type="password" placeholder="Paste your API key" /></div>
             <button class="btn sm" id="savekeyinline">Save key & start the conversation</button>
           </div>` : ''}
@@ -400,6 +407,11 @@ function renderOnboarding() {
       const v = document.getElementById('inlinekey').value.trim();
       if (!v) return;
       state.profile = state.profile || Profile.createProfile();
+      // Set provider + model to match the chosen provider — otherwise a GPT/Gemini key rides the
+      // default Anthropic adapter (with a leftover claude model id) and the first turn errors.
+      const pv = document.getElementById('inlineprovider').value;
+      state.profile.settings.provider = pv;
+      state.profile.settings.model = defaultModelFor(pv);
       state.profile.settings.apiKey = v;
       save();
       startConversation();
@@ -599,7 +611,7 @@ function renderConversationalOnboarding() {
   app.innerHTML = `
     <div class="fade-in">
       <div class="brandmark"><div class="logo">${formaMark}</div><div class="name">Forma</div><div class="tag">Getting to know you</div></div>
-      <div class="chat" id="dchat">
+      <div class="chat" id="dchat" role="log" aria-live="polite" aria-atomic="false">
         <div class="bubble coach">${esc(Diagnostic.OPENING)}</div>
         ${d.messages.map((m) => `<div class="bubble ${m.role === 'user' ? 'me' : 'coach'}">${esc(m.content)}</div>`).join('')}
         ${d.busy ? '<div class="bubble coach typing"><span class="typing-dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><span class="sr-only">Coach is composing a reply</span></div>' : ''}
@@ -610,7 +622,7 @@ function renderConversationalOnboarding() {
            <p class="muted small center" style="margin-top:8px;">Or keep talking — the more you share, the truer the read.</p>`
         : ''}
       <div class="composer" style="bottom:12px;">
-        <input id="dci" placeholder="Type your reply…" autocomplete="off" ${d.busy ? 'disabled' : ''} />
+        <input id="dci" aria-label="Type your reply" placeholder="Type your reply…" autocomplete="off" ${d.busy ? 'disabled' : ''} />
         <button class="btn" id="dsend" ${d.busy ? 'disabled' : ''}>Send</button>
       </div>
       <p class="muted small center" style="margin-top:6px;">
@@ -631,6 +643,7 @@ function renderConversationalOnboarding() {
     // and step out of the interview; don't echo or transmit what they typed.
     if (Coach.looksLikeDistress(text)) {
       d.messages.push({ role: 'assistant', content: Coach.ESCALATION_MESSAGE });
+      announce(Coach.ESCALATION_MESSAGE);
       render();
       dci.value = '';
       return;
@@ -642,6 +655,7 @@ function renderConversationalOnboarding() {
     try {
       const reply = await Diagnostic.diagnosticReply(d.messages, state.profile);
       d.messages.push({ role: 'assistant', content: reply.text });
+      announce(reply.text);
       if (reply.ready) d.ready = true;
     } catch (e) {
       d.messages.pop(); // let them retry the last reply
@@ -870,7 +884,7 @@ function renderHome() {
         <div class="row" style="margin-bottom:10px;">
           <strong>${doneToday ? "Today's session complete" : "Today's focus"}</strong>
           <span class="spacer"></span>
-          ${doneToday ? '<span class="trendpill up">done ✓</span>' : ''}
+          ${doneToday ? `<span class="trendpill up">done ${uiIcon('check', 'tpico')}</span>` : ''}
         </div>
         <div class="domain-row tappable" data-domain="${focus}" role="button" tabindex="0" aria-label="${esc(fd.name)} — how to grow it" style="margin-bottom:14px;">
           <span class="ico">${fd.icon}</span>
@@ -1658,7 +1672,7 @@ function renderTodayLanding() {
 
       ${doneToday ? `
         <div class="card" style="text-align:center;">
-          <div style="font-size:2.4rem;">✓</div>
+          <div style="color:var(--green);">${uiIcon('check', 'bigcheck')}</div>
           <h2 style="font-size:1.1rem; margin-top:6px;">Today's session is done</h2>
           <p class="muted small">Formation compounds in the returning, not the cramming. Come back tomorrow.</p>
         </div>
@@ -2787,7 +2801,7 @@ function renderSentence() {
     // Never fabricate a score: null = "not measured" (no key / API fail / bad parse).
     s.response.aiScore = (result && result.score != null) ? result.score : null;
     s.response.feedback = (result && result.feedback) ? result.feedback
-      : 'Saved — this reflection needs the live coach to read it. Add an AI key in Settings and it’ll be scored next time. Either way, finishing it honestly counts.';
+      : 'Saved — this reflection needs the live coach to read it. Add an API key in Settings and it’ll be scored next time. Either way, finishing it honestly counts.';
     completeSession();
   };
 }
@@ -2978,7 +2992,7 @@ function renderVignette() {
     // Never fabricate a score: null = "not measured" (no key / API fail / bad parse).
     s.response.aiScore = (result && result.score != null) ? result.score : null;
     s.response.feedback = (result && result.feedback) ? result.feedback
-      : 'Saved — this one needs the live coach to read it. Add an AI key in Settings and it’ll be scored next time. Either way, working through a hard conversation counts.';
+      : 'Saved — this one needs the live coach to read it. Add an API key in Settings and it’ll be scored next time. Either way, working through a hard conversation counts.';
     s.response.transcript = text;
     completeSession();
   };
@@ -3206,7 +3220,7 @@ function renderGuided() {
           const opt = (id, label) => `<button class="chip${mode === id ? ' sel' : ''}" data-sound="${id}" aria-pressed="${mode === id}">${label}</button>`;
           return `<div class="card soundsel">
           <div class="eyebrow">Sound</div>
-          <div class="chip-row" style="margin:8px 0 6px;">${opt('off', 'Silent')}${opt('waves', 'Breath waves')}${opt('voice', 'Spoken guidance')}</div>
+          <div class="chip-row" role="group" aria-label="Sound" style="margin:8px 0 6px;">${opt('off', 'Silent')}${opt('waves', 'Breath waves')}${opt('voice', 'Spoken guidance')}</div>
           <p class="muted small" style="margin:0;">Breath waves rise and fall and move gently left ↔ right — <strong>best with headphones</strong>. Spoken guidance reads each step aloud in a calm voice.</p>
         </div>`;
         })()}
@@ -3214,7 +3228,7 @@ function renderGuided() {
           <p class="muted small" style="margin-top:4px;">${esc(m.scale.label)}</p>
           <div class="slider-row">
             <span class="muted small">${esc(m.scale.lo)}</span>
-            <input type="range" id="gbefore" min="0" max="10" value="${r.before != null ? r.before : 5}" />
+            <input type="range" id="gbefore" min="0" max="10" value="${r.before != null ? r.before : 5}" aria-label="${esc(m.scale.label)}" aria-valuetext="${r.before != null ? r.before : 5} out of 10, ${esc(m.scale.lo)} to ${esc(m.scale.hi)}" />
             <span class="muted small">${esc(m.scale.hi)}</span>
           </div>
           <div class="center muted small" id="gbeforeval">${r.before != null ? r.before : 5}/10</div>
@@ -3225,7 +3239,9 @@ function renderGuided() {
     const slider = document.getElementById('gbefore');
     if (slider) {
       r.before = Number(slider.value);
-      slider.oninput = () => { r.before = Number(slider.value); const v = document.getElementById('gbeforeval'); if (v) v.textContent = `${slider.value}/10`; };
+      const setBeforeVt = () => slider.setAttribute('aria-valuetext', `${slider.value} out of 10, ${m.scale.lo} to ${m.scale.hi}`);
+      setBeforeVt();
+      slider.oninput = () => { r.before = Number(slider.value); const v = document.getElementById('gbeforeval'); if (v) v.textContent = `${slider.value}/10`; setBeforeVt(); };
     }
     app.querySelectorAll('[data-sound]').forEach((b) => b.onclick = () => {
       state.profile.settings.practiceSound = b.dataset.sound;
@@ -3257,7 +3273,7 @@ function renderGuided() {
       <p class="muted small" style="margin-top:14px;">${esc(eyesLine)}</p>
       <div class="breath-wrap">
         <div class="breath-orb" id="orb"></div>
-        <div class="breath-label" id="breathlbl"></div>
+        <div class="breath-label" id="breathlbl" aria-live="polite" aria-atomic="true"></div>
       </div>
       <p class="guide-step" id="gstep">${esc(m.steps[0].text)}</p>
       <button class="btn ghost sm" id="gend" style="width:auto; margin-top:18px;">End early</button>
@@ -3356,7 +3372,7 @@ function renderGuidedReflect() {
         <p class="likert-q" style="font-size:1.05rem; margin-top:12px;">${esc(m.after)}</p>
         <div class="slider-row">
           <span class="muted small">${esc(m.scale.lo)}</span>
-          <input type="range" id="gafter" min="0" max="10" value="${r.after != null ? r.after : (r.before != null ? r.before : 5)}" />
+          <input type="range" id="gafter" min="0" max="10" value="${r.after != null ? r.after : (r.before != null ? r.before : 5)}" aria-label="${esc(m.after)}" aria-valuetext="${r.after != null ? r.after : (r.before != null ? r.before : 5)} out of 10, ${esc(m.scale.lo)} to ${esc(m.scale.hi)}" />
           <span class="muted small">${esc(m.scale.hi)}</span>
         </div>
         <div class="center muted small" id="gafterval">${r.after != null ? r.after : (r.before != null ? r.before : 5)}/10</div>
@@ -3384,7 +3400,9 @@ function renderGuidedReflect() {
   const after = document.getElementById('gafter');
   if (after) {
     r.after = Number(after.value); // default = starting value, so Finish is always available
-    after.oninput = () => { r.after = Number(after.value); const v = document.getElementById('gafterval'); if (v) v.textContent = `${after.value}/10`; };
+    const setAfterVt = () => after.setAttribute('aria-valuetext', `${after.value} out of 10, ${m.scale.lo} to ${m.scale.hi}`);
+    setAfterVt();
+    after.oninput = () => { r.after = Number(after.value); const v = document.getElementById('gafterval'); if (v) v.textContent = `${after.value}/10`; setAfterVt(); };
   }
   const val = document.getElementById('gvalue');
   if (val) { val.oninput = () => { r.value = val.value; const b = document.getElementById('gfin'); if (b) b.disabled = !(r.value && r.value.trim()); }; attachMicButton(document.getElementById('gvaluemic'), val); }
@@ -3424,7 +3442,7 @@ function completeGuided() {
           <div class="k">Your next step</div>
           <p style="margin:6px 0 10px;">“${esc(savedAction)}”</p>
           <button class="btn sm" id="gcommit">Keep this as a commitment</button>
-          <span id="gcommitted" class="trendpill up" style="display:none;">saved ✓</span>
+          <span id="gcommitted" class="trendpill up" style="display:none;">saved ${uiIcon('check', 'tpico')}</span>
         </div>` : ''}
       <button class="btn ghost" id="gtalk" style="margin-top:16px;">${coachGlyph} Talk this through with the coach →</button>
       <button class="btn amber" id="gdone" style="margin-top:10px;">Done →</button>
@@ -3526,7 +3544,7 @@ async function completeSession() {
       ? `<div class="milestone" role="status" style="--mile:var(--amber)">
            <div class="mile-rule">${uiIcon('flame', 'binline')} Streak</div>
            <div class="mile-head">${streakMark}-day streak</div>
-           <div class="mile-note">Showing up is the formation. Keep the chain alive.</div>
+           <div class="mile-note">Showing up is the formation — and the person who returns this many days is already becoming someone different.</div>
          </div>`
       : (graced
         ? `<div class="milestone" role="status" style="--mile:var(--amber)">
@@ -3635,7 +3653,7 @@ function aiReadinessCard(p) {
     <div class="card airead" style="border-left:4px solid var(--accent);">
       <div class="row"><strong>AI-Readiness</strong>
         <span class="spacer"></span>
-        <span class="kbig" style="color:var(--accent);">${air == null ? '—' : air}</span></div>
+        <span class="kbig" style="color:var(--accent);">${air == null ? '—' : `${air}<span class="snapof"> / 100</span>`}</span></div>
       <p class="muted small" style="margin-top:2px;">The capacities that keep you irreplaceable as AI does more of the cognitive work — judgment over its output, independence from it, deep reading, and clear communication.</p>
       <div class="airgrid">
         ${contributors.map((c) => `
@@ -3687,7 +3705,7 @@ function renderProgress() {
     <div class="fade-in">
       ${viewHead('Your formation over time', 'Progress', '')}
       <div class="card">
-        <div class="row"><strong>Formation Index</strong><span class="spacer"></span><span class="kbig">${fi}</span></div>
+        <div class="row"><strong>Formation Index</strong><span class="spacer"></span><span class="kbig">${fi}<span class="snapof"> / 100</span></span></div>
         ${(() => {
           // Same headline-honesty treatment as Home (v112): on thin evidence the
           // Index is provisional. Progress is where users study the number, so the
@@ -3706,14 +3724,14 @@ function renderProgress() {
 
       ${aiReadinessCard(p)}
 
-      <h2 style="margin-top:6px;">Your scales</h2>
+      <h2 class="section-head">Your scales</h2>
       <div class="card">
         <div class="domain-list">
           ${domainOrder().map((id) => progressRow(id)).join('')}
         </div>
       </div>
 
-      <h2 style="margin-top:6px;">By capacity</h2>
+      <h2 class="section-head">By capacity</h2>
       <p class="muted small" style="margin:0 0 8px;">Your scales grouped into the capacities AI erodes. Each is a <strong>profile of its facets</strong>, shown only while it’s measured — not a single validated score.</p>
       <div class="card">
         ${(() => {
@@ -3748,7 +3766,7 @@ function renderProgress() {
         </div>
       </div>
 
-      <h2>What Forma is noticing</h2>
+      <h2 class="section-head">What Forma is noticing</h2>
       <div class="card">
         ${(() => {
           const lines = weeklyPatterns(p);
@@ -3760,7 +3778,7 @@ function renderProgress() {
       </div>
 
       ${Profile.recentSessions(p).length ? `
-      <h2>Recent sessions</h2>
+      <h2 class="section-head">Recent sessions</h2>
       <div class="card">
         <p class="muted small" style="margin:0 0 8px;">Every score you've earned, newest first — your own auditable record.</p>
         <div class="domain-list">
@@ -3806,7 +3824,7 @@ function renderPlan() {
               <span class="muted small">${label}${isToday ? ' · today' : ''}</span></div>
             <div class="muted small">${esc(Planner.typeLabel(d.type))} · <span title="intensity" style="letter-spacing:1px;">${dots}</span></div>
           </div>
-          ${d.done ? '<span class="trendpill up">done ✓</span>' : (isToday ? '<button class="btn sm" data-start="1" style="width:auto;">Start →</button>' : '')}
+          ${d.done ? `<span class="trendpill up">done ${uiIcon('check', 'tpico')}</span>` : (isToday ? '<button class="btn sm" data-start="1" style="width:auto;">Start →</button>' : '')}
         </div>
         <p class="muted small" style="margin:8px 0 0;">${esc(d.rationale)}</p>
       </div>`;
@@ -4051,7 +4069,7 @@ function renderSnapshot() {
       <div class="row no-print" style="gap:8px;">
         <button class="btn sm" id="print" style="width:auto;">Print / Save as PDF</button>
         <button class="btn ghost sm" id="copy" style="width:auto;">Copy as text</button>
-        <span id="copied" class="trendpill up" style="display:none;">copied ✓</span>
+        <span id="copied" class="trendpill up" style="display:none;">copied ${uiIcon('check', 'tpico')}</span>
       </div>
     </div>`;
   document.getElementById('back').onclick = () => go('progress');
@@ -4184,7 +4202,7 @@ function renderTeam() {
       <div class="row no-print" style="gap:8px;">
         <button class="btn sm" id="teamprint" style="width:auto;">Print / Save as PDF</button>
         <button class="btn ghost sm" id="teamcopy" style="width:auto;">Copy report</button>
-        <span id="teamcopied" class="trendpill up" style="display:none;">copied ✓</span>
+        <span id="teamcopied" class="trendpill up" style="display:none;">copied ${uiIcon('check', 'tpico')}</span>
       </div>
     </div>`;
   document.getElementById('back').onclick = () => go('settings');
@@ -4825,7 +4843,7 @@ function renderCoach() {
       ${!live ? `<p class="muted small">Add your API key in <button id="tosettings" class="inlinelink">Settings</button> — bring your own from any provider — for live, personalized coaching. Until then, the coach reads from your own data.</p>` : ''}
       ${threadBar}
       ${threadHist.length ? `<details class="coach-earlier"><summary class="muted small">Earlier in this chat (${threadHist.length}) — your coach still remembers these</summary><div class="chat earlier" style="margin-top:8px;">${threadHist.slice(-12).map(bubble).join('')}</div></details>` : ''}
-      <div class="chat" id="chat" role="log" aria-live="polite">
+      <div class="chat" id="chat" role="log" aria-live="polite" tabindex="-1">
         ${hasMsgs ? log.map(bubble).join('') : `<div class="bubble coach">${esc(greeting)}</div>`}
       </div>
       ${starters.length ? `<div id="starters" class="chiprow" style="margin:2px 0 10px;">${starters.map((c) => `<button class="chip starter" data-p="${esc(c.send || c.label)}">${esc(c.label)}</button>`).join('')}</div>` : ''}
@@ -4839,7 +4857,13 @@ function renderCoach() {
     </div>`;
   const tos = document.getElementById('tosettings');
   if (tos) tos.onclick = () => go('settings');
-  app.querySelectorAll('[data-thread]').forEach((b) => b.onclick = () => { state.coachThread = b.dataset.thread; renderCoach(); });
+  app.querySelectorAll('[data-thread]').forEach((b) => b.onclick = () => {
+    const key = b.dataset.thread;
+    state.coachThread = key;
+    renderCoach();
+    announce(`Switched to ${threadChipLabel(key)} chat.`);
+    const chip = app.querySelector('[data-thread].sel'); if (chip) chip.focus(); else focusViewHeading();
+  });
   const threadsDetails = app.querySelector('details.coach-threads');
   if (threadsDetails) threadsDetails.addEventListener('toggle', () => { state.coachThreadsOpen = threadsDetails.open; });
   // Archive (not clear): move this chat's live messages into History so context is kept, and the
@@ -4855,6 +4879,8 @@ function renderCoach() {
       save();
     }
     renderCoach();
+    announce('Chat archived to History.');
+    const chat = document.getElementById('chat'); if (chat) chat.focus(); else focusViewHeading();
   };
   const ci = document.getElementById('ci');
   const sendBtn = document.getElementById('send');
@@ -4864,6 +4890,7 @@ function renderCoach() {
     const text = ci.value.trim();
     if (!text || busy) return;
     busy = true;
+    stopActiveMic(); // stop live dictation so no further phrase writes into the cleared input
     const st = document.getElementById('starters'); if (st) st.remove();
     ci.value = '';
     ci.disabled = true; sendBtn.disabled = true;
@@ -4909,7 +4936,7 @@ function renderCoachHistory(p) {
       <p class="muted small" style="margin:2px 0 12px;">Earlier conversations, kept so nothing is lost. Your live chats stay fresh each day, and your coach still draws on these.</p>
       ${sections || '<p class="muted small">No archived conversations yet.</p>'}
     </div>`;
-  document.getElementById('backtocoach').onclick = () => { state.coachThread = 'general'; renderCoach(); };
+  document.getElementById('backtocoach').onclick = () => { state.coachThread = 'general'; renderCoach(); announce('Back to today’s chat.'); focusViewHeading(); };
 }
 
 function bubble(m) {
@@ -5022,7 +5049,7 @@ function renderSettings() {
       <div class="card">
         <h2 style="font-size:1.05rem;">Your name</h2>
         <div class="field">
-          <input id="name" value="${esc(p.settings.name || '')}" placeholder="What should the coach call you?" />
+          <input id="name" aria-label="Your name" value="${esc(p.settings.name || '')}" placeholder="What should the coach call you?" />
         </div>
       </div>
 
@@ -5044,7 +5071,7 @@ function renderSettings() {
             <h2 style="font-size:1.05rem; margin:0;">Spiritual Life track</h2>
             <p class="muted small" style="margin:2px 0 0;">Optional, faith-based. Adds a spiritual-formation scale, daily reflections, and a contemplative-silence practice. Kept private — never shown to any employer view.</p>
           </div>
-          <button class="opt ${p.settings.faithTrack ? 'selected' : ''}" id="faith" style="width:auto; padding:8px 16px; font-weight:700;">${p.settings.faithTrack ? 'On' : 'Off'}</button>
+          <button class="opt ${p.settings.faithTrack ? 'selected' : ''}" id="faith" aria-pressed="${!!p.settings.faithTrack}" aria-label="Spiritual Life track" style="width:auto; padding:8px 16px; font-weight:700;">${p.settings.faithTrack ? 'On' : 'Off'}</button>
         </div>
       </div>
 
@@ -5052,17 +5079,17 @@ function renderSettings() {
         <h2 style="font-size:1.05rem;">Live AI coaching</h2>
         <p class="muted small">Optional. Bring your own API key from any supported provider to turn on live, personalized coaching. Your key is stored only in this browser and is sent only to the provider you pick — never to a Forma server (there isn't one), and never with your Spiritual Life content.</p>
         <div class="field">
-          <label>Provider</label>
+          <label for="provider">Provider</label>
           <select id="provider">
             ${Object.values(PROVIDERS).map((pv) => `<option value="${esc(pv.id)}" ${prov.id === pv.id ? 'selected' : ''}>${esc(pv.label)}</option>`).join('')}
           </select>
         </div>
         <div class="field">
-          <label>${esc(prov.label)} API key</label>
+          <label for="key">${esc(prov.label)} API key</label>
           <input id="key" type="password" value="${esc(p.settings.apiKey || '')}" placeholder="${esc(keyHint)}" />
         </div>
         <div class="field">
-          <label>Model</label>
+          <label for="model">Model</label>
           <select id="model">
             ${prov.models.map((m) => `<option value="${esc(m)}" ${p.settings.model === m ? 'selected' : ''}>${esc(m)}</option>`).join('')}
           </select>
@@ -5071,7 +5098,7 @@ function renderSettings() {
           <button class="btn sm" id="savekey">Save</button>
           <button class="btn ghost sm" id="testkey">Test connection</button>
           <button class="btn ghost sm" id="howkey" aria-expanded="false" aria-controls="howkeybox" style="width:auto;">How to get a key →</button>
-          <span id="saved" class="trendpill up" style="display:none;">saved ✓</span>
+          <span id="saved" class="trendpill up" style="display:none;">saved ${uiIcon('check', 'tpico')}</span>
         </div>
         <div id="howkeybox" hidden style="margin-top:10px; background:var(--accent-soft); border-radius:12px; padding:12px;">
           <ol class="muted small" style="margin:0 0 8px; padding-left:18px;">
@@ -5126,7 +5153,7 @@ function renderSettings() {
         <div class="row" style="gap:8px;">
           <button class="btn sm" id="savecontact">${p.contact && p.contact.consent ? 'Update' : 'Opt in'}</button>
           ${p.contact && p.contact.consent ? `<button class="btn ghost sm" id="withdrawcontact">Remove my email</button>` : ''}
-          <span id="contactsaved" class="trendpill up" style="display:none;">saved ✓</span>
+          <span id="contactsaved" class="trendpill up" style="display:none;">saved ${uiIcon('check', 'tpico')}</span>
         </div>
         <p id="contacterr" class="small" style="margin-top:8px; color:var(--red); display:none;"></p>
       </div>
@@ -5186,7 +5213,7 @@ function renderSettings() {
         const GIVE_URL = '';
         const goes = [
           'keeps Forma honest and independent — no ads, no investors pulling strings',
-          'funds the research that proves the measures actually work',
+          'funds the research that tests whether the measures actually work',
           'keeps it free and open to anyone who needs it',
           'builds what’s next, with the people it’s for',
         ];

@@ -339,6 +339,10 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- coach ---------- */
 .chat { display:flex; flex-direction:column; gap:12px; padding-bottom: 10px; }
+/* On a cold-open coach thread (greeting bubble only) the log is short, so the sticky composer
+   has nothing to anchor against and floats mid-screen. Give ONLY the live log a min-height so it
+   fills the space above the composer; the .earlier archives + onboarding #dchat are untouched. */
+.chat[role="log"] { min-height: 38vh; }
 .bubble { max-width: 86%; padding:12px 15px; border-radius:16px; white-space:pre-wrap; font-size:.97rem; }
 .bubble.coach { background: var(--card); border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:5px; }
 .bubble.me { background: var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:5px; }
@@ -388,7 +392,16 @@ button { font-family: inherit; cursor: pointer; }
 .snapfoot { margin-top:14px; padding-top:10px; border-top:1px dashed var(--line, #e6e4dd); }
 @media print {
   .tabbar, .skip-link, .no-print, .brandmark { display:none !important; }
-  body, #app { background:#fff !important; }
+  /* Force the LIGHT palette for print/PDF — otherwise a dark-mode device prints near-white
+     ink on the forced-white page (an invisible snapshot/credential). !important + the explicit
+     dark selectors guarantee this beats the dark-mode token declarations regardless of source order. */
+  :root, :root:not([data-theme="light"]), [data-theme="dark"] {
+    --ink:#1b1c28 !important; --ink-soft:#4a4c5e !important; --ink-faint:#6b6d80 !important;
+    --bg:#fff !important; --card:#fff !important; --line:#e7e5dd !important;
+    --green-ink:#2f6b54 !important; --red-ink:#a83833 !important; --amber-ink:#8a5e12 !important;
+    --green-soft:#e2f0ea !important; --red-soft:#f9e7e6 !important; --amber-soft:#fbeed7 !important;
+  }
+  body, #app { background:#fff !important; color:#1b1c28 !important; }
   .snapsheet { border:none; box-shadow:none; }
   .card { box-shadow:none; }
 }
@@ -507,9 +520,13 @@ details.disclosure[open] > summary::after { content:'–'; }
   white-space:nowrap; cursor: help;
 }
 .trendpill { font-size:.78rem; font-weight:700; padding:2px 8px; border-radius:999px; }
+/* Inline check inside a status pill — sized to the pill text, baseline-aligned (the pill has no
+   flex gap, so it carries its own small left margin). Part of the one stroke-icon system. */
+.trendpill .tpico { width:.78em; height:.78em; vertical-align:-.06em; margin-left:3px; }
+.bigcheck { width:2.4rem; height:2.4rem; stroke-width:1.6; }
 .trendpill.up { background: var(--green-soft); color: var(--green-ink); }
 .trendpill.down { background: var(--red-soft); color: var(--red-ink); }
-.trendpill.flat { background: var(--line); color: var(--ink-faint); }
+.trendpill.flat { background: var(--line); color: var(--ink-soft); } /* ink-soft clears AA on --line; ink-faint did not */
 
 /* ---------- settings ---------- */
 /* Segmented control (Appearance: System / Light / Dark) — calm, instrument-grade,
@@ -599,6 +616,11 @@ details.disclosure[open] > summary::after { content:'–'; }
    in here makes every section label a consistent eyebrow — insight's amber still wins by
    specificity. */
 .eyebrow, .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint); font-weight:700; }
+/* One section divider for every mid-screen header between cards — a single calm tier below the
+   page h1, with systematic rhythm, replacing hand-rolled <h2 style="margin-top:6px"> that
+   inherited the larger global h2 size. The hierarchy is the trust signal. */
+.section-head { font-size:1.05rem; font-weight:700; letter-spacing:-.01em; line-height:1.2; margin:var(--s5) 0 var(--s3); color:var(--ink); }
+.section-head:first-child { margin-top:0; }
 /* Shared view header: eyebrow + title (+ optional lede / right slot) — one authored
    rhythm for every primary tab, instead of bare hand-rolled <h1> rows. */
 .viewhead { margin: 2px 0 18px; }
