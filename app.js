@@ -846,6 +846,8 @@ function renderHome() {
         })() : ' — relight it'}`}</div>
       </div>
 
+      ${radarCard(p.domainScores)}
+
       ${welcomeBackCard(p)}
 
       ${backupNudgeCard(p)}
@@ -886,8 +888,6 @@ function renderHome() {
       ${weekStripCard(p)}
 
       ${commitmentsCard(p)}
-
-      ${radarCard(p.domainScores)}
     </div>`;
 
   document.getElementById('startsession').onclick = () => go('session');
@@ -4748,8 +4748,15 @@ function renderCoach() {
   const log = coachThreadLog(p, tkey);
 
   const chips = coachThreadChips(p, tkey);
-  const threadBar = chips.length > 1 ? `<div class="chip-row coach-threads" style="margin:8px 0 12px;">${chips.map((k) =>
-    `<button class="chip ${k === tkey ? 'sel' : ''}" data-thread="${esc(k)}" aria-pressed="${k === tkey}">${k === 'general' ? 'General' : esc(getDomain(k).name)}</button>`).join('')}</div>` : '';
+  const activeLabel = tkey === 'general' ? 'General' : getDomain(tkey).name;
+  // Collapsible thread switcher: once you have more than one chat going, the chip row collapses
+  // so the chat window stays wide — expand it only when you want to switch (Sean).
+  const threadsOpen = !!state.coachThreadsOpen;
+  const threadBar = chips.length > 1 ? `<details class="coach-threads" ${threadsOpen ? 'open' : ''}>
+      <summary class="coach-threads-sum"><span class="muted small">${chips.length} chats ·</span> <strong>${esc(activeLabel)}</strong><span class="muted small"> — switch</span><span class="ct-chev" aria-hidden="true">›</span></summary>
+      <div class="chip-row" style="margin:10px 0 2px;">${chips.map((k) =>
+        `<button class="chip ${k === tkey ? 'sel' : ''}" data-thread="${esc(k)}" aria-pressed="${k === tkey}">${k === 'general' ? 'General' : esc(getDomain(k).name)}</button>`).join('')}</div>
+    </details>` : '';
 
   // Starter prompts on a cold open — thread-specific so the entry is guided.
   const focus = Planner.focusForToday(p) || recommendFocus(p);
@@ -4798,6 +4805,8 @@ function renderCoach() {
   const tos = document.getElementById('tosettings');
   if (tos) tos.onclick = () => go('settings');
   app.querySelectorAll('[data-thread]').forEach((b) => b.onclick = () => { state.coachThread = b.dataset.thread; renderCoach(); });
+  const threadsDetails = app.querySelector('details.coach-threads');
+  if (threadsDetails) threadsDetails.addEventListener('toggle', () => { state.coachThreadsOpen = threadsDetails.open; });
   const clr = document.getElementById('clearthread');
   if (clr) clr.onclick = () => {
     if (tkey === 'general') p.coachLog = [];
