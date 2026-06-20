@@ -4120,14 +4120,24 @@ function renderMethods() {
         <p class="muted small" style="margin:8px 0 0; line-height:1.55;"><strong>It isn't</strong> a clinical or diagnostic tool, a hiring or ranking instrument, or normed against a population — your bands are within-person growth, never a percentile. The measures are honest <em>adaptations</em> tuned for formation, not validated clinical tests; their reliability and validity are things Forma is built to <em>earn</em> with real use, not to claim up front.</p>
       </div>
 
-      <h2 class="section-head">The capacities, and why these</h2>
-      <p class="muted small" style="margin:0 0 10px;">We group the measures into a few higher-order capacities that AI quietly erodes when we let it do our thinking and relating for us. Each is shown as a <strong>profile of its facets</strong> — never a single validated score, until enough real data earns one.</p>
-      ${CONSTRUCTS.map((c) => `<div class="card" style="margin-bottom:10px;">
+      <h2 class="section-head">The capacities Forma measures</h2>
+      <p class="muted small" style="margin:0 0 8px;">The same capacities you saw at the start — each adapted from a specific, established research paradigm (the family of task used to study it in the literature), so a score always rests on something you can check, not on our say-so.</p>
+      <p class="muted small" style="margin:0 0 10px;">These come in a few kinds: <strong>live performance tasks</strong> (scored on what you actually did), <strong>situational judgment</strong> (how you’d respond to a realistic scenario), and — for the more relational or interior capacities — <strong>honest self-report</strong>, because faking a test of presence or meaning would be less true, not more. Each capacity is matched to the method that fits what it really is.</p>
+      ${rows}
+
+      <h2 class="section-head">How they group into families</h2>
+      <p class="muted small" style="margin:0 0 10px;">Underneath, those capacities roll up into a few higher-order families — the broader human faculties AI quietly erodes when we let it do our thinking and relating for us. Each is shown as a <strong>profile of its facets</strong>, never a single validated score, until enough real data earns one.</p>
+      ${CONSTRUCTS.map((c) => {
+        const members = c.facets.map((f) => (f.domains && f.domains.length)
+          ? f.domains.map((did) => (getDomain(did) ? getDomain(did).name : did)).join(' + ')
+          : f.name).join(' · ');
+        return `<div class="card" style="margin-bottom:10px;">
         <div class="row"><strong>${esc(c.name)}</strong>${c.track === 'self-report' ? '<span class="spacer"></span><span class="muted small">self-report · never shown to employers</span>' : ''}</div>
         <p class="muted small" style="margin:6px 0 0;">${esc(c.definition)}</p>
         <p class="muted small" style="margin:6px 0 0;"><em>What AI offloads:</em> ${esc(c.atrophy)}</p>
-        <div class="eyebrow" style="margin-top:8px;">${c.facets.map((f) => esc(f.name)).join(' · ')}</div>
-      </div>`).join('')}
+        <div class="eyebrow" style="margin-top:8px;">Groups: ${esc(members)}</div>
+      </div>`;
+      }).join('')}
 
       <h2 class="section-head">Self-knowledge instruments</h2>
       <p class="muted small" style="margin:0 0 10px;">Optional checks in the Tools tab, each adapted from an established research paradigm — the same honesty: a mirror you can see the basis of, never a verdict.</p>
@@ -4138,10 +4148,6 @@ function renderMethods() {
         <p class="muted small" style="margin-top:6px;">${esc(b.detail)}</p>
       </div>`).join('')}
 
-      <h2 class="section-head">The paradigm behind each measure</h2>
-      <p class="muted small" style="margin:0 0 8px;">Each capacity’s exercises are adapted from a specific, established research paradigm — the family of task used to study it in the literature. Here’s the lineage behind each, so a score always rests on something you can check, not on our say-so.</p>
-      <p class="muted small" style="margin:0 0 10px;">These come in a few kinds: <strong>live performance tasks</strong> (scored on what you actually did), <strong>situational judgment</strong> (how you’d respond to a realistic scenario), and — for the more relational or interior capacities — <strong>honest self-report</strong>, because faking a test of presence or meaning would be less true, not more. Each capacity is matched to the method that fits what it really is.</p>
-      ${rows}
       <p class="muted small center" style="margin-top:6px;">Measurement for formation — never a clinical diagnosis.</p>
     </div>`;
   document.getElementById('back').onclick = () => go('settings');
