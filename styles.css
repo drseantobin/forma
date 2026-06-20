@@ -311,6 +311,12 @@ button { font-family: inherit; cursor: pointer; }
 .coach-threads > summary::-webkit-details-marker { display:none; }
 .coach-threads .ct-chev { margin-left:auto; transition:transform .15s ease; color:var(--ink-faint); }
 .coach-threads[open] .ct-chev { transform:rotate(90deg); }
+/* Archived ("Earlier in this chat" / History) messages — dimmed + compact, clearly past. */
+.coach-earlier { margin:4px 0 10px; }
+.coach-earlier > summary { list-style:none; cursor:pointer; padding:4px 0; }
+.coach-earlier > summary::-webkit-details-marker { display:none; }
+.chat.earlier { opacity:.7; }
+.chat.earlier .bubble { font-size:.92rem; }
 .chip.used { opacity:.4; }
 .chip.starter { cursor:pointer; border-color:var(--accent-soft); color:var(--accent); font-size:.85rem; }
 .chip.sel { border-color: var(--amber); background: var(--amber-soft); color:var(--amber-ink); }

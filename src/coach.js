@@ -205,6 +205,26 @@ export function recentReflections(profile, limit = 6) {
   return out.slice(-limit);
 }
 
+// A compact digest of the OTHER coach conversations — every per-domain thread + archived history
+// (live + past days) — so the GENERAL/main chat "has access to them all" and can refer to what was
+// said about a capacity in a separate chat. Capped to stay lean; interior is never included.
+export function coachThreadsDigest(profile) {
+  const clip = (s) => { const x = String(s || '').trim().replace(/\s+/g, ' '); return x.length > 140 ? x.slice(0, 137) + '…' : x; };
+  const ct = (profile && profile.coachThreads) || {};
+  const ch = (profile && profile.coachHistory) || {};
+  const out = [];
+  const domainKeys = [...new Set([...Object.keys(ct), ...Object.keys(ch)])]
+    .filter((k) => k !== 'general' && k !== 'interior' && DOMAINS.some((d) => d.id === k));
+  for (const k of domainKeys) {
+    const msgs = (ch[k] || []).concat(ct[k] || []).slice(-6);
+    if (!msgs.length) continue;
+    out.push(`• ${domainName(k)} chat:\n  ${msgs.map((m) => `${m.role === 'user' ? 'Them' : 'You'}: ${clip(m.content)}`).join('\n  ')}`);
+  }
+  const genHist = (ch.general || []).slice(-6);
+  if (genHist.length) out.push(`• Earlier general chats:\n  ${genHist.map((m) => `${m.role === 'user' ? 'Them' : 'You'}: ${clip(m.content)}`).join('\n  ')}`);
+  return out.join('\n');
+}
+
 export function profileSummary(profile, focusDomain = null) {
   const lines = [];
   const name = profile.settings?.name;
@@ -443,8 +463,13 @@ export async function coachReply(userText, profile, opts = {}) {
   }
   try {
     const messages = buildCoachMessages(log, userText);
+    // The GENERAL/main chat can see every other conversation (domain chats + archived history)
+    // as context, so it stays the informed hub. A focused domain thread keeps to its own area.
+    const digest = !focusDomain ? coachThreadsDigest(profile) : '';
+    const system = `${FORMA_SYSTEM}\n\n--- THE PERSON YOU ARE COACHING ---\n${profileSummary(profile, focusDomain)}`
+      + (digest ? `\n\n--- THEIR OTHER COACH CONVERSATIONS (refer to these naturally when relevant) ---\n${digest}` : '');
     const text = await callLLM(profile, {
-      system: `${FORMA_SYSTEM}\n\n--- THE PERSON YOU ARE COACHING ---\n${profileSummary(profile, focusDomain)}`,
+      system,
       maxTokens: 1024,
       messages,
     });

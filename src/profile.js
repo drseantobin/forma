@@ -37,6 +37,12 @@ export function createProfile() {
     // capacity, so the coach can track a conversation about that area over time). The
     // general thread stays in coachLog (above). { [domainId]: [{role, content, ts}] }.
     coachThreads: {},
+    // Archived past-day coach messages per thread ('general' + domain ids). Chats are never
+    // CLEARED (which would lose context) — older days fold here so the live view stays fresh
+    // ("just the day's") while the coach can still draw on the whole history. coachDay marks
+    // which local day the LIVE threads belong to, so a new day auto-archives the prior day.
+    coachHistory: {},
+    coachDay: null,
     // Consented, de-identified research/improvement data (see research.js). Off by
     // default — captures nothing until the user explicitly opts in. No name/contact
     // ever lives here; interior content is never collected.
@@ -345,7 +351,32 @@ export function removeGoal(profile, goalId) {
 export function clearCoachLog(profile) {
   const p = clone(profile);
   p.coachLog = [];
-  p.coachThreads = {}; // clear every per-domain thread too, not just the general one
+  p.coachThreads = {};   // clear every per-domain thread too, not just the general one
+  p.coachHistory = {};   // and the archived history — a true wipe (the Settings "clear" control)
+  p.coachDay = null;
+  return p;
+}
+
+// On a NEW local day, fold the prior day's LIVE coach messages (general + every domain thread)
+// into coachHistory, then start the day fresh. Chats are ARCHIVED, never cleared — the coach
+// shows "just the day's" while keeping the whole conversation as memory. `today` = todayStr().
+// First-ever call (coachDay null) just adopts the current messages as today's (no disruption).
+export function foldCoachHistory(profile, today) {
+  const p = clone(profile);
+  if (p.coachDay === today) return p;
+  if (p.coachDay == null) { p.coachDay = today; return p; }
+  p.coachHistory = (p.coachHistory && typeof p.coachHistory === 'object') ? p.coachHistory : {};
+  const fold = (key, live) => {
+    if (live && live.length) {
+      p.coachHistory[key] = (p.coachHistory[key] || []).concat(live);
+      if (p.coachHistory[key].length > 400) p.coachHistory[key] = p.coachHistory[key].slice(-400);
+    }
+  };
+  fold('general', p.coachLog);
+  p.coachLog = [];
+  p.coachThreads = p.coachThreads || {};
+  for (const k of Object.keys(p.coachThreads)) { fold(k, p.coachThreads[k]); p.coachThreads[k] = []; }
+  p.coachDay = today;
   return p;
 }
 
@@ -487,6 +518,13 @@ function migrate(p) {
     p.coachThreads[k] = arr(p.coachThreads[k]);
     if (p.coachThreads[k].length > 200) p.coachThreads[k] = p.coachThreads[k].slice(-200);
   }
+  // Archived coach history (per thread) — same shape, deeper cap (it's the long memory).
+  p.coachHistory = (p.coachHistory && typeof p.coachHistory === 'object' && !Array.isArray(p.coachHistory)) ? p.coachHistory : {};
+  for (const k of Object.keys(p.coachHistory)) {
+    p.coachHistory[k] = arr(p.coachHistory[k]);
+    if (p.coachHistory[k].length > 400) p.coachHistory[k] = p.coachHistory[k].slice(-400);
+  }
+  if (p.coachDay === undefined) p.coachDay = null;
   p.streak = obj(p.streak);
   if (p.streak.current == null) p.streak.current = 0;
   if (p.streak.longest == null) p.streak.longest = 0;

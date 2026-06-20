@@ -4739,10 +4739,19 @@ function coachThreadLog(p, key) {
 }
 function coachThreadChips(p, activeKey) {
   const ct = p.coachThreads || {};
-  const domainKeys = Object.keys(ct).filter((k) => ct[k] && ct[k].length && getDomain(k) && k !== 'interior');
+  const ch = p.coachHistory || {};
+  // A domain chat shows if it has live messages OR archived history (so you can resume it).
+  const domainKeys = [...new Set([...Object.keys(ct), ...Object.keys(ch)])]
+    .filter((k) => k !== 'general' && k !== 'interior' && getDomain(k) && ((ct[k] && ct[k].length) || (ch[k] && ch[k].length)));
   const keys = ['general', ...domainKeys];
-  if (activeKey !== 'general' && !keys.includes(activeKey)) keys.push(activeKey); // current (maybe still empty) thread
+  if (activeKey !== 'general' && activeKey !== 'history' && !keys.includes(activeKey)) keys.push(activeKey); // current (maybe empty) thread
+  if (Object.keys(ch).some((k) => ch[k] && ch[k].length)) keys.push('history'); // the archive view
   return keys;
+}
+function threadChipLabel(k) {
+  if (k === 'general') return 'Today';
+  if (k === 'history') return 'History';
+  const d = getDomain(k); return d ? d.name : k;
 }
 function domainCoachGreeting(p, id) {
   const d = getDomain(id);
@@ -4753,26 +4762,34 @@ function domainCoachGreeting(p, id) {
 }
 
 function renderCoach() {
+  // A NEW day folds the prior day's chats into History so the live view stays "just the day's"
+  // (archived, never lost — the coach still draws on the history).
+  if (state.profile && state.profile.coachDay !== todayStr()) {
+    state.profile = Profile.foldCoachHistory(state.profile, todayStr());
+    save();
+  }
   const p = state.profile;
   const live = Coach.hasKey(p);
   const provName = Coach.providerName(p);
-  // Active thread: 'general' (the open space) or a capacity id. Interior is never a coach thread
-  // (the faith track is walled from the API), so fall back to general if asked.
+  // Active thread: 'general' (the open space), a capacity id, or 'history' (the read-only archive).
+  // Interior is never a coach thread (the faith track is walled), so fall back to general if asked.
   let tkey = state.coachThread || 'general';
-  if (tkey !== 'general' && (!getDomain(tkey) || tkey === 'interior')) tkey = 'general';
+  if (tkey !== 'general' && tkey !== 'history' && (!getDomain(tkey) || tkey === 'interior')) tkey = 'general';
+  if (tkey === 'history') return renderCoachHistory(p);
   const isDomain = tkey !== 'general';
   const dom = isDomain ? getDomain(tkey) : null;
   const log = coachThreadLog(p, tkey);
+  const threadHist = (p.coachHistory && p.coachHistory[tkey]) || [];
 
   const chips = coachThreadChips(p, tkey);
-  const activeLabel = tkey === 'general' ? 'General' : getDomain(tkey).name;
+  const activeLabel = threadChipLabel(tkey);
   // Collapsible thread switcher: once you have more than one chat going, the chip row collapses
   // so the chat window stays wide — expand it only when you want to switch (Sean).
   const threadsOpen = !!state.coachThreadsOpen;
   const threadBar = chips.length > 1 ? `<details class="coach-threads" ${threadsOpen ? 'open' : ''}>
       <summary class="coach-threads-sum"><span class="muted small">${chips.length} chats ·</span> <strong>${esc(activeLabel)}</strong><span class="muted small"> — switch</span><span class="ct-chev" aria-hidden="true">›</span></summary>
       <div class="chip-row" style="margin:10px 0 2px;">${chips.map((k) =>
-        `<button class="chip ${k === tkey ? 'sel' : ''}" data-thread="${esc(k)}" aria-pressed="${k === tkey}">${k === 'general' ? 'General' : esc(getDomain(k).name)}</button>`).join('')}</div>
+        `<button class="chip ${k === tkey ? 'sel' : ''}" data-thread="${esc(k)}" aria-pressed="${k === tkey}">${esc(threadChipLabel(k))}</button>`).join('')}</div>
     </details>` : '';
 
   // Starter prompts on a cold open — thread-specific so the entry is guided.
@@ -4807,6 +4824,7 @@ function renderCoach() {
       ${isDomain ? `<p class="muted small" style="margin:2px 0 0;">A thread about your ${esc(dom.name.toLowerCase())} — it keeps the running conversation about this one area, so growth here is easier to follow. Tap “General” for the open space.</p>` : ''}
       ${!live ? `<p class="muted small">Add your API key in <button id="tosettings" class="inlinelink">Settings</button> — bring your own from any provider — for live, personalized coaching. Until then, the coach reads from your own data.</p>` : ''}
       ${threadBar}
+      ${threadHist.length ? `<details class="coach-earlier"><summary class="muted small">Earlier in this chat (${threadHist.length}) — your coach still remembers these</summary><div class="chat earlier" style="margin-top:8px;">${threadHist.slice(-12).map(bubble).join('')}</div></details>` : ''}
       <div class="chat" id="chat" role="log" aria-live="polite">
         ${hasMsgs ? log.map(bubble).join('') : `<div class="bubble coach">${esc(greeting)}</div>`}
       </div>
@@ -4816,7 +4834,7 @@ function renderCoach() {
         <input id="ci" placeholder="Ask your coach…" autocomplete="off" aria-label="Message your coach" />
         <button class="btn" id="send">Send</button>
       </div>
-      ${hasMsgs ? `<p class="center" style="margin-top:8px;"><button class="btn ghost sm" id="clearthread" style="width:auto;">Clear this chat</button></p>` : ''}
+      ${hasMsgs ? `<p class="center" style="margin-top:8px;"><button class="btn ghost sm" id="archivethread" style="width:auto;">Archive this chat ↧</button> <span class="muted small">kept in History, not deleted</span></p>` : ''}
       ${micPrivacyNote()}
     </div>`;
   const tos = document.getElementById('tosettings');
@@ -4824,11 +4842,19 @@ function renderCoach() {
   app.querySelectorAll('[data-thread]').forEach((b) => b.onclick = () => { state.coachThread = b.dataset.thread; renderCoach(); });
   const threadsDetails = app.querySelector('details.coach-threads');
   if (threadsDetails) threadsDetails.addEventListener('toggle', () => { state.coachThreadsOpen = threadsDetails.open; });
-  const clr = document.getElementById('clearthread');
-  if (clr) clr.onclick = () => {
-    if (tkey === 'general') p.coachLog = [];
-    else if (p.coachThreads) p.coachThreads[tkey] = [];
-    save(); renderCoach();
+  // Archive (not clear): move this chat's live messages into History so context is kept, and the
+  // live thread starts fresh. (Days also auto-archive on their own; this is the manual version.)
+  const arch = document.getElementById('archivethread');
+  if (arch) arch.onclick = () => {
+    const liveMsgs = coachThreadLog(p, tkey);
+    if (liveMsgs.length) {
+      p.coachHistory = p.coachHistory || {};
+      p.coachHistory[tkey] = (p.coachHistory[tkey] || []).concat(liveMsgs);
+      if (p.coachHistory[tkey].length > 400) p.coachHistory[tkey] = p.coachHistory[tkey].slice(-400);
+      if (tkey === 'general') p.coachLog = []; else p.coachThreads[tkey] = [];
+      save();
+    }
+    renderCoach();
   };
   const ci = document.getElementById('ci');
   const sendBtn = document.getElementById('send');
@@ -4864,6 +4890,26 @@ function renderCoach() {
     b.onclick = () => { ci.value = b.getAttribute('data-p'); send(); };
   });
   ci.onkeydown = (e) => { if (e.key === 'Enter') send(); };
+}
+
+// The History view — a read-only archive of earlier conversations, grouped by chat. Nothing here
+// is lost: the live chats stay fresh each day, and the coach still draws on all of this as memory.
+function renderCoachHistory(p) {
+  const ch = p.coachHistory || {};
+  const keys = Object.keys(ch).filter((k) => ch[k] && ch[k].length);
+  const sections = keys.map((k) => {
+    const label = k === 'general' ? 'General' : (getDomain(k) ? getDomain(k).name : k);
+    return `<div class="card"><div class="eyebrow">${esc(label)}</div>
+      <div class="chat earlier" style="margin-top:8px;">${ch[k].slice(-40).map(bubble).join('')}</div></div>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="fade-in">
+      <div class="row"><h1 style="margin:0;">Coach</h1><span class="tagchip" style="margin-left:8px;">History</span><span class="spacer"></span>
+        <button class="btn ghost sm" id="backtocoach" style="width:auto;">← Today</button></div>
+      <p class="muted small" style="margin:2px 0 12px;">Earlier conversations, kept so nothing is lost. Your live chats stay fresh each day, and your coach still draws on these.</p>
+      ${sections || '<p class="muted small">No archived conversations yet.</p>'}
+    </div>`;
+  document.getElementById('backtocoach').onclick = () => { state.coachThread = 'general'; renderCoach(); };
 }
 
 function bubble(m) {
