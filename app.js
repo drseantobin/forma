@@ -422,7 +422,7 @@ function renderOnboarding() {
           <div class="glyph fmarkglyph">${formaMark}</div>
           <h1>Forma</h1>
           <p class="lede">AI keeps getting better at the work. The quieter question is who you become while it does.</p>
-          <p class="muted small" style="max-width:32rem; margin:12px auto 0; line-height:1.5;">Forma measures and trains the human capacities that grow more valuable as the machines take the rest — attention, judgment, deep reading, presence, the patience to stay with what's hard. A few minutes a day.</p>
+          <p class="muted small" style="max-width:32rem; margin:12px auto 0; line-height:1.5;">Forma measures and trains the human capacities that grow more valuable as the machines take the rest — like attention, deep reading, judgment, relational presence, and the agency to keep your thinking your own. A few minutes a day.</p>
         </div>
         <div class="pillrow">
           ${DOMAINS.map((d) => `<span class="pill" title="${esc(d.short)}">${d.icon} ${esc(d.name)}</span>`).join('')}
@@ -4190,7 +4190,7 @@ function renderMethods() {
       <p class="muted small" style="margin:0 0 10px;">These come in a few kinds: <strong>live performance tasks</strong> (scored on what you actually did), <strong>situational judgment</strong> (how you’d respond to a realistic scenario), and — for the more relational or interior capacities — <strong>honest self-report</strong>, because faking a test of presence or meaning would be less true, not more. Each capacity is matched to the method that fits what it really is.</p>
       ${rows}
 
-      <p class="muted small" style="margin:14px 0 0;">Underneath, these capacities map onto a few higher-order human faculties — <strong>attention, reasoning, relating, metacognition, self-regulation, and purpose</strong> — the things AI quietly erodes when we let it do our thinking and relating for us. Forma measures each capacity on its own; whether they roll up into validated higher-order scores is exactly what real data will tell us.</p>
+      <p class="muted small" style="margin:14px 0 0;">Underneath, these capacities cluster into a few broader human faculties — the kinds of thinking, relating, and self-governance AI quietly erodes when we let it do the work for us. Forma measures each capacity on its own; whether they roll up into validated higher-order scores is exactly what real data will tell us.</p>
 
       <h2 class="section-head">Self-knowledge instruments</h2>
       <p class="muted small" style="margin:0 0 10px;">Optional checks in the Tools tab, each adapted from an established research paradigm — the same honesty: a mirror you can see the basis of, never a verdict.</p>
