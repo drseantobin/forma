@@ -928,7 +928,7 @@ function renderHome() {
         <div class="tag">${greeting()}${p.settings.name ? ', ' + esc(p.settings.name) : ''}</div></div>
 
       <div class="card index-hero">
-        ${indexRing(fi)}
+        ${indexRing(fi, { numId: 'homeidx', start: 0 })}
         <div class="index-label">Formation Index${(() => {
           const t = indexTrend(p.indexHistory);
           return t.delta !== 0
@@ -1014,6 +1014,10 @@ function renderHome() {
     p.settings.backupSnoozeUntil = d.toISOString().slice(0, 10);
     save(); render();
   };
+  // Let the headline number arrive as a calm instrument settling to a reading — synced
+  // with the ring's draw-in (drawRing() fires after render), the same reveal already used
+  // at the baseline, domain, and session screens. countUp() is reduced-motion-safe.
+  countUp(document.getElementById('homeidx'), fi, 900);
   wireDomainLinks();
   wireCommitments();
   wireTodaysPractice();
