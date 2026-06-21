@@ -4237,6 +4237,7 @@ function renderTeam() {
         ${indexRing(agg.avgIndex, { label: 'Team Formation Index' })}
         <div class="index-label">Team Formation Index</div>
         <div class="streakchip" style="margin-top:8px;">${uiIcon('bolt', 'chipico')} AI-readiness ${agg.aiReadiness}<span class="snapof"> / 100</span></div>
+        <p class="muted small" style="margin-top:10px;">A development signal — self-generated, not normed against a population. Not a predictor of job performance; never a basis for hiring, ranking, or selection.</p>
       </div>
 
       <div class="card">
