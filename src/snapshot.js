@@ -79,6 +79,12 @@ export function buildSnapshot(profile, today = todayStr()) {
     thin: airCovered < AI_READINESS_DOMAINS.length || airProvisional > airCovered / 2,
   };
 
+  // Strengths (top) and growth edges (bottom) must be DISJOINT and only claimed when
+  // there's a real ordinal spread. The old slice(0,2) + reverse().slice(0,2) overlapped
+  // on short lists: with <=3 measured capacities the SAME capacity landed in BOTH lists —
+  // a literally self-contradicting credential ("Strengths: A, B. Growth edges: B, A."). Cap
+  // each side at floor(n/2) so the top-k and bottom-k can never meet; n<2 -> rank nothing.
+  const k = Math.min(2, Math.floor(domains.length / 2));
   return {
     name: (profile.settings && profile.settings.name) || null,
     // True only for the in-memory Demo Mode sample — so snapshotText() can self-label
@@ -93,8 +99,8 @@ export function buildSnapshot(profile, today = todayStr()) {
     coverage,
     aiReadinessCoverage,
     domains,
-    strengths: domains.slice(0, 2).map((d) => d.name),
-    growthEdges: domains.slice().reverse().slice(0, 2).map((d) => d.name),
+    strengths: k ? domains.slice(0, k).map((d) => d.name) : [],
+    growthEdges: k ? domains.slice(domains.length - k).reverse().map((d) => d.name) : [],
   };
 }
 
