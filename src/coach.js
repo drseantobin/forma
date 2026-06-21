@@ -363,7 +363,7 @@ export async function interpretBaseline(profile) {
       messages: [
         {
           role: 'user',
-          content: `This person just completed their baseline Forma assessment. Here is their data:\n\n${profileSummary(profile)}\n\nWrite their opening interpretation: warm, honest, specific to these numbers. Name their clearest strength and their biggest growth opening, and frame the whole thing as a starting line. 3-4 short paragraphs.`,
+          content: `This person just completed their baseline Forma assessment. Here is their data:\n\n${profileSummary(profile)}\n\nWrite their opening interpretation: warm, honest, specific to these numbers. Name their clearest strength and their biggest growth opening, and frame the whole thing as a starting line. 3-4 short paragraphs.\n\nIMPORTANT — honesty about what this is: the baseline is SELF-REPORT only. They rated themselves on a few statements; nothing has been performance-measured yet. So name the strength and the opening as how they SEE themselves right now, not as measured findings, and say plainly that the sessions are where Forma actually measures — and where these self-ratings will be tested or refined. Do not present a self-rating as a verdict.`,
         },
       ],
     });

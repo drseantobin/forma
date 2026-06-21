@@ -132,13 +132,13 @@ export function interpretBaseline(domainScores, name = '') {
   const greeting = name ? `${name}, here's` : "Here's";
 
   return [
-    `${greeting} your starting profile — a snapshot of where you are today, not a verdict. The only honest use of a baseline is as the line you grow from.`,
+    `${greeting} your starting profile — a snapshot of how you see yourself today, not a verdict and not yet a measurement. The only honest use of a baseline is as the line you grow from.`,
     ``,
     `Your overall Formation Index is ${index}. Think of it less as a grade and more as the resting heart rate of your inner life: useful mostly as a number to watch move.`,
     ``,
-    `Your clearest strength right now is ${hi.name} — ${hi.short.toLowerCase()}. ${hi.blurb} Protect this one; it's an asset most people are quietly losing.`,
+    `By your own rating, your clearest strength right now is ${hi.name} — ${hi.short.toLowerCase()}. ${hi.blurb} The sessions will test that against real performance; if it holds, it's an asset most people are quietly losing.`,
     ``,
-    `Your biggest opening for growth is ${lo.name} — ${lo.short.toLowerCase()}. ${lo.aiRationale} This is where your first weeks of sessions will move the most.`,
+    `By your own rating, your biggest opening for growth is ${lo.name} — ${lo.short.toLowerCase()}. ${lo.aiRationale} Self-ratings are often least reliable exactly here — which is why your first weeks of measured sessions will tell you something you can't tell yourself.`,
     ``,
     `Nothing here is fixed. These are capacities, not traits — every one of them responds to deliberate practice. That's the whole wager of Forma: the more cognition gets automated, the more the mind you keep in your own hands is worth.`,
   ].join('\n');
