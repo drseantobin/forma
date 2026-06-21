@@ -3655,6 +3655,12 @@ async function completeSession() {
   // just a "reflection saved" line and the coach's feedback.
   const unscored = rawScore == null;
   const band = unscored ? null : bandFor(rawScore);
+  // Honesty at the moment of peak salience: the reveal is the most-seen, most-screenshot-prone
+  // screen, yet it was the ONE place that showed a band ("Thriving") with no evidence qualifier —
+  // a single keyed item read as a settled, norm-referenced measurement. Carry the SAME confidence
+  // tag the Progress rows and the snapshot already show ('' once the scale is established, so a
+  // mature number still stands on its own). Validity review, v296.
+  const conftag = unscored ? '' : confidenceTag(state.profile, s.exercise.domain);
   app.innerHTML = `
     <div class="fade-in">
       <div class="score-reveal">
@@ -3662,7 +3668,8 @@ async function completeSession() {
         ${unscored
           ? `<div class="lbl" style="margin-top:6px;">${esc(getDomain(s.exercise.domain).name)} · reflection saved</div>`
           : `${indexRing(rawScore, { label: getDomain(s.exercise.domain).name, color: band.color, numId: 'bigscore', start: 0 })}
-        <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>`}
+        <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
+        ${conftag ? `<div class="muted small" style="margin-top:4px;">${esc(conftag)}</div>` : ''}`}
       </div>
       ${milestoneBanner}
       <div class="card" id="insight" aria-live="polite">
@@ -3701,7 +3708,7 @@ async function completeSession() {
   if (srScore) {
     srScore.textContent = unscored
       ? `${getDomain(s.exercise.domain).name} reflection saved.`
-      : `${getDomain(s.exercise.domain).name}: ${rawScore} out of 100, ${band.label}.`;
+      : `${getDomain(s.exercise.domain).name}: ${rawScore} out of 100, ${band.label}${conftag ? `. ${conftag}` : ''}.`;
   }
 
   // The vignette already produced Claude's rubric feedback — use it as the
