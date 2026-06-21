@@ -1687,6 +1687,14 @@ export const MATRICES = [
   },
 ];
 
+// One plain-language rule for the whole matrix family. A nervous first-timer sees an abstract
+// Raven's-style grid cold; they need to know the pattern runs in BOTH directions (across each row
+// AND down each column) BEFORE they choose. The per-item `explanation` teaches this — but only
+// appears AFTER they've answered, too late to help on item one. (v303 first-time clarity.)
+MATRICES.forEach((m) => {
+  m.instructions = 'Look across each row and down each column — the shapes follow a rule in both directions. Pick the option that completes it.';
+});
+
 // ----- SENTENCE COMPLETION: AI-scored self-knowledge (Values Alignment) -----
 // Rotter RISB lineage: finish open stems; Claude scores honesty/self-awareness/
 // coherence formatively (see coach.scoreSentences). Requires a live key.

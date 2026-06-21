@@ -2713,7 +2713,7 @@ function renderMatrix() {
   app.innerHTML = `
     <div class="fade-in">
       ${sessionHeader(ex)}
-      <p class="muted small">Which option completes the pattern?</p>
+      <p class="muted small">${esc(ex.instructions)}</p>
       <div class="matgrid">${cells.map((c) => `<div class="matcell">${matrixCell(c)}</div>`).join('')}</div>
       <p class="muted small" style="margin-top:14px;">Choose:</p>
       <div class="matopts">
