@@ -583,7 +583,8 @@ async function renderBaselineResult() {
       <div class="card index-hero">
         ${indexRing(fi, { numId: 'baselineidx', start: 0 })}
         <div class="index-label">Formation Index — your starting line</div>
-        <p class="muted small" style="margin-top:6px;">One read across all your capacities. Not a grade — the line you move from.</p>
+        ${(() => { const ic = indexConfidence(p); return ic.thin ? `<div class="muted small" style="margin-top:4px;">${esc(ic.note)}</div>` : ''; })()}
+        <p class="muted small" style="margin-top:6px;">One read across all your capacities — from how you described yourself today. Not a grade — the line you move from.</p>
       </div>
       ${radarCard(p.domainScores)}
       <div class="card" id="interp">
