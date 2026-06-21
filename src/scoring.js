@@ -84,7 +84,14 @@ export function scoreStay(stayed, selfRating, dwellMs = null) {
     else if (dwellMs < 12000) behavioral = 80;  // brief but real
     // >= 12s → full credit: they genuinely sat in the not-knowing
   }
-  return clamp(round(behavioral * 0.7 + scoreSelfRating(selfRating || 3) * 0.3));
+  const blended = behavioral * 0.7 + scoreSelfRating(selfRating || 3) * 0.3;
+  // Self-report may TEMPER a result but not INFLATE a weak behavior across a band.
+  // When the behavior was weak (a fast click-through, behavioral < 60), cap the blend
+  // at the behavioral value so a maxed self-rating can't manufacture a "Strong" out of
+  // a 4-second quit (55*0.7 + 100*0.3 = 69 → Strong, before this). A strong behavior is
+  // never capped, and self-report can still pull a weak result DOWN. (v300 validity fix.)
+  const capped = behavioral < 60 ? Math.min(blended, behavioral) : blended;
+  return clamp(round(capped));
 }
 
 // --- Pursuit tracking: proportion of time the cursor stayed on the target ---
