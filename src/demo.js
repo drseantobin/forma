@@ -52,8 +52,10 @@ export const SPEC = {
   // Formation Index per week, oldest first, ~90 days. Rises 51->57 but bumpy: an
   // early dip (wk3), a mid-run plateau (wks7-9), a small pullback (wk10). Not a line.
   weeklyIndex: [51, 52, 50, 53, 54, 53, 54, 55, 55, 54, 56, 57, 57],
+  // Target streak — actually COMPUTED from the 90-day practice pattern in buildPractice
+  // (so the displayed streak can never contradict the session dates); a test asserts they match.
   streak: { current: 6, longest: 17 },
-  focusCheck: { count: 7, medianMsLow: 372, medianMsHigh: 521, scoreLow: 49, scoreHigh: 72 },
+  focusCheck: { count: 12, medianMsLow: 372, medianMsHigh: 521, scoreLow: 49, scoreHigh: 72 },
   // The general "Today" coach thread — solution-focused, warm, specific. Anchors on
   // his STEADIEST capacity (Relational Presence), without overclaiming it as #1. No interior.
   coachGeneral: [
@@ -105,65 +107,73 @@ const TYPE_FOR = {
   communication: 'comm', emotion_regulation: 'steu', values: 'reflection',
 };
 
-// Build the per-capacity longitudinal log that drives the sparklines + deltas:
-// a few points per domain marching from baseline toward current over 90 days.
-function buildHistory(today) {
-  const ids = DOMAINS.map((d) => d.id).filter((id) => SPEC.current[id] != null);
-  const history = [];
-  const STEPS = 5; // points per capacity across the window
-  ids.forEach((id) => {
-    const from = SPEC.baseline[id] != null ? SPEC.baseline[id] : SPEC.current[id];
-    const to = SPEC.current[id];
-    for (let k = 0; k < STEPS; k++) {
-      const t = k / (STEPS - 1);
-      // Ease the climb and add a tiny seeded wobble so the line isn't a ruler.
-      const wob = ((id.length * 7 + k * 13) % 5) - 2; // -2..2, deterministic
-      const val = Math.round(from + (to - from) * t + (k === 0 || k === STEPS - 1 ? 0 : wob));
-      const daysAgo = Math.round(84 - t * 78); // ~84d ago -> ~6d ago
-      history.push({
-        date: dayStr(today, daysAgo),
-        domain: id,
-        exerciseType: TYPE_FOR[id] || 'reflection',
-        rawScore: val,
-        newDomainScore: k === STEPS - 1 ? to : val, // last point lands on current
-        formationIndex: SPEC.weeklyIndex[Math.min(SPEC.weeklyIndex.length - 1, Math.round(t * (SPEC.weeklyIndex.length - 1)))],
-      });
-    }
-  });
-  return history;
+// A believable 90-day adherence pattern (deterministic, no RNG): a strong early
+// 17-day run (the longest streak), a realistic ~5-of-7 cadence through the middle,
+// one lapse week (life happened), and a solid recent 6-day run (the current streak).
+// Yields ~55 sessions across the full 90 days — a seasoned user, not a 9-session one.
+function practiced(daysAgo) {
+  if (daysAgo >= 73) return true;                    // days 89..73: the 17-day early run
+  if (daysAgo >= 50 && daysAgo <= 56) return false;  // a lapse week — honest, not a perfect record
+  if (daysAgo <= 5) return true;                     // the recent 6-day run
+  if (daysAgo === 6) return false;                   // a rest day, so the current streak is exactly 6
+  const m = daysAgo % 7;
+  return !(m === 2 || m === 5);                      // otherwise ~5 of every 7 days
 }
 
-// A believable run of recent, scored sessions (one a day for the last stretch),
-// rotating through capacities — what Recent sessions lists.
-function buildSessions(today) {
+// Build the full 90-day practice record: the scored sessions AND the per-capacity
+// longitudinal log derived from them (one history row per scored session — exactly how
+// the real app records history via applySession, so the sparklines show the genuine
+// baseline->current climb across the whole window, not just the last few days). Streak is
+// COMPUTED from the practice days, so the displayed streak can't contradict the dates.
+function buildPractice(today) {
   const ids = DOMAINS.map((d) => d.id).filter((id) => SPEC.current[id] != null);
+  const days = [];
+  for (let d = 89; d >= 0; d--) if (practiced(d)) days.push(d); // oldest -> newest
+  const W = SPEC.weeklyIndex;
   const sessions = [];
-  const N = 9;
-  for (let i = 0; i < N; i++) {
-    const daysAgo = N - 1 - i; // oldest first ... today
-    const id = ids[(i * 3 + 2) % ids.length]; // deterministic rotation
-    const cur = SPEC.current[id];
-    const raw = Math.max(0, Math.min(100, cur + (((i * 11 + id.length * 5) % 11) - 5))); // cur ±5
+  const history = [];
+  days.forEach((daysAgo, i) => {
+    const id = ids[i % ids.length]; // even rotation across the ten capacities
+    const from = SPEC.baseline[id] != null ? SPEC.baseline[id] : SPEC.current[id];
+    const to = SPEC.current[id];
+    const t = (90 - daysAgo) / 90; // 0 at the baseline -> ~1 today
+    const wob = ((id.length * 7 + daysAgo * 13) % 7) - 3; // -3..3, deterministic
+    const nd = Math.max(0, Math.min(100, Math.round(from + (to - from) * t + wob)));
+    const raw = Math.max(0, Math.min(100, nd + (((i * 11 + id.length * 5) % 11) - 5)));
+    const fi = W[Math.min(W.length - 1, Math.round(t * (W.length - 1)))];
+    const type = TYPE_FOR[id] || 'reflection';
     sessions.push({
-      date: dayStr(today, daysAgo),
-      hour: 8 + (i % 6),
-      ts: isoAt(today, daysAgo, 8 + (i % 6)),
-      exerciseId: 'demo-' + id + '-' + i,
-      type: TYPE_FOR[id] || 'reflection',
-      domain: id,
-      rawScore: raw,
-      prevDomainScore: cur - 1,
-      newDomainScore: cur,
-      priorBandPeak: bandIndex(cur),
-      unscored: false,
-      response: {},
+      date: dayStr(today, daysAgo), hour: 8 + (i % 6), ts: isoAt(today, daysAgo, 8 + (i % 6)),
+      exerciseId: 'demo-' + id + '-' + daysAgo, type, domain: id,
+      rawScore: raw, prevDomainScore: nd, newDomainScore: nd, priorBandPeak: bandIndex(nd),
+      unscored: false, response: {},
     });
-  }
-  return sessions;
+    history.push({ date: dayStr(today, daysAgo), domain: id, exerciseType: type, rawScore: raw, newDomainScore: nd, formationIndex: fi });
+  });
+  // Pin each capacity's EARLIEST point to its baseline and its LATEST to its current
+  // score, so the sparkline runs from where it started to where the scale now sits and
+  // the per-capacity delta equals the true baseline->current change the SPEC intends
+  // (presence +1 = flat, emotion_regulation -4 = down) — the wobble shouldn't distort the
+  // honest endpoints.
+  ids.forEach((id) => {
+    const from = SPEC.baseline[id] != null ? SPEC.baseline[id] : SPEC.current[id];
+    for (let i = 0; i < sessions.length; i++) { if (sessions[i].domain === id) { sessions[i].newDomainScore = from; break; } }
+    for (let i = 0; i < history.length; i++) { if (history[i].domain === id) { history[i].newDomainScore = from; break; } }
+    for (let i = sessions.length - 1; i >= 0; i--) { if (sessions[i].domain === id) { sessions[i].newDomainScore = SPEC.current[id]; break; } }
+    for (let i = history.length - 1; i >= 0; i--) { if (history[i].domain === id) { history[i].newDomainScore = SPEC.current[id]; break; } }
+  });
+  // Streak computed FROM the practice days: current = consecutive days ending today;
+  // longest = the longest consecutive run anywhere in the window.
+  const set = new Set(days);
+  let current = 0; while (set.has(current)) current++;
+  let longest = 0, run = 0;
+  for (let d = 0; d <= 89; d++) { if (set.has(d)) { run++; if (run > longest) longest = run; } else run = 0; }
+  return { sessions, history, streak: { current, longest, lastDate: dayStr(today, 0) } };
 }
 
 // Construct the full sample profile. `today` is injectable for stable tests.
 export function buildDemoProfile(today = new Date()) {
+  const practice = buildPractice(today); // ~55 scored sessions + derived history across 90 days
   const p = {
     version: 1,
     createdAt: isoAt(today, 92, 9),
@@ -171,13 +181,13 @@ export function buildDemoProfile(today = new Date()) {
     settings: { provider: 'anthropic', apiKey: '', model: 'claude-opus-4-8', name: SPEC.persona.name, faithTrack: false, researchEndpoint: '' },
     baseline: { date: dayStr(today, 90), domainScores: { ...SPEC.baseline }, responses: {}, method: 'quick' },
     domainScores: { ...SPEC.current },
-    sessions: buildSessions(today),
-    history: buildHistory(today),
+    sessions: practice.sessions,
+    history: practice.history,
     indexHistory: [],
     focusChecks: [],
     plan: null,
     goals: SPEC.goals.map((g, i) => ({ id: 'demo-goal-' + i, domain: g.domain, text: g.text, createdAt: isoAt(today, 30 - i * 6, 9), done: false })),
-    streak: { current: SPEC.streak.current, longest: SPEC.streak.longest, lastDate: dayStr(today, 0) },
+    streak: practice.streak,
     coachLog: SPEC.coachGeneral.map((m, i) => ({ role: m.role, content: m.content, ts: isoAt(today, 0, 8 + i) })),
     coachThreads: { [SPEC.coachDomainId]: SPEC.coachDomain.map((m, i) => ({ role: m.role, content: m.content, ts: isoAt(today, 1, 17 + i) })) },
     coachHistory: {},
@@ -204,7 +214,7 @@ export function buildDemoProfile(today = new Date()) {
   const fc = SPEC.focusCheck;
   for (let i = 0; i < fc.count; i++) {
     const t = fc.count > 1 ? i / (fc.count - 1) : 1;
-    const daysAgo = Math.round(40 - t * 38);
+    const daysAgo = Math.round(84 - t * 80); // spread across the full 90-day window (~84d ago -> ~4d ago)
     p.focusChecks.push({
       date: dayStr(today, daysAgo),
       ts: isoAt(today, daysAgo, 10),
