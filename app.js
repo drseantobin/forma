@@ -920,6 +920,12 @@ function renderHome() {
   const focus = Planner.focusForToday(p) || recommendFocus(p);
   const fd = getDomain(focus);
   const doneToday = (p.sessions || []).some((s) => s.date === todayStr());
+  // Once today's session is done, "keep going" points to the NEXT most useful capacity —
+  // the lowest-scoring one not just practiced (recommendFocus), NOT today's already-finished
+  // plan focus (which would just repeat the same domain). Surfaces the tailored loop for a
+  // motivated user; framed as optional below, never pressured.
+  const keepFocus = doneToday ? recommendFocus(p) : focus;
+  const kfd = getDomain(keepFocus);
   const lastInsight = p._lastInsight;
 
   app.innerHTML = `
@@ -971,13 +977,14 @@ function renderHome() {
           <span class="spacer"></span>
           ${doneToday ? `<span class="trendpill up">done ${uiIcon('check', 'tpico')}</span>` : ''}
         </div>
-        <div class="domain-row tappable" data-domain="${focus}" role="button" tabindex="0" aria-label="${esc(fd.name)} — how to grow it" style="margin-bottom:14px;">
-          <span class="ico">${fd.icon}</span>
-          <div class="meta"><div class="dn">${esc(fd.name)}</div>
-            <div class="muted small">${esc(fd.short)}</div></div>
+        ${doneToday ? `<p class="muted small" style="margin:-2px 0 12px;">That’s today’s — genuinely enough. But if you’re in a groove, here’s where the next few minutes go furthest:</p>` : ''}
+        <div class="domain-row tappable" data-domain="${keepFocus}" role="button" tabindex="0" aria-label="${esc(kfd.name)} — how to grow it" style="margin-bottom:14px;">
+          <span class="ico">${kfd.icon}</span>
+          <div class="meta"><div class="dn">${esc(kfd.name)}</div>
+            <div class="muted small">${esc(kfd.short)}</div></div>
           <span class="chev" aria-hidden="true">›</span>
         </div>
-        <button class="btn amber" id="startsession">${doneToday ? 'Practice again →' : 'Go to today’s session →'}</button>
+        <button class="btn ${doneToday ? 'ghost' : 'amber'}" id="startsession">${doneToday ? `Keep going → ${esc(kfd.name)}` : 'Go to today’s session →'}</button>
         <p class="muted small center" style="margin:10px 0 0;">Tap the capacity above to learn how to grow it.</p>
       </div>
 
@@ -999,7 +1006,9 @@ function renderHome() {
       ${commitmentsCard(p)}
     </div>`;
 
-  document.getElementById('startsession').onclick = () => go('session');
+  // When today's done, "Keep going" starts a session aimed at the tailored next capacity
+  // (lowest, not-just-done); otherwise it's today's planned focus.
+  document.getElementById('startsession').onclick = () => { if (doneToday) startDomainSession(keepFocus); else go('session'); };
   const sg = document.getElementById('startguided');
   if (sg) sg.onclick = () => startGuidedSession();
   const wp = document.getElementById('toplan');
@@ -3666,6 +3675,11 @@ async function completeSession() {
   // tag the Progress rows and the snapshot already show ('' once the scale is established, so a
   // mature number still stands on its own). Validity review, v296.
   const conftag = unscored ? '' : confidenceTag(state.profile, s.exercise.domain);
+  // The tailored "keep going" target: the lowest-scoring capacity not just practiced
+  // (recommendFocus excludes recent domains), so a motivated person continues into where it
+  // helps most — not "more of the same." Calm + optional; "Done" stays the amber default below.
+  const nextFocusId = recommendFocus(state.profile);
+  const nfx = getDomain(nextFocusId);
   app.innerHTML = `
     <div class="fade-in">
       <div class="score-reveal">
@@ -3681,12 +3695,16 @@ async function completeSession() {
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
       </div>
       ${growthCard(s.exercise.domain)}
+      ${nfx ? `<p class="muted small" style="margin:4px 0 6px;">That’s today’s — genuinely enough. If you’re in a groove, the most useful next is <strong>${esc(nfx.name)}</strong> — ${esc(nfx.short.toLowerCase())}.</p>
+      <button class="btn ghost" id="keepgoing" style="margin-bottom:10px;">Keep going → ${esc(nfx.name)}</button>` : ''}
       <button class="btn ghost" id="seedomain" style="margin-bottom:10px;">See your ${esc(getDomain(s.exercise.domain).name)} — trajectory & next step →</button>
       <button class="btn ghost" id="talkthrough" style="margin-bottom:10px;">${coachGlyph} Talk this through with the coach →</button>
       ${tomorrowNudge}
       <button class="btn amber" id="home">Done →</button>
     </div>`;
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };
+  const kg = document.getElementById('keepgoing');
+  if (kg) kg.onclick = () => startDomainSession(nextFocusId); // straight into the tailored next capacity
   document.getElementById('seedomain').onclick = () => {
     // Into the full per-capacity view, where the just-updated trajectory + next-step live.
     state.focusDomain = s.exercise.domain; state.focusDomainFrom = 'home'; state.session = null; go('domain');
