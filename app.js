@@ -1192,6 +1192,23 @@ function growthCard(domainId, opts = {}) {
   const items = growthFor(domainId);
   if (!items) return '';
   const d = getDomain(domainId);
+  if (opts.compact) {
+    // Phone reveal: show ONE growth habit (a taste) instead of all three, so the
+    // post-session screen stays short. The full set lives on the capacity page,
+    // reachable from the "See your …" link just below on the reveal.
+    const g = items[0];
+    return `<div class="card growcard">
+      <div class="eyebrow">Grow this in daily life</div>
+      <div class="growitem">
+        <div class="growitem-head">
+          <div class="growtitle">${esc(g.title)}</div>
+          <button class="btn ghost growcommit" data-gd="${esc(domainId)}" data-gt="${esc(g.title)}" aria-label="Make “${esc(g.title)}” a commitment">+ Commitment</button>
+        </div>
+        <div class="muted small" style="margin-top:2px;">${esc(g.how)}</div>
+        <div class="growwhy">${esc(g.why)}</div>
+      </div>
+    </div>`;
+  }
   return `<div class="card growcard${opts.nested ? ' nested' : ''}">
       ${opts.nested ? '' : `<div class="eyebrow">Grow this in daily life</div>`}
       ${opts.hideName || opts.nested ? '' : `<div class="row" style="margin:2px 0;"><strong>${esc(d ? d.name : 'this capacity')}</strong></div>`}
@@ -3694,11 +3711,14 @@ async function completeSession() {
       <div class="card" id="insight" aria-live="polite">
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
       </div>
-      ${growthCard(s.exercise.domain)}
+      ${growthCard(s.exercise.domain, { compact: true })}
       ${nfx ? `<p class="muted small" style="margin:4px 0 6px;">That’s today’s — genuinely enough. If you’re in a groove, the most useful next is <strong>${esc(nfx.name)}</strong> — ${esc(nfx.short.toLowerCase())}.</p>
       <button class="btn ghost" id="keepgoing" style="margin-bottom:10px;">Keep going → ${esc(nfx.name)}</button>` : ''}
-      <button class="btn ghost" id="seedomain" style="margin-bottom:10px;">See your ${esc(getDomain(s.exercise.domain).name)} — trajectory & next step →</button>
-      <button class="btn ghost" id="talkthrough" style="margin-bottom:10px;">${coachGlyph} Talk this through with the coach →</button>
+      <div style="text-align:center; margin:6px 0 12px;">
+        <button class="inlinelink" id="seedomain">See your ${esc(getDomain(s.exercise.domain).name)} →</button>
+        <span class="muted small" style="margin:0 10px;">·</span>
+        <button class="inlinelink" id="talkthrough">Talk it through with the coach →</button>
+      </div>
       ${tomorrowNudge}
       <button class="btn amber" id="home">Done →</button>
     </div>`;
