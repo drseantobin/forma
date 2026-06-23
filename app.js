@@ -4440,6 +4440,7 @@ function renderMethods() {
       ${viewHead('Settings', 'The science behind your measures', '', '<button class="btn ghost sm" id="back" style="width:auto;">← Settings</button>')}
       <div class="card" style="background:linear-gradient(180deg,var(--card),var(--bg)); border-left:4px solid var(--accent);">
         <p class="muted small" style="margin:0;">Forma’s exercises adapt established cognitive and psychological paradigms — the same families of task used in research on attention, memory, reasoning, and emotional skill. They’re tuned to track <strong>growth over time</strong>, as formation, not to diagnose or label. The point is a measurement you can trust because you can see what it rests on.</p>
+        <p class="muted small" style="margin:10px 0 0;">One honest caveat: because you’ll meet some tasks more than once, an early jump can partly be you getting <em>used to the task</em> rather than changing underneath it. So Forma reads the <strong>trend over weeks</strong>, not any single score, and stops counting a measure once its items are used up — a steadier signal than a one-day result.</p>
       </div>
 
       <div class="card" style="border-left:4px solid var(--green);">
