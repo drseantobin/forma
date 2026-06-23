@@ -361,12 +361,63 @@ function render() {
     else if (state.route === 'progress') renderProgressIntro();
     else if (PRE_OK.includes(state.route)) renderRoute();
     else renderOnboarding();
-    drawRing(); return;
+    drawRing(); mountSupportFooter(); return;
   }
   ensurePlan();
   renderRoute();
   // Animate any ring this route mounted (home/team Index) from empty → value.
   drawRing();
+  mountSupportFooter();
+}
+
+// A calm, always-available support affordance (#8). The reactive crisis path (Coach.looksLikeDistress
+// → ESCALATION_MESSAGE) only fires once a person DISCLOSES distress; this makes the same human help
+// reachable WITHOUT a disclosure. A quiet footer link on every screen opens a gentle resource sheet.
+// Deliberately not red/alarming — honesty made quiet, like the demo banner.
+function mountSupportFooter() {
+  // The Coach screen has its own bottom-anchored composer (and its own reactive escalation),
+  // so a trailing link there would crowd the input. Skip it; the link is on every other screen.
+  if (state.route === 'coach') return;
+  if (document.getElementById('supportfoot')) return; // app.innerHTML reset clears it; guard re-entry
+  const foot = document.createElement('div');
+  foot.className = 'support-foot';
+  foot.innerHTML = `<button id="supportfoot" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 22l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+    In a hard moment</button>`;
+  app.appendChild(foot);
+  foot.querySelector('#supportfoot').onclick = openSupport;
+}
+
+// The support sheet itself — a modal mirroring the promo overlay's focus/ESC/backdrop handling,
+// rendering Coach.SUPPORT_RESOURCES (the single source of truth shared with the escalation message).
+function openSupport() {
+  if (document.querySelector('.support-overlay')) return;
+  const items = (Coach.SUPPORT_RESOURCES || []).map((r) => {
+    const body = r.href
+      ? `<a href="${esc(r.href)}"${/^https?:/.test(r.href) ? ' target="_blank" rel="noopener"' : ''}>${esc(r.detail)}</a>`
+      : esc(r.detail);
+    return `<li><span class="support-label">${esc(r.label)}</span><span class="support-detail">${body}</span></li>`;
+  }).join('');
+  const overlay = document.createElement('div');
+  overlay.className = 'promo-overlay support-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Support in a hard moment');
+  overlay.innerHTML = `
+    <div class="promo-card support-card">
+      <button class="promo-close" id="supportClose" aria-label="Close">×</button>
+      <h2>If you're going through something hard</h2>
+      <p class="muted small" style="margin:0; line-height:1.55;">Forma is for formation, not crisis care — what matters most right now is a real person. Any of these can help, any time:</p>
+      <ul class="support-list">${items}</ul>
+      <p class="muted small" style="margin:14px 0 0; line-height:1.5;">There's no shame in reaching out. Forma will be here for the formation work whenever you're ready.</p>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); try { app.focus(); } catch (e) {} };
+  const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+  document.addEventListener('keydown', onKey, true);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector('#supportClose').onclick = close;
+  try { overlay.querySelector('#supportClose').focus(); } catch (e) { /* noop */ }
 }
 
 function renderRoute() {

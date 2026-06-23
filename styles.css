@@ -759,6 +759,27 @@ h1[tabindex]:focus, h2[tabindex]:focus { outline: none; }
    shows once, and never returns after dismissal (localStorage forma_promo_seen).
    Emphatically NOT a hype reel — gentle cross-fades, the real tagline, the
    real capacities. Anti-gamification: no confetti, no countdown pressure. */
+/* Calm, always-available support affordance (#8). A quiet footer link on every screen
+   opens the support sheet — help reachable WITHOUT a person having to disclose distress.
+   Deliberately not red/alarming: honesty made quiet, the same philosophy as the demo banner. */
+.support-foot { margin: 36px 0 14px; text-align: center; }
+.support-foot button {
+  background: none; border: none; color: var(--ink-faint);
+  font: inherit; font-size: .85rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 14px; border-radius: 999px; opacity: .9;
+}
+.support-foot button:hover { color: var(--ink); background: var(--accent-soft); opacity: 1; }
+.support-foot svg { width: 15px; height: 15px; }
+.support-card { text-align: left; max-width: 440px; padding: 32px 28px 24px; }
+.support-card h2 { font-size: 1.18rem; margin: 0 0 8px; }
+.support-list { list-style: none; padding: 0; margin: 18px 0 4px; display: flex; flex-direction: column; gap: 15px; }
+.support-list li { line-height: 1.45; }
+.support-list .support-label { font-weight: 600; display: block; }
+.support-list .support-detail { color: var(--ink-soft); font-size: .92rem; }
+.support-list a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.support-list a:hover { text-decoration: underline; }
+
 .promo-overlay {
   position: fixed; inset: 0; z-index: 200;
   display: flex; align-items: center; justify-content: center;

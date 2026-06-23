@@ -425,6 +425,17 @@ export const ESCALATION_MESSAGE =
   'Please reach out right now to someone you trust, or to a trained human who can help. In the US you can call or text 988 (the Suicide & Crisis Lifeline), any time, day or night. Anywhere else, your local emergency number or a crisis line in your country can connect you with someone immediately. If you are in immediate danger, please call emergency services.\n\n' +
   "I'll be here for the formation work whenever you're ready — but let a real person be with you in this first.";
 
+// Proactive support resources — the SAME help the reactive ESCALATION_MESSAGE points to,
+// surfaced as a calm, always-available list so a person never has to disclose distress to
+// find help. Structured (not prose) so the UI renders it consistently and it lives in ONE
+// place. Internationally aware: no assumption the user is in the US.
+export const SUPPORT_RESOURCES = [
+  { label: 'Someone you trust', detail: 'A friend, a family member, someone close. Telling one real person is often the first and most important step.' },
+  { label: 'Call or text 988 (US)', detail: 'The Suicide & Crisis Lifeline — free, confidential, any time, day or night.', href: 'tel:988' },
+  { label: 'Outside the US', detail: 'findahelpline.com lists free, confidential crisis lines in your own country.', href: 'https://findahelpline.com' },
+  { label: 'If anyone is in immediate danger', detail: 'Call your local emergency number right away.' },
+];
+
 // Build a VALID Anthropic messages array from possibly-messy stored history:
 // the API requires the list to start with a user turn and to strictly alternate
 // roles. We take recent turns, drop leading non-user turns, collapse any
