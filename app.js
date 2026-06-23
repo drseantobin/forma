@@ -4247,6 +4247,12 @@ function renderMethods() {
         <p class="muted small" style="margin:8px 0 0; line-height:1.55;"><strong>It isn't</strong> a clinical or diagnostic tool, a hiring or ranking instrument, or normed against a population — your bands are within-person growth, never a percentile. The measures are honest <em>adaptations</em> tuned for formation, not validated clinical tests; their reliability and validity are things Forma is built to <em>earn</em> with real use, not to claim up front.</p>
       </div>
 
+      <div class="card">
+        <div class="eyebrow">Where these ten come from</div>
+        <p class="muted small" style="margin:8px 0 0; line-height:1.55;">They aren’t a clinical diagnosis or a received list — they’re a considered framework, chosen against one question: <strong>which human capacities grow more valuable as AI does more of the thinking?</strong> Each one is (a) something AI is making rarer, and (b) measurable through established paradigms from cognitive and psychological science — working memory, cognitive reflection, sustained attention, emotional skill, and so on (you can see each capacity’s basis below).</p>
+        <p class="muted small" style="margin:8px 0 0; line-height:1.55;">What Forma adds is the <em>selection and the framing</em> for this moment, not the underlying science. Honest limit: whether these are exactly the right ten, and whether they hold together as higher-order factors, is a claim real data will test — not something we’re asserting as settled.</p>
+      </div>
+
       <h2 class="section-head">The capacities Forma measures</h2>
       <p class="muted small" style="margin:0 0 8px;">The same capacities you saw at the start — each adapted from a specific, established research paradigm (the family of task used to study it in the literature), so a score always rests on something you can check, not on our say-so.</p>
       <p class="muted small" style="margin:0 0 10px;">These come in a few kinds: <strong>live performance tasks</strong> (scored on what you actually did), <strong>situational judgment</strong> (how you’d respond to a realistic scenario), and — for the more relational or interior capacities — <strong>honest self-report</strong>, because faking a test of presence or meaning would be less true, not more. Each capacity is matched to the method that fits what it really is.</p>
