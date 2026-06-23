@@ -402,6 +402,16 @@ button { font-family: inherit; cursor: pointer; }
 .demo-banner-exit { flex: none; background: none; border: none; color: var(--amber-ink); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px 2px; white-space: nowrap; border-radius: 6px; }
 .demo-banner-exit:hover { opacity: .82; }
 .demo-banner-exit:focus-visible { outline: 2px solid var(--amber-ink); outline-offset: 2px; }
+/* Builder measurement-diagnostics dashboard (#12) — quiet, instrument-like, never gamified. */
+.diag-stats { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 8px; }
+.diag-stats > div { display: flex; flex-direction: column; }
+.diag-big { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+.diag-table th { font-size: .76rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); font-weight: 600; padding-bottom: 4px; }
+.diag-lvl { display: inline-block; font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; text-transform: capitalize; }
+.diag-established { background: var(--accent-soft); color: var(--accent); }
+.diag-building { background: var(--amber-soft); color: var(--amber-ink); }
+.diag-provisional { background: color-mix(in srgb, var(--ink-faint) 16%, transparent); color: var(--ink-soft); }
+
 .demo-banner-actions { flex: none; display: flex; align-items: center; gap: 14px; }
 .demo-banner-tour { flex: none; background: var(--amber-ink); color: var(--amber-soft); border: none; font: inherit; font-weight: 700; cursor: pointer; padding: 4px 12px; white-space: nowrap; border-radius: 999px; font-size: .8rem; }
 .demo-banner-tour:hover { opacity: .9; }

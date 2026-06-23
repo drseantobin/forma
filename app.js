@@ -39,6 +39,7 @@ import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
 import { buildDemoProfile, SPEC as DEMO_SPEC } from './src/demo.js';
 import { buildReminderIcs, reminderSummary } from './src/reminder.js';
+import { builderDiagnostics } from './src/diagnostics.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
 // The domains to display for the current user (adds Spiritual Life when the
@@ -165,6 +166,15 @@ function setTheme(pref) {
     else { localStorage.removeItem(THEME_KEY); document.documentElement.removeAttribute('data-theme'); }
   } catch (e) { /* noop */ }
 }
+
+// Builder mode: a quiet developer/builder toggle (NOT a user feature) that reveals the
+// measurement-diagnostics dashboard. Stored in localStorage, OUTSIDE the profile, so it
+// never rides into a sample/export. Activated by tapping the Settings footer line 5×, so a
+// focus-group participant never stumbles into it — the standard "developer options" pattern.
+const BUILDER_KEY = 'forma_builder';
+function isBuilder() { try { return localStorage.getItem(BUILDER_KEY) === '1'; } catch (e) { return false; } }
+function setBuilder(on) { try { if (on) localStorage.setItem(BUILDER_KEY, '1'); else localStorage.removeItem(BUILDER_KEY); } catch (e) { /* noop */ } }
+let _builderTaps = 0;
 
 function prefersReducedMotion() {
   return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -361,7 +371,7 @@ function render() {
     // standalone Tools practices that don't need a profile. So a new person can read the
     // science or try a tool instead of being bounced into setup (the "blank science page"
     // bug: tapping View → from Settings used to land on onboarding). Everything else → setup.
-    const PRE_OK = ['coach', 'settings', 'tools', 'methods', 'team', 'domain', 'epistemiccheck', 'calibration', 'breathcount', 'svt'];
+    const PRE_OK = ['coach', 'settings', 'tools', 'methods', 'team', 'domain', 'epistemiccheck', 'calibration', 'breathcount', 'svt', 'validitylab'];
     // The Today and Progress tabs would otherwise fall through to renderOnboarding and just
     // repeat the Home/welcome screen for a brand-new visitor. Give each its OWN first-time
     // invitation instead (Today → the quick check; Progress → a skill to track).
@@ -479,6 +489,83 @@ function showTourStep(i) {
 }
 function startDemoTour() { if (state.demo) showTourStep(0); }
 
+// ---- Builder measurement-diagnostics dashboard (#12) ----
+// Builder-gated (isBuilder). Aggregates the EXISTING reliability + analytics signals into one
+// honest picture: what this device's data can show now, and what the consented cohort will prove.
+function renderValidityLab() {
+  if (!isBuilder()) { go('settings'); return; }
+  const p = state.profile || Profile.createProfile();
+  const ids = activeDomainIds(p.settings && p.settings.faithTrack).filter((id) => id !== 'interior');
+  const d = builderDiagnostics(p, ids);
+  const idx = d.index || { covered: 0, total: ids.length, thin: true, note: '' };
+  const lvl = (k) => (d.levels && d.levels[k]) || 0;
+
+  const capRows = d.perCapacity.map((c) => {
+    const name = getDomain(c.id) ? getDomain(c.id).name : c.id;
+    const stab = (c.stability && c.stability.ready)
+      ? `±${c.stability.meanAbsStep} <span class="muted">(SD ${c.stability.sd}, n=${c.stability.n})</span>`
+      : `<span class="muted">needs ≥${d.cohortGates.stabilityMin} re-tests</span>`;
+    return `<tr>
+        <td>${esc(name)}${c.frozen ? ' <span class="muted small">· items used up</span>' : ''}</td>
+        <td style="text-align:center;">${c.evidence}</td>
+        <td style="text-align:center;"><span class="diag-lvl diag-${esc(c.level)}">${esc(c.level)}</span></td>
+        <td style="text-align:right;">${stab}</td>
+      </tr>`;
+  }).join('');
+
+  const researchLine = d.research
+    ? `Sharing ON — ${d.research.measured} scored event${d.research.measured === 1 ? '' : 's'} across ${d.research.days} day${d.research.days === 1 ? '' : 's'} queued for the cohort.`
+    : 'Sharing OFF on this device — nothing here is contributing to the pooled validity dataset yet.';
+
+  app.innerHTML = `
+    ${viewHead('Builder', 'Measurement diagnostics', 'Whether Forma’s measures are actually working — on this device’s data now, and what the consented cohort will prove. Not a user feature; nothing here leaves the device.', '<button class="btn ghost sm" id="back" style="width:auto;">Done →</button>')}
+
+    <div class="card">
+      <div class="eyebrow">On this device, now</div>
+      <div class="diag-stats">
+        <div><span class="diag-big">${d.measuredSessions}</span><span class="muted small">scored measurements</span></div>
+        <div><span class="diag-big">${d.daysOfData}</span><span class="muted small">days of data</span></div>
+        <div><span class="diag-big">${idx.covered}/${idx.total}</span><span class="muted small">capacities measured</span></div>
+      </div>
+      <p class="muted small" style="margin:10px 0 0;">${esc(idx.note || '')}${idx.thin ? ' — treat every score as provisional.' : ''}</p>
+      <p class="muted small" style="margin:6px 0 0;">Confidence mix: ${lvl('established')} established · ${lvl('building')} building · ${lvl('provisional')} provisional.</p>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Per-capacity reliability (this person)</div>
+      <p class="muted small" style="margin:4px 0 10px;">N = scored measures behind the score. Consistency = typical swing between repeated scores (lower = steadier) — steadiness, NOT growth; on a frozen bank it reflects recall, not re-measurement. A one-person series can’t yield a true test–retest r.</p>
+      <table class="snaptable diag-table"><thead><tr><th>Capacity</th><th style="text-align:center;">N</th><th style="text-align:center;">Confidence</th><th style="text-align:right;">Consistency</th></tr></thead>
+      <tbody>${capRows || '<tr><td colspan="4" class="muted small">No measured sessions yet.</td></tr>'}</tbody></table>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Validity instruments running</div>
+      <ul class="muted small" style="margin:6px 0 0; padding-left:18px; line-height:1.7;">
+        <li>Response quality — straightlining + infrequency catch on the baseline battery (keep-but-flag, never silently discard).</li>
+        <li>Calibration — confidence-vs-accuracy bias (overconfidence), ≥10 items.</li>
+        <li>Over-claiming — signal-detection self-enhancement bias (claiming knowledge of things that don’t exist).</li>
+        <li>Focus Check — ${d.focusChecks.n} taken${d.focusChecks.bestMs != null ? `, best median ${d.focusChecks.bestMs}ms` : ''}.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Awaiting the cohort — the white-paper engine</div>
+      <p class="muted small" style="margin:4px 0 10px;">These make validity demonstrable and compute automatically once consented data pools. Gated so a number is never shown off too few people:</p>
+      <table class="snaptable diag-table"><tbody>
+        <tr><td>Per-item difficulty &amp; discrimination</td><td style="text-align:right;" class="muted">needs ≥${d.cohortGates.itemMinN} installs</td></tr>
+        <tr><td>Test–retest r (per capacity)</td><td style="text-align:right;" class="muted">needs ≥${d.cohortGates.retestMinPairs} person-pairs</td></tr>
+        <tr><td>Population norms / factor structure</td><td style="text-align:right;" class="muted">server dataset</td></tr>
+      </tbody></table>
+      <p class="muted small" style="margin:10px 0 0;">${esc(researchLine)}</p>
+    </div>
+
+    <p class="muted small center"><button class="inlinelink" id="hidebuilder">Hide builder tools</button></p>
+  `;
+  document.getElementById('back').onclick = () => go('settings');
+  const hb = document.getElementById('hidebuilder');
+  if (hb) hb.onclick = () => { setBuilder(false); announce('Builder tools hidden.'); go('settings'); };
+}
+
 function renderRoute() {
   switch (state.route) {
     case 'home': return renderHome();
@@ -489,6 +576,7 @@ function renderRoute() {
     case 'lens': return renderInteriorLens();
     case 'team': return renderTeam();
     case 'methods': return renderMethods();
+    case 'validitylab': return renderValidityLab();
     case 'snapshot': return renderSnapshot();
     case 'proof': return renderProof();
     case 'focuscheck': return renderFocusCheck();
@@ -5480,10 +5568,30 @@ function renderSettings() {
       </div>`;
       })()}
 
-      <p class="muted small center">Forma · the capacities a machine can’t keep for you.</p>
+      ${isBuilder() ? `<div class="card">
+        <div class="eyebrow">Builder</div>
+        <h2 style="font-size:1.05rem; margin:0 0 6px;">Measurement diagnostics</h2>
+        <p class="muted small" style="margin:0 0 10px;">Reliability &amp; validity of Forma’s measures — on this device now, and the cohort engine for the validity white paper. A development view; nothing here leaves your device.</p>
+        <button class="btn ghost sm" id="tovaliditylab" style="width:auto;">Open diagnostics →</button>
+      </div>` : ''}
+      <p class="muted small center" id="formafoot">Forma · the capacities a machine can’t keep for you.</p>
     </div>`;
 
   document.getElementById('name').onchange = (e) => { p.settings.name = e.target.value.trim(); save(); };
+  const tvl = document.getElementById('tovaliditylab'); if (tvl) tvl.onclick = () => go('validitylab');
+  // Quiet builder-mode gate: 5 taps on the footer line toggles the diagnostics tools, so a
+  // focus-group participant never stumbles into them (the "developer options" pattern).
+  const ff = document.getElementById('formafoot');
+  if (ff) ff.onclick = () => {
+    _builderTaps++;
+    if (_builderTaps >= 5) {
+      _builderTaps = 0;
+      const on = !isBuilder();
+      setBuilder(on);
+      announce(on ? 'Builder tools enabled.' : 'Builder tools hidden.');
+      render();
+    }
+  };
   [...document.querySelectorAll('[data-theme-set]')].forEach((b) => {
     b.onclick = () => { setTheme(b.getAttribute('data-theme-set')); render(); };
   });
