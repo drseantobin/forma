@@ -440,13 +440,10 @@ function renderOnboarding() {
         </div>
         <div class="stack">
           <button class="btn amber" id="start">Quick check · ~${Math.max(3, Math.round(BASELINE_ITEMS.length * 7 / 60))} min →</button>
-          <button class="btn ghost" id="talk">Talk it through with the coach →</button>
+          <button class="btn ghost" id="seedemo">${esc(DEMO_SPEC.welcomeButton)} →</button>
         </div>
-        <p class="muted small center" style="margin-top:12px;">The quick check is ${BASELINE_ITEMS.length} honest ratings across your capacities — a short self-assessment that works offline. The conversation is an adaptive interview that writes your profile — it uses your own API key (any provider), so it stays yours.</p>
-        <div style="text-align:center; margin-top:16px;">
-          <button class="btn ghost" id="seedemo" style="width:auto;">${esc(DEMO_SPEC.welcomeButton)} →</button>
-          <p class="muted small" style="margin:6px 0 0;">${esc(DEMO_SPEC.welcomeButtonSub)}</p>
-        </div>
+        <p class="muted small center" style="margin-top:12px;">${BASELINE_ITEMS.length} honest self-ratings across your capacities — a short check that works offline, no account or key. Not sure yet? The sample profile shows the whole app, already populated — nothing saved.</p>
+        <p class="muted small center" style="margin-top:10px;">Prefer to talk it through? <button class="inlinelink" id="talk">Start a coach conversation</button> <span class="muted">· advanced — uses your own AI key</span></p>
         <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
           ${uiIcon('dove')}
           <div style="flex:1;">
@@ -948,15 +945,12 @@ function renderHome() {
           const ic = indexConfidence(p);
           return ic.thin ? `<div class="muted small" style="margin-top:4px;">${esc(ic.note)}</div>` : '';
         })()}
-        <div class="streakchip ${alive ? '' : neverStarted ? 'fresh' : 'cold'}">${uiIcon(alive ? 'flame' : neverStarted ? 'spark' : 'ember', 'chipico')} ${neverStarted ? 'Your first session starts your streak' : `${p.streak.current || 0}-day streak${alive ? (() => {
-          // Honest forward-pull: the true number of days to the next real mark.
-          // Only when the streak is alive (don't compete with the warmer "relight
-          // it" copy) and a mark is still ahead (silent past 365). No fake urgency.
-          const nm = nextStreakMark(p.streak.current || 0);
-          if (!nm) return '';
-          const left = nm - (p.streak.current || 0);
-          return ` · ${left} ${left === 1 ? 'day' : 'days'} to ${nm}`;
-        })() : ' — relight it'}`}</div>
+        <div class="streakchip ${alive ? '' : neverStarted ? 'fresh' : 'cold'}">${uiIcon(alive ? 'flame' : neverStarted ? 'spark' : 'ember', 'chipico')} ${
+          // Calm presence count — no countdown-to-a-mark, no "relight it" nudge (v309: streaks
+          // are not a pressure mechanic). Just the honest number of days, framed as formation.
+          neverStarted ? 'Your formation starts today'
+            : (p.streak.current || 0) >= 1 ? `${p.streak.current} ${p.streak.current === 1 ? 'day' : 'days'} of formation`
+              : 'Welcome back'}</div>
       </div>
 
       ${radarCard(p.domainScores)}
