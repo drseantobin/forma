@@ -402,6 +402,24 @@ button { font-family: inherit; cursor: pointer; }
 .demo-banner-exit { flex: none; background: none; border: none; color: var(--amber-ink); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px 2px; white-space: nowrap; border-radius: 6px; }
 .demo-banner-exit:hover { opacity: .82; }
 .demo-banner-exit:focus-visible { outline: 2px solid var(--amber-ink); outline-offset: 2px; }
+.demo-banner-actions { flex: none; display: flex; align-items: center; gap: 14px; }
+.demo-banner-tour { flex: none; background: var(--amber-ink); color: var(--amber-soft); border: none; font: inherit; font-weight: 700; cursor: pointer; padding: 4px 12px; white-space: nowrap; border-radius: 999px; font-size: .8rem; }
+.demo-banner-tour:hover { opacity: .9; }
+.demo-banner-tour:focus-visible { outline: 2px solid var(--amber-ink); outline-offset: 2px; }
+
+/* Guided demo tour (#6): a calm, non-blocking explanation card pinned above the tabbar.
+   The live screen stays visible behind it; pointer-events pass through except on the card. */
+.demo-tour { position: fixed; left: 0; right: 0; z-index: 190; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; padding: 0 14px; pointer-events: none; }
+.demo-tour-card { pointer-events: auto; width: 100%; max-width: 460px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 18px 44px -18px rgba(0,0,0,.45); padding: 16px 18px; animation: tourIn .35s ease both; }
+@keyframes tourIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.demo-tour-step { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
+.demo-tour-card h3 { margin: 4px 0 6px; font-size: 1.05rem; }
+.demo-tour-card p { margin: 0; color: var(--ink-soft); font-size: .92rem; line-height: 1.5; }
+.demo-tour-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.demo-tour-foot .spacer { flex: 1; }
+.demo-tour-skip { background: none; border: none; color: var(--ink-faint); font: inherit; font-size: .85rem; cursor: pointer; padding: 4px; }
+.demo-tour-skip:hover { color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .demo-tour-card { animation: none; } }
 /* Self-contained sample marker inside the snapshot credential card, so a cropped
    screenshot of just the card (which won't include the page banner) still says so. */
 .snapsample { background: var(--amber-soft); color: var(--amber-ink); border: 1px solid var(--amber); border-radius: 10px; padding: 7px 11px; font-size: .8rem; font-weight: 700; text-align: center; margin-bottom: 12px; }

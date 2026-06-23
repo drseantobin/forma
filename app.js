@@ -85,6 +85,9 @@ function enterDemo() {
   state.route = 'home';
   render();
   window.scrollTo(0, 0);
+  // Auto-offer the guided walkthrough the first time a visitor opens the sample (it's a
+  // non-blocking bottom card with a clear Skip; the banner's "Take the tour" relaunches it).
+  if (!_tourShown) { _tourShown = true; startDemoTour(); }
 }
 function exitDemo() {
   if (!state.demo) return;
@@ -129,10 +132,15 @@ function updateDemoBanner() {
   demobanner.setAttribute('aria-label', DEMO_SPEC.bannerText + ' ' + DEMO_SPEC.honestyNote);
   demobanner.innerHTML = `<div class="demo-banner-in">
       <span class="demo-banner-txt">${esc(DEMO_SPEC.bannerText)}</span>
-      <button type="button" class="demo-banner-exit" id="exitdemo">${esc(DEMO_SPEC.exitCta)}</button>
+      <span class="demo-banner-actions">
+        <button type="button" class="demo-banner-tour" id="demotourbtn">Take the tour</button>
+        <button type="button" class="demo-banner-exit" id="exitdemo">${esc(DEMO_SPEC.exitCta)}</button>
+      </span>
     </div>`;
   const x = document.getElementById('exitdemo');
   if (x) x.onclick = exitDemo;
+  const tb = document.getElementById('demotourbtn');
+  if (tb) tb.onclick = startDemoTour;
 }
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
@@ -419,6 +427,57 @@ function openSupport() {
   overlay.querySelector('#supportClose').onclick = close;
   try { overlay.querySelector('#supportClose').focus(); } catch (e) { /* noop */ }
 }
+
+// ---- Guided demo tour (#6) ----
+// A short, skippable walkthrough of the SAMPLE profile so a first-time visitor (or a
+// focus-group facilitator) understands what each surface means. Each step navigates to a
+// REAL screen via render() and pins a calm explanation card above the tabbar — the live
+// screen shows behind it. Demo-only: the tour explains the sample and never runs on real data.
+let _tourShown = false; // auto-offer once per demo session (the banner button relaunches)
+const DEMO_TOUR = [
+  { route: 'home', title: 'The Formation Index', body: 'One calm number for how the ten capacities are trending together. The ring only mirrors the score — there are no points, levels, or streaks to chase here.' },
+  { route: 'progress', title: 'How you’re doing', body: 'A plain-language read of where this person is strong and where they’re growing — plus each capacity measured over weeks. A picture, never a verdict.' },
+  { route: 'domain', focus: 'emotion_regulation', title: 'Inside a capacity', body: 'Every capacity opens to show how it’s measured, the research it adapts, and a way to practice it. This one is trending gently down — Forma names that plainly, without alarm.' },
+  { route: 'methods', title: 'Where the ten come from', body: 'The science page explains why these ten capacities, and the established paradigm each measure adapts — honest about what’s validated and what isn’t yet.' },
+];
+function _onTourKey(e) { if (e.key === 'Escape') { e.stopPropagation(); endDemoTour(); } }
+function endDemoTour() {
+  const el = document.getElementById('demotour');
+  if (el) el.remove();
+  document.removeEventListener('keydown', _onTourKey, true);
+}
+function showTourStep(i) {
+  if (!state.demo) { endDemoTour(); return; }            // meaningless off the sample
+  if (i < 0 || i >= DEMO_TOUR.length) { endDemoTour(); return; }
+  const step = DEMO_TOUR[i];
+  if (step.focus) state.focusDomain = step.focus;
+  state.route = step.route;
+  render();                                              // rebuilds #app; the tour card lives in <body> and survives
+  window.scrollTo(0, 0);
+  let el = document.getElementById('demotour');
+  if (!el) { el = document.createElement('div'); el.id = 'demotour'; el.className = 'demo-tour'; document.body.appendChild(el); }
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-label', 'Sample tour: ' + step.title);
+  const last = i === DEMO_TOUR.length - 1;
+  el.innerHTML = `
+    <div class="demo-tour-card">
+      <div class="demo-tour-step">Tour · ${i + 1} of ${DEMO_TOUR.length}</div>
+      <h3>${esc(step.title)}</h3>
+      <p>${esc(step.body)}</p>
+      <div class="demo-tour-foot">
+        <button class="demo-tour-skip" id="tourskip" type="button">Skip tour</button>
+        <span class="spacer"></span>
+        ${i > 0 ? '<button class="btn ghost sm" id="tourback" type="button">Back</button>' : ''}
+        <button class="btn sm" id="tournext" type="button">${last ? 'Done' : 'Next →'}</button>
+      </div>
+    </div>`;
+  document.removeEventListener('keydown', _onTourKey, true);
+  document.addEventListener('keydown', _onTourKey, true);
+  el.querySelector('#tourskip').onclick = endDemoTour;
+  const back = el.querySelector('#tourback'); if (back) back.onclick = () => showTourStep(i - 1);
+  el.querySelector('#tournext').onclick = () => (last ? endDemoTour() : showTourStep(i + 1));
+}
+function startDemoTour() { if (state.demo) showTourStep(0); }
 
 function renderRoute() {
   switch (state.route) {
