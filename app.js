@@ -38,6 +38,7 @@ import { speechSupported, createRecognizer } from './src/speech.js';
 import { createTones } from './src/audio.js';
 import * as Team from './src/team.js';
 import { buildDemoProfile, SPEC as DEMO_SPEC } from './src/demo.js';
+import { buildReminderIcs, reminderSummary } from './src/reminder.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
 // The domains to display for the current user (adds Spiritual Life when the
@@ -5273,19 +5274,29 @@ function renderSettings() {
       <div class="card">
         <div class="row">${uiIcon('mail')}
           <div style="flex:1;"><h2 style="font-size:1.05rem; margin:0;">Reminders &amp; encouragement</h2>
-            <p class="muted small" style="margin:2px 0 0;">Optional. Reminders aren’t built yet — opt in now and your email is stored <strong>only on this device</strong> (it’s never sent anywhere), so Forma can reach you once they ship, and only for that. This is separate from the anonymous research data and is never linked to it. Remove it anytime.</p>
+            <p class="muted small" style="margin:2px 0 0;">A gentle nudge to come back — added to your own calendar, so it works on any device and nothing leaves this one.</p>
           </div>
         </div>
-        <div class="field" style="margin-top:10px;">
-          <label>Email</label>
-          <input id="contactemail" type="email" value="${esc((p.contact && p.contact.email) || '')}" placeholder="you@example.com" />
+        <div class="row" style="gap:10px; margin-top:12px; flex-wrap:wrap; align-items:flex-end;">
+          <div class="field" style="margin:0;"><label for="remindtime">Time</label><input id="remindtime" type="time" value="08:00" style="width:auto;" /></div>
+          <div class="field" style="margin:0;"><label for="remindcadence">Days</label><select id="remindcadence"><option value="daily">Every day</option><option value="weekdays">Weekdays</option></select></div>
+          <button class="btn sm" id="addreminder" style="width:auto;">Add to my calendar →</button>
         </div>
-        <div class="row" style="gap:8px;">
-          <button class="btn sm" id="savecontact">${p.contact && p.contact.consent ? 'Update' : 'Opt in'}</button>
-          ${p.contact && p.contact.consent ? `<button class="btn ghost sm" id="withdrawcontact">Remove my email</button>` : ''}
-          <span id="contactsaved" class="trendpill up" style="display:none;">saved ${uiIcon('check', 'tpico')}</span>
-        </div>
-        <p id="contacterr" class="small" style="margin-top:8px; color:var(--red); display:none;"></p>
+        <p class="muted small" style="margin:8px 0 0;">One tap downloads a recurring reminder your calendar app (Apple / Google / Outlook) handles. Forma builds it on this device — it never sends anything, and there's no account.</p>
+        <details style="margin-top:14px;">
+          <summary class="muted small" style="cursor:pointer;">Get notified when cloud features ship (optional email)</summary>
+          <div class="field" style="margin-top:10px;">
+            <label>Email</label>
+            <input id="contactemail" type="email" value="${esc((p.contact && p.contact.email) || '')}" placeholder="you@example.com" />
+          </div>
+          <div class="row" style="gap:8px;">
+            <button class="btn sm" id="savecontact">${p.contact && p.contact.consent ? 'Update' : 'Opt in'}</button>
+            ${p.contact && p.contact.consent ? `<button class="btn ghost sm" id="withdrawcontact">Remove my email</button>` : ''}
+            <span id="contactsaved" class="trendpill up" style="display:none;">saved ${uiIcon('check', 'tpico')}</span>
+          </div>
+          <p class="muted small" style="margin-top:6px;">Stored <strong>only on this device</strong> — never sent anywhere (no server exists yet), and never linked to the anonymous research data.</p>
+          <p id="contacterr" class="small" style="margin-top:8px; color:var(--red); display:none;"></p>
+        </details>
       </div>
 
       <div class="card">
@@ -5427,6 +5438,18 @@ function renderSettings() {
       r.textContent = `✗ ${errMsg}`;
       announce(`Connection failed: ${errMsg}`);
     }
+  };
+  // Calendar reminder: build the .ics on-device and hand it to the user's own calendar app.
+  const addRem = document.getElementById('addreminder');
+  if (addRem) addRem.onclick = () => {
+    const time = (document.getElementById('remindtime') || {}).value || '08:00';
+    const cadence = (document.getElementById('remindcadence') || {}).value || 'daily';
+    const blob = new Blob([buildReminderIcs({ time, cadence })], { type: 'text/calendar' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'forma-reminder.ics';
+    a.click();
+    announce(`${reminderSummary(time, cadence)} Open it to add it to your calendar.`);
   };
   document.getElementById('savecontact').onclick = () => {
     if (blockedInDemo('manage reminders for')) return;
