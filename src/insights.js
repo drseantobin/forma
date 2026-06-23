@@ -144,6 +144,36 @@ export function interpretBaseline(domainScores, name = '') {
   ].join('\n');
 }
 
+// A concise, ALWAYS-AVAILABLE plain-language read of how the person is doing right now.
+// The baseline result shows a one-time interpretation and never stores it, so once a user
+// leaves that screen the read is gone (real first-user feedback: "I couldn't go back to it").
+// This regenerates the same kind of read from CURRENT scores — for a card on Progress — so it
+// can be revisited any time and stays current as the scores move. Honest about evidence;
+// growth-framed; pure. Returns '' until at least two capacities are scored (nothing honest to say).
+export function currentRead(profile, name = '') {
+  const scores = (profile && profile.domainScores) || {};
+  const faith = !!(profile && profile.settings && profile.settings.faithTrack);
+  const ids = activeDomainIds(faith).filter((id) => scores[id] != null);
+  if (ids.length < 2) return '';
+  const sorted = [...ids].sort((a, b) => scores[b] - scores[a]);
+  const hi = getDomain(sorted[0]);
+  const lo = getDomain(sorted[sorted.length - 1]);
+  const index = Math.round(ids.reduce((a, id) => a + scores[id], 0) / ids.length);
+  const lead = name ? `${name}, here’s` : 'Here’s';
+  // Trajectory since the first index point (the baseline), when there's more than one.
+  const ih = ((profile && profile.indexHistory) || []).map((x) => x.formationIndex).filter((v) => v != null);
+  const delta = ih.length >= 2 ? ih[ih.length - 1] - ih[0] : 0;
+  const traj = delta > 2 ? ` It’s up ${delta} since you began — and that’s banked.`
+    : delta < -2 ? ` It’s ${delta} since you began; one hard stretch doesn’t undo the work.`
+      : '';
+  // Honesty about what this rests on: pure self-report until real sessions accrue.
+  const measured = ((profile && profile.sessions) || []).filter((s) => !s.unscored).length;
+  const basis = measured === 0
+    ? ' For now this is built from how you rated yourself — the sessions are where Forma actually measures it, and where this read sharpens.'
+    : '';
+  return `${lead} how you’re doing right now. Your clearest strength is ${hi.name} — ${hi.short.toLowerCase()}. Where you’ve got the most room is ${lo.name} — ${lo.short.toLowerCase()}. Your overall Formation Index is ${index}.${traj}${basis} None of this is fixed — these are capacities, and they move with practice.`;
+}
+
 // --- Weekly pattern report (longitudinal, the "Insight Report") ---
 export function weeklyPatterns(profile) {
   const out = [];

@@ -8,7 +8,7 @@ import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/s
 import {
   todayStr, streakAlive, domainTrend, sparklinePath, radarGeometry, daysBetween, startRoute, indexTrend, isLapsedReturn,
 } from './src/progress.js';
-import { recommendFocus, weeklyPatterns, dailyInsight as ruleDailyInsight, interpretBaseline as ruleInterpretBaseline } from './src/insights.js';
+import { recommendFocus, weeklyPatterns, dailyInsight as ruleDailyInsight, interpretBaseline as ruleInterpretBaseline, currentRead } from './src/insights.js';
 import * as Profile from './src/profile.js';
 import * as Coach from './src/coach.js';
 import * as Diagnostic from './src/diagnostic.js';
@@ -3842,6 +3842,16 @@ function renderProgress() {
   app.innerHTML = `
     <div class="fade-in">
       ${viewHead('Your formation over time', 'Progress', '')}
+      ${(() => {
+        // A plain-language read of how they're doing, regenerated from current scores so it's
+        // ALWAYS here — the interpretive feedback the baseline screen showed once is now revisitable
+        // (real first-user feedback: liked the read, couldn't get back to it). Words before numbers.
+        const read = currentRead(p, p.settings && p.settings.name);
+        return read ? `<div class="card">
+        <div class="k">How you’re doing</div>
+        <p style="margin:6px 0 0; line-height:1.55;">${esc(read)}</p>
+      </div>` : '';
+      })()}
       <div class="card">
         <div class="row"><strong>Formation Index</strong><span class="spacer"></span><span class="kbig">${fi}<span class="snapof"> / 100</span></span></div>
         ${(() => {
