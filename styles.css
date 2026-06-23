@@ -571,6 +571,13 @@ details.disclosure[open] > summary::after { content:'–'; }
   border:1px solid var(--line, #e6e4dd); border-radius:999px; padding:1px 7px; margin-left:8px;
   white-space:nowrap; cursor: help;
 }
+/* Evidence-tier label (v314): distinguishes a measured-from-task score from a self-rating, so the
+   two are never read as the same kind of evidence. Calm, not a badge to chase — informational. */
+.scale-group-head { font-size:.82rem; font-weight:700; letter-spacing:.01em; color: var(--ink); margin-bottom:10px; }
+.scale-group-head .muted { font-weight:400; }
+.method-tag { font-size:.64rem; font-weight:700; letter-spacing:.02em; border-radius:999px; padding:1px 7px; white-space:nowrap; cursor:help; border:1px solid transparent; }
+.method-measured { background: var(--accent-soft); color: var(--accent); }
+.method-selfreport { background: color-mix(in srgb, var(--ink-faint) 14%, transparent); color: var(--ink-soft); }
 .trendpill { font-size:.78rem; font-weight:700; padding:2px 8px; border-radius:999px; }
 /* Inline check inside a status pill — sized to the pill text, baseline-aligned (the pill has no
    flex gap, so it carries its own small left margin). Part of the one stroke-icon system. */

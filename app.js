@@ -1,7 +1,7 @@
 // app.js — Forma UI controller. Vanilla JS SPA, no build step.
 // Renders views into #app and persists everything locally via profile.js.
 
-import { DOMAINS, getDomain, bandFor, activeDomainIds, BANDS, DOMAIN_ICON_PATHS } from './src/domains.js';
+import { DOMAINS, getDomain, bandFor, activeDomainIds, BANDS, DOMAIN_ICON_PATHS, OBJECTIVE_DOMAINS, REFLECTIVE_DOMAINS } from './src/domains.js';
 import { LIKERT_SCALE, LIKERT_POINTS, baselineByDomain, BASELINE_ITEMS, ALL_ITEMS } from './src/assessments.js';
 import { pickExercise, nextMathProblem, shuffledIndices, exerciseMode, makeGuided } from './src/exercises.js';
 import { domainScoresFromBaseline, scoreExercise, formationIndex } from './src/scoring.js';
@@ -4066,11 +4066,18 @@ function renderProgress() {
       ${aiReadinessCard(p)}
 
       <h2 class="section-head">Your scales</h2>
-      <div class="card">
-        <div class="domain-list">
-          ${domainOrder().map((id) => progressRow(id)).join('')}
-        </div>
-      </div>
+      <p class="muted small" style="margin:-4px 0 10px;">These rest on two different kinds of evidence, kept apart on purpose: what Forma can <strong>measure</strong> from how you did on a task, and how you <strong>see yourself</strong>. They’re never blended into one verdict.</p>
+      ${(() => {
+        const order = domainOrder();
+        const objRows = order.filter((id) => OBJECTIVE_DOMAINS.includes(id)).map((id) => progressRow(id)).join('');
+        const selfRows = order.filter((id) => !OBJECTIVE_DOMAINS.includes(id)).map((id) => progressRow(id)).join('');
+        const group = (title, sub, rows) => rows ? `<div class="card">
+            <div class="scale-group-head">${title}<span class="muted"> — ${sub}</span></div>
+            <div class="domain-list">${rows}</div>
+          </div>` : '';
+        return group('Measured directly', 'from how you did on a task', objRows)
+             + group('Self-report &amp; reflection', 'how you see yourself, not a performance score', selfRows);
+      })()}
 
       <div class="card" style="background:linear-gradient(180deg,var(--card),var(--bg)); border-left:4px solid var(--green);">
         <div class="row"><strong>Your 90-day proof</strong><span class="spacer"></span><span class="trendpill up">auditable</span></div>
@@ -4380,14 +4387,15 @@ function renderSnapshot() {
             <th scope="col" class="sr-only">Score</th>
           </tr></thead>
           <tbody>
-          ${snap.domains.map((d) => `<tr>
-            <td><span class="snapdot" style="background:${band(d.score)};"></span>${esc(d.name)}</td>
+          ${snap.domains.map((d) => { const tier = methodTier(d.id); return `<tr>
+            <td><span class="snapdot" style="background:${band(d.score)};"></span>${esc(d.name)}${tier ? ` <span class="method-tag method-${tier.cls}" title="${esc(tier.title)}">${tier.label}</span>` : ''}</td>
             <td class="snapconf muted small">${esc(d.confidence)}</td>
             <td style="text-align:right;">${d.frozen ? '<span class="muted small">items used up</span>' : deltaTag(d.delta)}</td>
             <td class="snapsc">${d.score}</td>
-          </tr>`).join('')}
+          </tr>`; }).join('')}
           </tbody>
         </table>
+        <p class="muted small" style="margin:6px 0 0;"><span class="method-tag method-measured">Measured</span> = scored from a task · <span class="method-tag method-selfreport">Self-report</span> = your own rating. Kept distinct; not averaged into one number.</p>
         ${snap.strengths.length && snap.growthEdges.length
           ? `<p class="muted small" style="margin-top:12px;">Strengths: <strong>${snap.strengths.map(esc).join(', ')}</strong>. Growth edges: <strong>${snap.growthEdges.map(esc).join(', ')}</strong>.</p>`
           : `<p class="muted small" style="margin-top:12px;">Strengths and growth edges appear once a few more capacities are measured — too few so far to rank honestly.</p>`}
@@ -5004,6 +5012,15 @@ function renderFocusCheck() {
     </div>`;
   state._focus = null;
   document.getElementById('doneproof').onclick = () => go('proof');
+}
+
+// The kind of evidence a capacity's score rests on — kept visible (v314) so an objective
+// performance measure and a self-rating are never mistaken for the same thing (the unanimous
+// psychometric note from the external critique). Interior/unknown → null (walled, never tiered).
+function methodTier(id) {
+  if (OBJECTIVE_DOMAINS.includes(id)) return { label: 'Measured', cls: 'measured', title: 'Measured directly from how you did on a task.' };
+  if (REFLECTIVE_DOMAINS.includes(id)) return { label: 'Self-report', cls: 'selfreport', title: 'From your own ratings and reflection — a self-perception, not a performance score.' };
+  return null;
 }
 
 function progressRow(id) {
