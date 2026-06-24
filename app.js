@@ -2654,6 +2654,10 @@ function renderFlanker() {
         <button class="btn" id="fR" aria-label="Middle arrow points right" style="font-size:1.6rem; padding:18px 0;">▶</button>
       </div>
       <p class="muted small" style="margin-top:8px;">Tap the side the MIDDLE arrow points — or use ← →.</p>
+      <div id="ftimerwrap" aria-hidden="true" style="height:4px; width:200px; max-width:70%; margin:14px auto 0; background:var(--line); border-radius:999px; overflow:hidden;">
+        <div id="ftimer" style="height:100%; width:100%; background:var(--accent); border-radius:999px;"></div>
+      </div>
+      <p class="muted small center" style="margin-top:6px; opacity:.8;">Answer before the bar runs out.</p>
     </div>`;
   const fix = document.getElementById('ffix');
   const arrows = document.getElementById('farrows');
@@ -2663,6 +2667,17 @@ function renderFlanker() {
   const aborted = () => state.session !== s || state.route !== 'session';
   const clearT = () => { if (s._timer) { clearTimeout(s._timer); s._timer = null; } };
   const sink = practice ? s.practice : (s.response.trials = s.response.trials || []);
+  // Visible time pressure (v319): a thin bar depletes over the 2s response window, so attention
+  // is measured UNDER PRESSURE (the point of executive-attention). It only mirrors the existing
+  // window — the scored RT/accuracy and the 2s miss bound are unchanged.
+  const tbar = document.getElementById('ftimer');
+  const resetTimer = () => { if (tbar) { tbar.style.transition = 'none'; tbar.style.width = '100%'; } };
+  const runTimer = () => {
+    if (!tbar) return;
+    tbar.style.transition = 'none'; tbar.style.width = '100%';
+    void tbar.offsetWidth; // reflow so the next change animates from full
+    tbar.style.transition = 'width 2000ms linear'; tbar.style.width = '0%';
+  };
 
   const finishPhase = () => {
     clearT();
@@ -2683,6 +2698,7 @@ function renderFlanker() {
     feed.textContent = '';
     arrows.style.display = 'none';
     fix.style.display = 'block';
+    resetTimer();
     s._timer = setTimeout(() => {
       if (aborted()) { clearT(); return; }
       fix.style.display = 'none';
@@ -2690,6 +2706,7 @@ function renderFlanker() {
       arrows.style.display = 'block';
       s.shownAt = performance.now();
       s.awaiting = true;
+      runTimer();
       s._timer = setTimeout(() => { // no response in 2s → miss
         if (aborted() || !s.awaiting) { return; }
         s.awaiting = false;
@@ -2702,6 +2719,7 @@ function renderFlanker() {
   const respond = (side) => {
     if (!s.awaiting) return;
     clearT();
+    resetTimer();
     s.awaiting = false;
     const t = trials[s.fi];
     const rt = performance.now() - s.shownAt;
