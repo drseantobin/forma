@@ -1129,6 +1129,25 @@ function renderHome() {
       <div class="brandmark"><div class="logo">${formaMark}</div><div class="name">Forma</div>
         <div class="tag">${greeting()}${p.settings.name ? ', ' + esc(p.settings.name) : ''}</div></div>
 
+      <h2 class="section-head">Today</h2>
+
+      <div class="card">
+        <div class="row" style="margin-bottom:10px;">
+          <strong>${doneToday ? "Today's session complete" : "Today's focus"}</strong>
+          <span class="spacer"></span>
+          ${doneToday ? `<span class="trendpill up">done ${uiIcon('check', 'tpico')}</span>` : ''}
+        </div>
+        ${doneToday ? `<p class="muted small" style="margin:-2px 0 12px;">That’s today’s — genuinely enough. But if you’re in a groove, here’s where the next few minutes go furthest:</p>` : ''}
+        <div class="domain-row tappable" data-domain="${keepFocus}" role="button" tabindex="0" aria-label="${esc(kfd.name)} — how to grow it" style="margin-bottom:14px;">
+          <span class="ico">${kfd.icon}</span>
+          <div class="meta"><div class="dn">${esc(kfd.name)}</div>
+            <div class="muted small">${esc(kfd.short)}</div></div>
+          <span class="chev" aria-hidden="true">›</span>
+        </div>
+        <button class="btn ${doneToday ? 'ghost' : 'amber'}" id="startsession">${doneToday ? `Keep going → ${esc(kfd.name)}` : 'Go to today’s session →'}</button>
+        <p class="muted small center" style="margin:10px 0 0;">Tap the capacity above to learn how to grow it.</p>
+      </div>
+
       <div class="card index-hero">
         ${indexRing(fi, { numId: 'homeidx', start: 0 })}
         <div class="index-label">Formation Index${(() => {
@@ -1150,25 +1169,6 @@ function renderHome() {
           neverStarted ? 'Your formation starts today'
             : (p.streak.current || 0) >= 1 ? `${p.streak.current} ${p.streak.current === 1 ? 'day' : 'days'} of formation`
               : 'Welcome back'}</div>
-      </div>
-
-      <h2 class="section-head">Today</h2>
-
-      <div class="card">
-        <div class="row" style="margin-bottom:10px;">
-          <strong>${doneToday ? "Today's session complete" : "Today's focus"}</strong>
-          <span class="spacer"></span>
-          ${doneToday ? `<span class="trendpill up">done ${uiIcon('check', 'tpico')}</span>` : ''}
-        </div>
-        ${doneToday ? `<p class="muted small" style="margin:-2px 0 12px;">That’s today’s — genuinely enough. But if you’re in a groove, here’s where the next few minutes go furthest:</p>` : ''}
-        <div class="domain-row tappable" data-domain="${keepFocus}" role="button" tabindex="0" aria-label="${esc(kfd.name)} — how to grow it" style="margin-bottom:14px;">
-          <span class="ico">${kfd.icon}</span>
-          <div class="meta"><div class="dn">${esc(kfd.name)}</div>
-            <div class="muted small">${esc(kfd.short)}</div></div>
-          <span class="chev" aria-hidden="true">›</span>
-        </div>
-        <button class="btn ${doneToday ? 'ghost' : 'amber'}" id="startsession">${doneToday ? `Keep going → ${esc(kfd.name)}` : 'Go to today’s session →'}</button>
-        <p class="muted small center" style="margin:10px 0 0;">Tap the capacity above to learn how to grow it.</p>
       </div>
 
       ${radarCard(p.domainScores)}
