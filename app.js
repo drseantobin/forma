@@ -1526,7 +1526,7 @@ function todaysPracticeCard(p) {
       : (practice.cadence === 'situational' ? 'It stays armed — a day without the moment isn’t a miss.' : 'A small real-life rep, your way.');
     return `
       <div class="card practice-card">
-        <div class="k">Today’s practice · ${esc(d.name)}</div>
+        <div class="k">Real-life practice · ${esc(d.name)}</div>
         <div class="practice-commit">
           <button class="goalcheck ${done ? 'on' : ''}" data-practicecheck="${esc(commit.id)}" aria-pressed="${done}" aria-label="${done ? 'Done today — tap to undo' : 'Mark done today'}: “${esc(commit.text)}”">${done ? uiIcon('check', 'goalcheckico') : ''}</button>
           <div class="practice-commit-body">
@@ -1567,7 +1567,7 @@ function todaysPracticeCard(p) {
           </div>
         </details>
         <p class="practice-why muted small">${esc(practice.why)}</p>
-        <button class="btn" id="practiceadopt" data-domain="${esc(focus)}">Make it today’s practice</button>
+        <button class="btn ghost" id="practiceadopt" data-domain="${esc(focus)}">Add to my commitments</button>
       </div>
     </div>`;
 }
@@ -1599,7 +1599,7 @@ function wireTodaysPractice() {
       if (g) state.profile = Profile.setCoping(state.profile, g.id, obstacle, recovery);
     }
     save(); render();
-    announce('Set as today’s practice — it’s in your commitments.');
+    announce('Added to your commitments.');
     const c = app.querySelector('[data-practicecheck]'); if (c) c.focus(); else focusViewHeading();
   };
 }
