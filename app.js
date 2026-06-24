@@ -1152,16 +1152,6 @@ function renderHome() {
               : 'Welcome back'}</div>
       </div>
 
-      ${radarCard(p.domainScores)}
-
-      ${welcomeBackCard(p)}
-
-      ${backupNudgeCard(p)}
-
-      ${lastInsight ? `<div class="card"><div class="insight ${lastInsight.live ? 'live' : ''}" style="border:none;padding:0;">
-        <div class="k">Today's insight</div>
-        <div style="margin-top:6px; white-space:pre-wrap;">${esc(lastInsight.text)}</div></div></div>` : ''}
-
       <h2 class="section-head">Today</h2>
 
       <div class="card">
@@ -1180,6 +1170,16 @@ function renderHome() {
         <button class="btn ${doneToday ? 'ghost' : 'amber'}" id="startsession">${doneToday ? `Keep going → ${esc(kfd.name)}` : 'Go to today’s session →'}</button>
         <p class="muted small center" style="margin:10px 0 0;">Tap the capacity above to learn how to grow it.</p>
       </div>
+
+      ${radarCard(p.domainScores)}
+
+      ${welcomeBackCard(p)}
+
+      ${backupNudgeCard(p)}
+
+      ${lastInsight ? `<div class="card"><div class="insight ${lastInsight.live ? 'live' : ''}" style="border:none;padding:0;">
+        <div class="k">Today's insight</div>
+        <div style="margin-top:6px; white-space:pre-wrap;">${esc(lastInsight.text)}</div></div></div>` : ''}
 
       ${todaysPracticeCard(p)}
 
