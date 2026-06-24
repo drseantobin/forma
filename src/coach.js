@@ -788,10 +788,13 @@ export async function scoreReflection(context, text, profile) {
   try {
     const scale = (context && context.markers) ? rubricScaleText(context.markers) : '';
     const scaleBlock = scale ? `\n\nDevelopmental scale for this capacity (place them on it):\n${scale}` : '';
+    // Capacity-specific judge guidance grounded in the source instrument — e.g. Values requires a
+    // named concrete action; Self-knowledge caps over-certainty (confident self-narration ≠ insight).
+    const noteBlock = (context && context.judgeNote) ? `\n\nCapacity-specific scoring guidance: ${context.judgeNote}` : '';
     const out = await complete(profile, {
       system: REFLECTION_SYSTEM,
       maxTokens: 500,
-      messages: [{ role: 'user', content: `Capacity being formed: ${(context && context.capacity) || 'this capacity'}\n\nThe reflection prompt: ${(context && context.prompt) || ''}${scaleBlock}\n\nWhat they wrote: "${text}"\n\nScore it.` }],
+      messages: [{ role: 'user', content: `Capacity being formed: ${(context && context.capacity) || 'this capacity'}\n\nThe reflection prompt: ${(context && context.prompt) || ''}${scaleBlock}${noteBlock}\n\nWhat they wrote: "${text}"\n\nScore it.` }],
     });
     return parseVignette(out) || soft; // reuses the shared {score,feedback} JSON parser
   } catch {

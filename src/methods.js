@@ -28,11 +28,11 @@ export const MEASURE_BASIS = {
   },
   ai_autonomy: {
     paradigm: 'Appropriate-reliance task + agentic-engagement self-report',
-    detail: 'Rather than measuring how much you use AI, a behavioral task gives you problems with verifiable answers where an AI assistant offers a suggestion — a prediction of a likely answer, not a verified truth, so it is sometimes off: it credits taking good help and, above all, keeping your own judgment in the loop rather than deferring to a confident predictor (the appropriate-reliance paradigm, Schemmer et al. 2023), alongside self-report on how much you stay the author. An adaptation for formation, not a validated "AI-agency" test.',
+    detail: 'Rather than measuring how much you use AI, a behavioral task gives you problems with verifiable answers where an AI assistant offers a suggestion — a prediction of a likely answer, not a verified truth, so it is sometimes off: it credits taking good help and, above all, keeping your own judgment in the loop rather than deferring to a confident predictor (the appropriate-reliance paradigm, Schemmer et al. 2023), alongside a written reflection rated against research-derived markers of agency (the Self-Determination Theory autonomy continuum). The reflection rates the quality of your account, not your calibration — the behavioral task stays the primary signal. An adaptation for formation, not a validated "AI-agency" test.',
   },
   presence: {
     paradigm: 'Situational judgment of relational attention + reflection',
-    detail: 'The capacity to attend to a person without managing or fixing. Measured by situational items — the most present response to someone’s grief, withdrawal, or excitement — drawing on person-centred listening and the "righting reflex" from Motivational Interviewing, alongside guided reflection. Formation, not a personality test.',
+    detail: 'The capacity to attend to a person without managing or fixing. Measured by situational items — the most present response to someone’s grief, withdrawal, or excitement — drawing on person-centred listening and the "righting reflex" from Motivational Interviewing, alongside a written reflection rated against research-derived markers of relational presence (Carkhuff’s ordered empathy levels; Geller & Greenberg’s therapeutic presence). Formation, not a personality test.',
   },
   communication: {
     paradigm: 'Situational judgment + AI-scored open response',
@@ -44,11 +44,11 @@ export const MEASURE_BASIS = {
   },
   values: {
     paradigm: 'Meaning in Life Questionnaire — Presence (Steger 2006); self-report',
-    detail: 'Your own honest rating of how purposeful and meaningful life feels — the Presence-of-Meaning subscale. A self-report reading held in your private Purpose track, never a performance score and never shown to employers. (A reflective sentence-completion practice sits alongside it.)',
+    detail: 'Your own honest rating of how purposeful and meaningful life feels — the Presence-of-Meaning subscale. A self-report reading held in your private Purpose track, never a performance score and never shown to employers. Alongside it, a written values reflection is rated against research-derived markers of values alignment (self-concordance; the Valued Living Questionnaire’s importance-vs-action distinction) — these rate the quality of your reflection, not the meaning score.',
   },
   persistence: {
     paradigm: 'Behavioral persistence + self-report',
-    detail: 'Frustration tolerance is measured behaviorally — whether you stay with a hard task past the urge to quit — combined with an honest self-rating, since the felt experience matters as much as the outcome.',
+    detail: 'Frustration tolerance is measured behaviorally — whether you stay with a hard task past the urge to quit (the dwell-time on the task) — alongside a written reflection rated against research-derived markers of distress tolerance (Simons & Gaher’s Distress Tolerance Scale). Because self-reported and actual persistence diverge, the behavioral signal stays primary.',
   },
   interior: {
     paradigm: 'Contemplative practice + DSES-informed self-report',

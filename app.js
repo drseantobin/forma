@@ -3857,7 +3857,7 @@ function renderReflection() {
     if (Coach.hasKey(state.profile) && text.length >= 15) {
       s._scoringRef = true; render();
       const rub = rubricFor(ex.domain);
-      const ctx = { capacity: getDomain(ex.domain) ? getDomain(ex.domain).name : 'this capacity', prompt: ex.prompt, markers: rub ? rub.markers : null };
+      const ctx = { capacity: getDomain(ex.domain) ? getDomain(ex.domain).name : 'this capacity', prompt: ex.prompt, markers: rub ? rub.markers : null, judgeNote: rub ? rub.judgeNote : null };
       const result = await Coach.scoreReflection(ctx, text, state.profile);
       s.response.aiScore = (result && result.score != null) ? result.score : null;
       if (result && result.feedback) s.response.feedback = result.feedback;
