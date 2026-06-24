@@ -28,7 +28,7 @@ export const MEASURE_BASIS = {
   },
   ai_autonomy: {
     paradigm: 'Appropriate-reliance task + agentic-engagement self-report',
-    detail: 'Rather than measuring how much you use AI, a behavioral task gives you problems with verifiable answers and a sometimes-wrong AI assistant: it credits taking good help and, above all, holding your own judgment when the tool is confidently wrong (the appropriate-reliance paradigm, Schemmer et al. 2023), alongside self-report on how much you stay the author. An adaptation for formation, not a validated "AI-agency" test.',
+    detail: 'Rather than measuring how much you use AI, a behavioral task gives you problems with verifiable answers where an AI assistant offers a suggestion — a prediction of a likely answer, not a verified truth, so it is sometimes off: it credits taking good help and, above all, keeping your own judgment in the loop rather than deferring to a confident predictor (the appropriate-reliance paradigm, Schemmer et al. 2023), alongside self-report on how much you stay the author. An adaptation for formation, not a validated "AI-agency" test.',
   },
   presence: {
     paradigm: 'Situational judgment of relational attention + reflection',

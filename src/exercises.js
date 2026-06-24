@@ -1873,7 +1873,7 @@ export const TRADEOFFS = [
 // paradigm (Schemmer et al. 2023: RAIR = switch to AI when you were wrong; RSR = hold
 // your own when the AI is wrong). Each item has VERIFIABLE answers, so the wrong-AI
 // trials are honest, not rigged. Keyed → single-use-gated in profile.js RECALL_PRONE.
-const RELIANCE_INTRO = 'You’ll work through a few short problems. Each time, commit your own answer first — then an AI assistant offers its take. Sometimes it’s right; sometimes it’s confidently wrong. Decide what to do with it. There’s no penalty for using the tool and none for trusting yourself — what’s measured is whether your reliance fits the moment.';
+const RELIANCE_INTRO = 'You’ll work through a few short problems. Each time, commit your own answer first — then an AI assistant offers a suggestion. An AI predicts a likely answer; it doesn’t know the truth, so its suggestion can sound certain and still be off. Your job is to stay the author: reason it through, check it against what you can verify, and decide. No penalty for using the tool, none for trusting your own working — what’s measured is whether you keep your own judgment in the loop.';
 export const RELIANCE = [
   {
     id: 'rel-reason', type: 'reliance', domain: 'ai_autonomy', title: 'Working With an Assistant',

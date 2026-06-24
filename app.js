@@ -2251,9 +2251,10 @@ function renderDecision() {
 }
 
 // Agency — the behavioral appropriate-reliance task. For each problem: commit your
-// OWN answer, then an AI assistant weighs in (sometimes right, sometimes confidently
-// wrong), and you commit a final answer. Measures whether you stay the author —
-// taking good help, holding your ground against bad help (scoreReliance).
+// OWN answer, then an AI assistant offers a SUGGESTION (a prediction — correct on some
+// trials, off on others; framed as predict-not-know, never an oracle that's "right/wrong").
+// You commit a final answer. Measures whether you stay the author: verifying the suggestion
+// and keeping your own judgment in the loop, not deferring to a confident predictor (scoreReliance).
 function renderReliance() {
   const s = state.session;
   const ex = s.exercise;
@@ -2282,10 +2283,10 @@ function renderReliance() {
       const r = s.response.trials[i] || {};
       const finalCorrect = r.final === t.answer;
       const overRel = !finalCorrect && t.ai && t.ai.correct === false && r.final === t.ai.suggestId;
-      const aiLabel = t.ai && t.ai.correct ? 'The assistant was right' : 'The assistant was wrong';
+      const aiLabel = t.ai && t.ai.correct ? 'Its suggestion held up when you checked it' : 'Its suggestion didn’t hold up when you checked it';
       const verdict = finalCorrect
-        ? (t.ai && !t.ai.correct ? 'You held your own — good.' : 'You landed it.')
-        : (overRel ? 'You went with the assistant, and it was off.' : 'Not quite.');
+        ? (t.ai && !t.ai.correct ? 'You stayed the author — good.' : 'You landed it.')
+        : (overRel ? 'You went with the suggestion, and it didn’t hold up.' : 'Not quite.');
       const cls = finalCorrect ? 'correct' : 'wrong';
       return `<div class="opt ${cls}" style="cursor:default; text-align:left;">
         <div style="font-weight:600;">${esc(t.prompt)}</div>
