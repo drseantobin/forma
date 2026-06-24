@@ -40,6 +40,7 @@ import * as Team from './src/team.js';
 import { buildDemoProfile, SPEC as DEMO_SPEC } from './src/demo.js';
 import { buildReminderIcs, reminderSummary } from './src/reminder.js';
 import { builderDiagnostics } from './src/diagnostics.js';
+import { rubricFor } from './src/rubrics.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
 // The domains to display for the current user (adds Spiritual Life when the
@@ -3855,7 +3856,8 @@ function renderReflection() {
     // is the keyless fallback. Distress is escalated inside scoreReflection before any API call.
     if (Coach.hasKey(state.profile) && text.length >= 15) {
       s._scoringRef = true; render();
-      const ctx = { capacity: getDomain(ex.domain) ? getDomain(ex.domain).name : 'this capacity', prompt: ex.prompt };
+      const rub = rubricFor(ex.domain);
+      const ctx = { capacity: getDomain(ex.domain) ? getDomain(ex.domain).name : 'this capacity', prompt: ex.prompt, markers: rub ? rub.markers : null };
       const result = await Coach.scoreReflection(ctx, text, state.profile);
       s.response.aiScore = (result && result.score != null) ? result.score : null;
       if (result && result.feedback) s.response.feedback = result.feedback;
@@ -3994,7 +3996,7 @@ async function completeSession() {
   // The vignette already produced Claude's rubric feedback — use it as the
   // insight rather than asking for a generic one.
   let insight;
-  if ((s.exercise.type === 'vignette' || s.exercise.type === 'sentence') && s.response.feedback) {
+  if ((s.exercise.type === 'vignette' || s.exercise.type === 'sentence' || s.exercise.type === 'reflection') && s.response.feedback) {
     insight = { text: s.response.feedback, live: true };
   } else {
     // Soft timeout: if a live key stalls, fall back to the rule-based insight

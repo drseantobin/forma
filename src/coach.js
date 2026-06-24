@@ -23,6 +23,7 @@ import {
 import { domainTrend } from './progress.js';
 import { providerFor } from './llm.js';
 import { GROWTH_GUIDE, growthFor } from './growth.js';
+import { rubricScaleText } from './rubrics.js';
 
 export const DEFAULT_MODEL = 'claude-opus-4-8';
 
@@ -774,7 +775,9 @@ export async function scoreSentences(stems, completions, profile) {
 // before any API call, key-gated, and NULL (never a fabricated number) when it can't truly judge.
 const REFLECTION_SYSTEM = `You are scoring a Forma formation reflection. You are NOT diagnosing — never use clinical or pathologizing language. A person wrote a few honest sentences reflecting on a human capacity they are forming. Rate 0–100 how much the reflection shows GENUINE evidence of that capacity at work: honest self-awareness, concrete specifics from real life (a real situation, choice, tension, or feeling named — not platitudes), and ownership over deflection. Reward candor and concreteness over polish or length; a short but specific, honest reflection outscores a long generic one. Judge the SUBSTANCE, never the writing quality. Blank, vague, or evasive answers score lower — but gently.
 
-Return ONLY a JSON object: {"score": <0-100>, "feedback": "<2-3 sentences, second person, warm and plain: one specific thing the reflection quietly reveals that's worth seeing, and one concrete invitation to go further. No clinical language, no scores in the prose, no preamble.>"}`;
+If a DEVELOPMENTAL SCALE is given, PLACE the reflection on it and let that anchor your score: Emerging → 0–39, Developing → 40–59, Strong → 60–79, Thriving → 80–100. In your feedback, name in plain words where they are on that path now and what the next level up would actually look like in real life — a direction, never a verdict.
+
+Return ONLY a JSON object: {"score": <0-100>, "feedback": "<2-3 sentences, second person, warm and plain: where they are on the path and what the next step up looks like, grounded in something specific they wrote. No clinical language, no scores or band names in the prose, no preamble.>"}`;
 
 export async function scoreReflection(context, text, profile) {
   // Safety guardrail: a reflection can carry a crisis disclosure. Escalate BEFORE any API call or
@@ -783,10 +786,12 @@ export async function scoreReflection(context, text, profile) {
   if (!hasKey(profile)) return null; // keyless → caller falls back to the self-rating
   const soft = { score: null, feedback: "Saved — adding an API key in Settings lets the coach read what you wrote and reflect it back. Either way, the honest looking is the rep." };
   try {
+    const scale = (context && context.markers) ? rubricScaleText(context.markers) : '';
+    const scaleBlock = scale ? `\n\nDevelopmental scale for this capacity (place them on it):\n${scale}` : '';
     const out = await complete(profile, {
       system: REFLECTION_SYSTEM,
       maxTokens: 500,
-      messages: [{ role: 'user', content: `Capacity being formed: ${(context && context.capacity) || 'this capacity'}\n\nThe reflection prompt: ${(context && context.prompt) || ''}\n\nWhat they wrote: "${text}"\n\nScore it.` }],
+      messages: [{ role: 'user', content: `Capacity being formed: ${(context && context.capacity) || 'this capacity'}\n\nThe reflection prompt: ${(context && context.prompt) || ''}${scaleBlock}\n\nWhat they wrote: "${text}"\n\nScore it.` }],
     });
     return parseVignette(out) || soft; // reuses the shared {score,feedback} JSON parser
   } catch {
