@@ -766,6 +766,34 @@ export async function scoreSentences(stems, completions, profile) {
   }
 }
 
+// --- Reflection scoring (v320): the reflection exercises (persistence, agency, presence, values)
+// collect honest written sentences but used to score ONLY by the 1–5 self-rating — "how did you
+// think you did?" giving yourself the grade. This judges the WRITTEN CONTENT instead: AI reads
+// the reflection and scores the actual evidence of the capacity, with the self-rating kept only
+// as a keyless fallback (scoreExercise). Same guardrails as scoreVignette: distress-escalation
+// before any API call, key-gated, and NULL (never a fabricated number) when it can't truly judge.
+const REFLECTION_SYSTEM = `You are scoring a Forma formation reflection. You are NOT diagnosing — never use clinical or pathologizing language. A person wrote a few honest sentences reflecting on a human capacity they are forming. Rate 0–100 how much the reflection shows GENUINE evidence of that capacity at work: honest self-awareness, concrete specifics from real life (a real situation, choice, tension, or feeling named — not platitudes), and ownership over deflection. Reward candor and concreteness over polish or length; a short but specific, honest reflection outscores a long generic one. Judge the SUBSTANCE, never the writing quality. Blank, vague, or evasive answers score lower — but gently.
+
+Return ONLY a JSON object: {"score": <0-100>, "feedback": "<2-3 sentences, second person, warm and plain: one specific thing the reflection quietly reveals that's worth seeing, and one concrete invitation to go further. No clinical language, no scores in the prose, no preamble.>"}`;
+
+export async function scoreReflection(context, text, profile) {
+  // Safety guardrail: a reflection can carry a crisis disclosure. Escalate BEFORE any API call or
+  // scoring, and before the key gate (protects keyless users too) — never transmit/score distress.
+  if (looksLikeDistress(text)) return { score: null, feedback: ESCALATION_MESSAGE, escalated: true };
+  if (!hasKey(profile)) return null; // keyless → caller falls back to the self-rating
+  const soft = { score: null, feedback: "Saved — adding an API key in Settings lets the coach read what you wrote and reflect it back. Either way, the honest looking is the rep." };
+  try {
+    const out = await complete(profile, {
+      system: REFLECTION_SYSTEM,
+      maxTokens: 500,
+      messages: [{ role: 'user', content: `Capacity being formed: ${(context && context.capacity) || 'this capacity'}\n\nThe reflection prompt: ${(context && context.prompt) || ''}\n\nWhat they wrote: "${text}"\n\nScore it.` }],
+    });
+    return parseVignette(out) || soft; // reuses the shared {score,feedback} JSON parser
+  } catch {
+    return soft;
+  }
+}
+
 // Generic completion helper so other modules (e.g. the Diagnostic Agent) can
 // reuse the same browser-direct Claude plumbing and the user's key/model.
 export async function complete(profile, { system, messages, maxTokens = 1024 }) {

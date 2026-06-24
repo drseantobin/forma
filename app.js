@@ -3815,6 +3815,16 @@ function closingLineFor(m, r) {
 function renderReflection() {
   const s = state.session;
   const ex = s.exercise;
+  // AI is reading the written reflection (v320) — a brief, honest loading beat, like the vignette.
+  if (s._scoringRef) {
+    app.innerHTML = `
+      <div class="fade-in center">
+        ${sessionHeader(ex)}
+        <div class="card" style="margin-top:18px;"><p>Reading what you wrote…</p>
+        <p class="muted small">Scoring the substance of your reflection, not just a self-rating.</p></div>
+      </div>`;
+    return;
+  }
   const rating = s.response.selfRating;
   app.innerHTML = `
     <div class="fade-in">
@@ -3838,7 +3848,22 @@ function renderReflection() {
     s.response.selfRating = Number(b.dataset.n);
     render();
   });
-  document.getElementById('fin').onclick = completeSession;
+  document.getElementById('fin').onclick = async () => {
+    const text = (s.response.text || '').trim();
+    // With a live key and a real reflection, let AI judge the CONTENT (the score); the self-rating
+    // is the keyless fallback. Distress is escalated inside scoreReflection before any API call.
+    if (Coach.hasKey(state.profile) && text.length >= 15) {
+      s._scoringRef = true; render();
+      const ctx = { capacity: getDomain(ex.domain) ? getDomain(ex.domain).name : 'this capacity', prompt: ex.prompt };
+      const result = await Coach.scoreReflection(ctx, text, state.profile);
+      s.response.aiScore = (result && result.score != null) ? result.score : null;
+      if (result && result.feedback) s.response.feedback = result.feedback;
+      s._scoringRef = false;
+      completeSession();
+    } else {
+      completeSession();
+    }
+  };
 }
 
 async function completeSession() {

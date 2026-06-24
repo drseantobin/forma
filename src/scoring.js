@@ -417,7 +417,10 @@ export function scoreExercise(exercise, response) {
     case 'pursuit':
       return scorePursuit(response.onFrames || 0, response.totalFrames || 0);
     case 'reflection':
-      return scoreSelfRating(response.selfRating || 3);
+      // Prefer AI judgment of the WRITTEN reflection (v320). The self-rating is only the keyless
+      // fallback — never the headline when the content was actually read. null aiScore (no key /
+      // API fail / unparseable) falls through to the honest self-rating rather than fabricating.
+      return response.aiScore != null ? clamp(round(response.aiScore)) : scoreSelfRating(response.selfRating || 3);
     default:
       return 0;
   }
