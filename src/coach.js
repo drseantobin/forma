@@ -23,7 +23,7 @@ import {
 import { domainTrend } from './progress.js';
 import { providerFor } from './llm.js';
 import { GROWTH_GUIDE, growthFor } from './growth.js';
-import { rubricScaleText } from './rubrics.js';
+import { rubricScaleText, rubricFor } from './rubrics.js';
 
 export const DEFAULT_MODEL = 'claude-opus-4-8';
 
@@ -703,6 +703,8 @@ export function offlineCoachReply(userText, profile, opts = {}) {
 // returns one piece of formative feedback. Growth-framed, never clinical.
 const VIGNETTE_SYSTEM = `You are scoring a Forma communication exercise. You are NOT diagnosing anyone and you never use clinical language. A person was given a charged interpersonal scenario and said how they would respond. Rate that response 0–100 on how well it embodies real relational presence and emotional intelligence: did they attune to the other person's emotional reality before fixing, advising, or defending? Perspective-taking, warmth, clarity, non-defensiveness and repair. Reward genuine listening over clever solutions. A clumsy but warm, present response should outscore a polished but defensive or fix-it-first one.
 
+If a DEVELOPMENTAL SCALE is given, PLACE the response on it and let that anchor your score: Emerging → 0–39, Developing → 40–59, Strong → 60–79, Thriving → 80–100. A response too thin to show real evidence cannot score above Developing. In your feedback, name where they are on the path and what the next level up looks like — a direction, never a verdict.
+
 Return ONLY a JSON object, nothing else:
 {"score": <0-100>, "feedback": "<2-3 sentences, second person, warm and plain: one specific thing the response did well, and one concrete thing to try. No clinical language, no scores in the prose, no preamble.>"}`;
 
@@ -733,7 +735,7 @@ export async function scoreVignette(vignette, transcript, profile) {
     const text = await complete(profile, {
       system: VIGNETTE_SYSTEM,
       maxTokens: 500,
-      messages: [{ role: 'user', content: `Scenario: ${vignette.scenario}\n\nThe prompt they answered: ${vignette.prompt}\n\nTheir response: "${transcript}"\n\nScore it.` }],
+      messages: [{ role: 'user', content: `Scenario: ${vignette.scenario}\n\nThe prompt they answered: ${vignette.prompt}${scaleBlockFor('communication')}\n\nTheir response: "${transcript}"\n\nScore it.` }],
     });
     return parseVignette(text) || soft;
   } catch {
@@ -743,6 +745,8 @@ export async function scoreVignette(vignette, transcript, profile) {
 
 // --- Sentence-completion scoring (Rotter RISB lineage, formative not clinical) ---
 const SENTENCES_SYSTEM = `You are scoring a Forma self-reflection exercise: a person finished several incomplete sentences. You are NOT diagnosing — never use clinical or pathologizing language. Rate 0–100 how much honest self-awareness and coherence the completions show: candor over deflection, emotional specificity (a real feeling named, not "fine"), and the sense of someone who actually knows themselves. Reward honesty over polish; a raw, true completion outscores a guarded, clever one. Blank or evasive answers score lower, but gently.
+
+If a DEVELOPMENTAL SCALE is given, PLACE the completions on it and let that anchor your score: Emerging → 0–39, Developing → 40–59, Strong → 60–79, Thriving → 80–100. Completions too thin to show real evidence cannot score above Developing. In your feedback, name where they are on the path and what the next level up looks like — a direction, never a verdict.
 
 Return ONLY a JSON object: {"score": <0-100>, "feedback": "<2-3 sentences, second person, warm and plain: one thing their answers quietly reveal that's worth seeing, and one gentle invitation to look further. No clinical language, no scores in the prose, no preamble.>"}`;
 
@@ -759,7 +763,7 @@ export async function scoreSentences(stems, completions, profile) {
     const text = await complete(profile, {
       system: SENTENCES_SYSTEM,
       maxTokens: 500,
-      messages: [{ role: 'user', content: `Their sentence completions:\n${pairs}\n\nScore them.` }],
+      messages: [{ role: 'user', content: `Their sentence completions:\n${pairs}${scaleBlockFor('self_knowledge')}\n\nScore them.` }],
     });
     return parseVignette(text) || soft;
   } catch {
@@ -775,9 +779,21 @@ export async function scoreSentences(stems, completions, profile) {
 // before any API call, key-gated, and NULL (never a fabricated number) when it can't truly judge.
 const REFLECTION_SYSTEM = `You are scoring a Forma formation reflection. You are NOT diagnosing — never use clinical or pathologizing language. A person wrote a few honest sentences reflecting on a human capacity they are forming. Rate 0–100 how much the reflection shows GENUINE evidence of that capacity at work: honest self-awareness, concrete specifics from real life (a real situation, choice, tension, or feeling named — not platitudes), and ownership over deflection. Reward candor and concreteness over polish or length; a short but specific, honest reflection outscores a long generic one. Judge the SUBSTANCE, never the writing quality. Blank, vague, or evasive answers score lower — but gently.
 
-If a DEVELOPMENTAL SCALE is given, PLACE the reflection on it and let that anchor your score: Emerging → 0–39, Developing → 40–59, Strong → 60–79, Thriving → 80–100. In your feedback, name in plain words where they are on that path now and what the next level up would actually look like in real life — a direction, never a verdict.
+If a DEVELOPMENTAL SCALE is given, PLACE the reflection on it and let that anchor your score: Emerging → 0–39, Developing → 40–59, Strong → 60–79, Thriving → 80–100. A reflection too short or thin to show real evidence cannot score above Developing — there is not enough there to judge Strong or Thriving. In your feedback, name in plain words where they are on that path now and what the next level up would actually look like in real life — a direction, never a verdict.
 
 Return ONLY a JSON object: {"score": <0-100>, "feedback": "<2-3 sentences, second person, warm and plain: where they are on the path and what the next step up looks like, grounded in something specific they wrote. No clinical language, no scores or band names in the prose, no preamble.>"}`;
+
+// Build the developmental-scale + judge-note block for a capacity rubric, by capacity id. Used by the
+// vignette (communication) and sentence (self_knowledge) judges; scoreReflection gets its markers via
+// the caller's context (looked up by domain there).
+function scaleBlockFor(rubricId) {
+  const rub = rubricFor(rubricId);
+  if (!rub) return '';
+  const scale = rubricScaleText(rub.markers);
+  if (!scale) return '';
+  const note = rub.judgeNote ? `\n\nCapacity-specific scoring guidance: ${rub.judgeNote}` : '';
+  return `\n\nDevelopmental scale for this capacity (place them on it):\n${scale}${note}`;
+}
 
 export async function scoreReflection(context, text, profile) {
   // Safety guardrail: a reflection can carry a crisis disclosure. Escalate BEFORE any API call or

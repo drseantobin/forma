@@ -88,6 +88,18 @@ export function applyBaseline(profile, domainScores, responses) {
 
 // Apply a completed daily session. Returns { profile, session } where session
 // includes the computed rawScore and the new domain scale value.
+// How a session's score was produced — so AI-judged scores never silently pool with objective
+// performance scores in the psychometric pipeline (forma-validity flag, v324). 'ai-judged' = a
+// rubric placed by the coach model; 'self-report' = the person's own rating; 'performance' = scored
+// from behavior/accuracy on the task. Recorded per session for honest downstream analysis.
+const AI_JUDGED_TYPES = ['reflection', 'vignette', 'sentence'];
+const SELF_REPORT_TYPES = ['meaning', 'contemplation'];
+export function scoreSourceFor(type) {
+  if (AI_JUDGED_TYPES.includes(type)) return 'ai-judged';
+  if (SELF_REPORT_TYPES.includes(type)) return 'self-report';
+  return 'performance';
+}
+
 export function applySession(profile, exercise, response, opts = {}) {
   const p = clone(profile);
   const now = opts.now ? new Date(opts.now) : new Date();
@@ -163,6 +175,7 @@ export function applySession(profile, exercise, response, opts = {}) {
     newDomainScore,
     priorBandPeak,
     unscored: !measured,
+    scoreSource: scoreSourceFor(exercise.type),
     response: summarizeResponse(exercise, response),
   };
   p.sessions.push(session);

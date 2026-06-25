@@ -40,7 +40,7 @@ import * as Team from './src/team.js';
 import { buildDemoProfile, SPEC as DEMO_SPEC } from './src/demo.js';
 import { buildReminderIcs, reminderSummary } from './src/reminder.js';
 import { builderDiagnostics } from './src/diagnostics.js';
-import { rubricFor } from './src/rubrics.js';
+import { rubricFor, BAND_KEYS, BAND_LABELS } from './src/rubrics.js';
 
 const DOMAIN_ORDER = DOMAINS.map((d) => d.id);
 // The domains to display for the current user (adds Spiritual Life when the
@@ -3946,6 +3946,7 @@ async function completeSession() {
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
         ${conftag ? `<div class="muted small" style="margin-top:4px;">${esc(conftag)}</div>` : ''}`}
       </div>
+      ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? rubricLadder(s.exercise, rawScore) : ''}
       ${milestoneBanner}
       <div class="card" id="insight" aria-live="polite">
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
@@ -5068,6 +5069,35 @@ function methodTier(id) {
   if (OBJECTIVE_DOMAINS.includes(id)) return { label: 'Measured', cls: 'measured', title: 'Measured directly from how you did on a task.' };
   if (REFLECTIVE_DOMAINS.includes(id)) return { label: 'Self-report', cls: 'selfreport', title: 'From your own ratings and reflection — a self-perception, not a performance score.' };
   return null;
+}
+
+// The right developmental rubric for an exercise: a sentence-completion measures self-knowledge
+// (it shares the 'values' domain), so it's looked up by intent; everything else by domain.
+function rubricForExercise(ex) {
+  if (!ex) return null;
+  if (ex.type === 'sentence') return rubricFor('self_knowledge');
+  if (ex.type === 'vignette' || ex.type === 'reflection') return rubricFor(ex.domain);
+  return null;
+}
+
+// The visual 4-rung "what health looks like" ladder (v324) — the scale made visible, with the
+// person's placement highlighted. Only shown when AI actually judged the response against the markers.
+function rubricLadder(ex, score) {
+  const rub = rubricForExercise(ex);
+  if (!rub || score == null) return '';
+  const curBand = bandFor(score).label.toLowerCase();
+  const rungs = BAND_KEYS.slice().reverse().map((b) => {
+    const on = b === curBand;
+    return `<div class="ladder-rung${on ? ' on' : ''}"${on ? ' aria-current="true"' : ''}>
+        <span class="ladder-band">${esc(BAND_LABELS[b] || b)}</span>
+        <span class="ladder-marker">${esc(rub.markers[b] || '')}</span>
+      </div>`;
+  }).join('');
+  return `<div class="card ladder-card">
+      <div class="k">Where you are · ${esc(rub.label)}</div>
+      <div class="ladder">${rungs}</div>
+      <p class="muted small" style="margin:10px 0 0;">Rated against research-derived markers of this capacity — a direction to grow, never a verdict.</p>
+    </div>`;
 }
 
 function progressRow(id) {
