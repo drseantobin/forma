@@ -1084,7 +1084,11 @@ function indexRing(value, opts = {}) {
   const arcStroke = opts.color ? ` style="stroke:${opts.color}"` : '';
   const numId = opts.numId ? ` id="${opts.numId}"` : '';
   const shown = opts.start != null ? opts.start : v;
-  return `<div class="index-ring" role="img" aria-label="${esc(label)}: ${v} out of 100">
+  // soft = an AI-judged (rather than performance-measured) reading — drawn dashed + lighter with an
+  // "≈" prefix (v325), so a reflection score never reads with the hard certainty of a Flanker score.
+  const softCls = opts.soft ? ' soft' : '';
+  const softLabel = opts.soft ? ' (an approximate AI read)' : '';
+  return `<div class="index-ring${softCls}" role="img" aria-label="${esc(label)}: ${v} out of 100${softLabel}">
       <svg class="index-ring-svg" viewBox="0 0 120 120" aria-hidden="true">
         <circle class="ring-track" cx="60" cy="60" r="54"></circle>
         <circle class="ring-arc" cx="60" cy="60" r="54"${arcStroke} stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${C.toFixed(2)}" data-arc-to="${off}"></circle>
@@ -3942,11 +3946,11 @@ async function completeSession() {
         <div id="srscore" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         ${unscored
           ? `<div class="lbl" style="margin-top:6px;">${esc(getDomain(s.exercise.domain).name)} · reflection saved</div>`
-          : `${indexRing(rawScore, { label: getDomain(s.exercise.domain).name, color: band.color, numId: 'bigscore', start: 0 })}
+          : `${indexRing(rawScore, { label: getDomain(s.exercise.domain).name, color: band.color, numId: 'bigscore', start: 0, soft: (s.response.aiScore != null && !!rubricForExercise(s.exercise)) })}
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
         ${conftag ? `<div class="muted small" style="margin-top:4px;">${esc(conftag)}</div>` : ''}`}
       </div>
-      ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? rubricLadder(s.exercise, rawScore) : ''}
+      ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? aiTrustNote(s.exercise) + rubricLadder(s.exercise, rawScore) : ''}
       ${milestoneBanner}
       <div class="card" id="insight" aria-live="polite">
         <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
@@ -5097,6 +5101,19 @@ function rubricLadder(ex, score) {
       <div class="k">Where you are · ${esc(rub.label)}</div>
       <div class="ladder">${rungs}</div>
       <p class="muted small" style="margin:10px 0 0;">Rated against research-derived markers of this capacity — a direction to grow, never a verdict.</p>
+    </div>`;
+}
+
+// The "trust layer" for an AI-judged result (v325) — the honest caveat the external panel converged on:
+// an AI read of the WRITING about a capacity isn't the capacity itself, and can reward articulate prose.
+// One read is provisional; the trend is the signal. Shown under the (softened) score.
+function aiTrustNote(ex) {
+  const rub = rubricForExercise(ex);
+  if (!rub) return '';
+  const name = esc(rub.label.toLowerCase());
+  return `<div class="card trust-note">
+      <div class="row" style="gap:8px; align-items:center; margin-bottom:4px;"><span class="method-tag method-selfreport">AI read</span><span class="muted small">how much to trust this</span></div>
+      <p class="muted small" style="margin:0; line-height:1.5;">This is an AI’s read of <strong>what you wrote</strong> about ${name} — not ${name} itself — so it can reward articulate writing as much as the real thing. Treat one read as provisional; the <strong>trend over weeks</strong> is the signal that matters.</p>
     </div>`;
 }
 
