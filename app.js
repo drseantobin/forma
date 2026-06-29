@@ -5173,12 +5173,13 @@ function recentReadsLine(ex) {
   // The trust note asserts "the trend over weeks is the signal" — so SHOW the trend, don't just say it
   // (v332, forma-design). Dashed + ink-faint, never a solid band line: a settled EMA trajectory (the
   // per-capacity page) is drawn solid in band.color; these are AI-judged single reads — the SAME
-  // lower-certainty class the soft dashed ring already marks, so they get the dashed treatment too.
-  // Caption text preserved verbatim (the data is also there for non-SVG/SR users, plus aria-label).
+  // lower-certainty class the soft dashed ring already marks, so they share its dash (the --soft-dash
+  // token, applied via the .recentreads path CSS rule — v333). Caption text preserved verbatim (the
+  // data is also there for non-SVG/SR users, plus aria-label).
   return `<div class="card recentreads">
       <div class="k">Your recent ${esc(label)} reads</div>
       <svg viewBox="0 0 320 48" width="100%" style="margin-top:8px; max-width:440px;" role="img" aria-label="Your recent ${esc(label)} reads: ${recent.join(', ')} out of 100">
-        <path d="${sparklinePath(recent, 320, 48, 6)}" fill="none" stroke="var(--ink-faint)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 5"/>
+        <path d="${sparklinePath(recent, 320, 48, 6)}" fill="none" stroke="var(--ink-faint)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <p class="muted small" style="margin:6px 0 0;">${recent.join(' → ')}. One read is a data point — the line is the signal.</p>
     </div>`;

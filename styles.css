@@ -25,6 +25,11 @@
   --shadow-lg: 0 4px 12px rgba(27,28,40,.08), 0 24px 48px rgba(27,28,40,.10);
   --radius: 18px;
   --radius-sm: 12px;
+  /* The "provisional read" visual language: a single dash pattern shared by everything that shows an
+     AI-judged (vs hard-measured) value — the soft score ring (v325) and the recent-reads sparkline
+     (v332). One source of truth so a measured trend stays solid and an AI-read trend stays dashed,
+     consistently, wherever a new lower-certainty readout appears. Theme-independent (geometry, not color). */
+  --soft-dash: 3 5;
   /* One 8px spacing rhythm for padding + vertical gaps — consistent whitespace is the
      cheapest "premium" signal. Cards run a touch roomier (22px) than the old tight 20px. */
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
@@ -423,7 +428,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* Soft ring (v325): an AI-judged reading drawn dashed + lighter with an "≈" prefix, so a reflection
    score never carries the hard certainty of a performance-measured one (the epistemic-honesty fix). */
-.index-ring.soft .ring-arc { stroke-dasharray: 3 5 !important; opacity: .7; }
+.index-ring.soft .ring-arc { stroke-dasharray: var(--soft-dash) !important; opacity: .7; }
 .index-ring.soft .index-num { opacity: .82; }
 .index-ring.soft .index-num::before { content: "\2248"; font-size: .62em; opacity: .55; vertical-align: middle; margin-right: 1px; }
 .trust-note { border-left: 3px solid color-mix(in srgb, var(--ink-faint) 40%, transparent); margin-top: 12px; }
@@ -431,6 +436,7 @@ button { font-family: inherit; cursor: pointer; }
 /* Recent AI-judged reads, drawn (v332): the trust note says "the trend is the signal" — so show the
    trend. Shares the trust-note's hairline so trust-note + reads + ladder read as one calm group. */
 .recentreads { border-left: 3px solid color-mix(in srgb, var(--ink-faint) 40%, transparent); margin-top: 12px; }
+.recentreads path { stroke-dasharray: var(--soft-dash); } /* shares the soft ring's provisional-read dash */
 
 .demo-banner-actions { flex: none; display: flex; align-items: center; gap: 14px; }
 .demo-banner-tour { flex: none; background: var(--amber-ink); color: var(--amber-soft); border: none; font: inherit; font-weight: 700; cursor: pointer; padding: 4px 12px; white-space: nowrap; border-radius: 999px; font-size: .8rem; }
