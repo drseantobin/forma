@@ -40,6 +40,12 @@ export function cleanDemographics(input) {
   return out;
 }
 
+// The de-identified score-provenance enum — HARD-validated at the data boundary so only these exact
+// values can ever leave the device (defense-in-depth, Codex review: buildEvent/recordSession are pure
+// exported fns that could be handed a malformed session, and cleanFlushEvent re-checks queued values too).
+export const SCORE_SOURCE_VALUES = new Set(['performance', 'ai-judged', 'self-report', 'unscored']);
+function cleanScoreSource(v) { return SCORE_SOURCE_VALUES.has(v) ? v : null; }
+
 // Build a de-identified event from a completed session, or null if it must not be
 // captured at all. Pure: no side effects, no I/O. `response` is the RAW response —
 // we read ONLY its short optionId; its free-text fields are never touched.
@@ -55,6 +61,12 @@ export function buildEvent(session, response, today) {
     score: session.rawScore == null ? null : session.rawScore,
     measured: session.unscored !== true,
   };
+  // How the score was DERIVED ('performance' | 'ai-judged' | 'self-report' | 'unscored') — a benign
+  // methodological tag, not content: no PII, no interior (already dropped above), no free text. Carrying
+  // it lets the pooled analysis SEPARATE AI-judged rubric scores from objective performance scores
+  // instead of silently mixing them (the 2026-06-24 panel's core validity concern). Hard-validated. v336.
+  const source = cleanScoreSource(session.scoreSource);
+  if (source) ev.scoreSource = source;
   // A short keyed option id is the CHOICE (the heart of item analysis), not content.
   // Free-text exercises carry no optionId, so their words never reach here — only
   // the numeric score does. We copy ONLY this one field off the raw response.
@@ -106,11 +118,14 @@ export function recordSession(profile, session, response, today) {
 export const FLUSH_SCHEMA = 1;
 // ALLOW-LIST: the ONLY fields that may leave the device. PII is impossible by
 // construction — buildBatch never references profile.contact/release/settings/coachLog.
-const FLUSH_EVENT_FIELDS = ['t', 'day', 'type', 'domain', 'score', 'measured', 'option', 'item', 'seq'];
+const FLUSH_EVENT_FIELDS = ['t', 'day', 'type', 'domain', 'score', 'measured', 'option', 'item', 'seq', 'scoreSource'];
 function cleanFlushEvent(ev) {
   if (!ev || typeof ev !== 'object') return null;
   const out = {};
   FLUSH_EVENT_FIELDS.forEach((k) => { if (ev[k] !== undefined) out[k] = ev[k]; });
+  // Re-validate the provenance enum at the egress boundary too — a queued event (possibly from an older
+  // build or a tampered store) can never flush a non-enum scoreSource value (Codex review, v336).
+  if (out.scoreSource !== undefined && cleanScoreSource(out.scoreSource) == null) delete out.scoreSource;
   return out;
 }
 
