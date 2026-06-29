@@ -3962,7 +3962,7 @@ async function completeSession() {
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
         ${conftag ? `<div class="muted small" style="margin-top:4px;">${esc(conftag)}</div>` : ''}`}
       </div>
-      ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? aiTrustNote(s.exercise) + rubricLadder(s.exercise, rawScore) : ''}
+      ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? aiTrustNote(s.exercise) + rubricLadder(s.exercise, rawScore) + recentReadsLine(s.exercise) : ''}
       ${(s.exercise.type === 'reflection' && s.response.practice && (s.response.text || '').trim() && rubricForExercise(s.exercise)) ? practiceLadder(s.exercise) : ''}
       ${milestoneBanner}
       <div class="card" id="insight" aria-live="polite">
@@ -5128,6 +5128,20 @@ function aiTrustNote(ex) {
       <div class="row" style="gap:8px; align-items:center; margin-bottom:4px;"><span class="method-tag method-selfreport">AI read</span><span class="muted small">how much to trust this</span></div>
       <p class="muted small" style="margin:0; line-height:1.5;">This is an AI’s read of <strong>what you wrote</strong> about ${name} — not ${name} itself — so it can reward articulate writing as much as the real thing. Treat one read as provisional; the <strong>trend over weeks</strong> is the signal that matters.</p>
     </div>`;
+}
+
+// Change-over-time (v329): on an AI-judged result, show the recent ACTUAL reads as a trajectory so the
+// trust note's "the trend is the signal" is concrete. Built from sessions filtered to this exercise's
+// AI-judged reads (rawScore — the real read, NOT the EMA domain scale) — fixes a Codex-caught mismatch
+// and avoids cross-pollution (sentence shares the 'values' domain; vignette shares 'communication').
+function recentReadsLine(ex) {
+  const rows = (state.profile.sessions || [])
+    .filter((r) => r && !r.unscored && r.scoreSource === 'ai-judged' && r.type === ex.type && r.domain === ex.domain && r.rawScore != null);
+  if (rows.length < 2) return ''; // need at least two reads before a trend means anything
+  const recent = rows.slice(-5).map((r) => r.rawScore);
+  const rub = rubricForExercise(ex);
+  const label = rub ? rub.label : (getDomain(ex.domain) ? getDomain(ex.domain).name : 'this capacity');
+  return `<p class="muted small center" style="margin:8px 0 0;">Your recent ${esc(label)} reads: <strong>${recent.join(' → ')}</strong>. One read is a data point — the line is the signal.</p>`;
 }
 
 // Keyless Practice Mode (v328): a keyless reflection is unscored (v326), so instead of a dead end the
