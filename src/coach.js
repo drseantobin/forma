@@ -257,7 +257,13 @@ export function profileSummary(profile, focusDomain = null) {
   if (recent.length) {
     lines.push('Recent sessions:');
     for (const s of recent) {
-      lines.push(`  - ${s.date}: ${domainName(s.domain)} (${s.type}) scored ${s.rawScore}`);
+      // Honest provenance for the coach (v330, Codex finding): an unscored session is NOT "scored null"
+      // (that misreads as a zero); and an AI-read of a reflection is softer than a performance score — the
+      // coach must hold it as lightly as the UI does (mirrors the trust note + scoreSource tagging).
+      const src = s.scoreSource === 'ai-judged' ? ' (AI read of their writing — provisional, not a hard measure)'
+        : s.scoreSource === 'self-report' ? ' (self-report)' : '';
+      const detail = s.rawScore != null ? `scored ${s.rawScore}${src}` : 'saved, unscored (practice — didn’t move the scale)';
+      lines.push(`  - ${s.date}: ${domainName(s.domain)} (${s.type}) ${detail}`);
     }
   }
   // Recent WRITTEN reflections — what the person actually SAID in their practices, so the coach
@@ -286,7 +292,7 @@ export function profileSummary(profile, focusDomain = null) {
   }
   const trajIds = Object.keys(trajById).filter((id) => trajById[id].length >= 2);
   if (trajIds.length) {
-    lines.push('Measurement trajectory by capacity (their own scores, oldest → newest):');
+    lines.push('Score trajectory by capacity (their own readings, oldest → newest — some are AI reads of reflections, not hard measurements):');
     for (const id of trajIds) lines.push(`  - ${domainName(id)}: ${trajById[id].slice(-6).join(' → ')}`);
   }
   // FOCUSED deep-dive: a per-domain coach thread is ABOUT one capacity — give the coach that
@@ -392,7 +398,7 @@ export async function dailyInsight(session, profile) {
       messages: [
         {
           role: 'user',
-          content: `The person just finished today's session: ${domainName(session.domain)} (${session.type}), scoring ${session.rawScore}/100. Their broader picture:\n\n${profileSummary(profile)}\n\nReturn ONE insight about today's session relative to their pattern — two or three sentences, specific and encouraging, no preamble.`,
+          content: `The person just finished today's session: ${domainName(session.domain)} (${session.type}), ${session.rawScore == null ? 'saved as practice — it did not move the scale' : `scoring ${session.rawScore}/100`}. Their broader picture:\n\n${profileSummary(profile)}\n\nReturn ONE insight about today's session relative to their pattern — two or three sentences, specific and encouraging, no preamble.`,
         },
       ],
     });
