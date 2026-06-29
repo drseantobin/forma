@@ -21,6 +21,13 @@ export function dailyInsight(session, profile) {
   const { domain, rawScore, type } = session;
   const name = domainName(domain);
 
+  // Keyless Practice Mode (v328, Codex review): an unscored reflection didn't move the scale, so don't
+  // explain a "cause" as if it were measured — name it as practice. (A distress reflection carries its
+  // own escalation feedback and never reaches here.)
+  if (type === 'reflection' && rawScore == null) {
+    return `Reflection saved for ${name}. This was practice, not a measurement — the scale didn’t move, but the honest looking is the rep.`;
+  }
+
   // Prior average for this domain (excluding today's session). Use only DIRECT
   // measurements of this domain: secondary-credit rows (exerciseType ".*-secondary",
   // written by applySession) carry the PRIMARY exercise's rawScore, not a real

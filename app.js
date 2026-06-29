@@ -3877,6 +3877,9 @@ function renderReflection() {
       s._scoringRef = false;
       completeSession();
     } else {
+      // Keyless (or too-short) → honest PRACTICE, not a scored measure (v328). The reveal shows the
+      // developmental markers so the reflection is still formative — the looking is the rep.
+      s.response.practice = true;
       completeSession();
     }
   };
@@ -3960,9 +3963,10 @@ async function completeSession() {
         ${conftag ? `<div class="muted small" style="margin-top:4px;">${esc(conftag)}</div>` : ''}`}
       </div>
       ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? aiTrustNote(s.exercise) + rubricLadder(s.exercise, rawScore) : ''}
+      ${(s.exercise.type === 'reflection' && s.response.practice && (s.response.text || '').trim() && rubricForExercise(s.exercise)) ? practiceLadder(s.exercise) : ''}
       ${milestoneBanner}
       <div class="card" id="insight" aria-live="polite">
-        <div class="row"><span class="spinner"></span> <span class="muted">Your coach is reading the session…</span></div>
+        <div class="row"><span class="spinner"></span> <span class="muted">${s.response.practice ? 'Saving your practice…' : 'Your coach is reading the session…'}</span></div>
       </div>
       ${growthCard(s.exercise.domain, { compact: true })}
       ${nfx ? `<p class="muted small" style="margin:4px 0 6px;">That’s today’s — genuinely enough. If you’re in a groove, the most useful next is <strong>${esc(nfx.name)}</strong> — ${esc(nfx.short.toLowerCase())}.</p>
@@ -5123,6 +5127,23 @@ function aiTrustNote(ex) {
   return `<div class="card trust-note">
       <div class="row" style="gap:8px; align-items:center; margin-bottom:4px;"><span class="method-tag method-selfreport">AI read</span><span class="muted small">how much to trust this</span></div>
       <p class="muted small" style="margin:0; line-height:1.5;">This is an AI’s read of <strong>what you wrote</strong> about ${name} — not ${name} itself — so it can reward articulate writing as much as the real thing. Treat one read as provisional; the <strong>trend over weeks</strong> is the signal that matters.</p>
+    </div>`;
+}
+
+// Keyless Practice Mode (v328): a keyless reflection is unscored (v326), so instead of a dead end the
+// reveal shows the developmental markers as "what growth looks like" — no rung highlighted, no fabricated
+// score, framed as practice. Fills the keyless gap on-brand (formation, not measurement; GLM's flag).
+function practiceLadder(ex) {
+  const rub = rubricForExercise(ex);
+  if (!rub) return '';
+  const rungs = BAND_KEYS.slice().reverse().map((b) => `<div class="ladder-rung">
+        <span class="ladder-band">${esc(BAND_LABELS[b] || b)}</span>
+        <span class="ladder-marker">${esc(rub.markers[b] || '')}</span>
+      </div>`).join('');
+  return `<div class="card ladder-card">
+      <div class="k">What growth looks like · ${esc(rub.label)}</div>
+      <div class="ladder">${rungs}</div>
+      <p class="muted small" style="margin:10px 0 0;">You wrote honestly — that’s the practice. Read down the markers and notice where you’d place yourself. Add an AI key in Settings and Forma will read your words back against them; without one, the looking itself is the rep.</p>
     </div>`;
 }
 
