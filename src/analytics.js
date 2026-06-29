@@ -69,6 +69,15 @@ export const STABILITY_MIN_SESSIONS = 4;
 // ============================================================================
 export const ITEM_MIN_N = 30;        // independent installs before a per-item stat is trustworthy
 export const RETEST_MIN_PAIRS = 50;  // person-pairs before a test-retest r is trustworthy
+
+// GENERATED tasks make fresh content every serve, so a repeat genuinely re-measures the capacity.
+// KEYED banks deplete: a re-answer after seeing the rationale measures RECALL, and a rising-but-stable
+// keyed score would masquerade as high reliability. So only generated records may be pooled into a
+// retest coefficient by default (mirrors profile.js RECALL_PRONE / the generated set in applySession).
+// A record's `type` (carried on every research event by research.js buildEvent) is the bucket signal.
+export const GENERATED_TYPES = new Set(['nback', 'series', 'span', 'mathfluency', 'vigilance', 'pursuit', 'flanker', 'memory', 'digitspan', 'stream']);
+export const KEYED_TYPES = new Set(['crt', 'decision', 'tradeoff', 'stem', 'comm', 'attend', 'steu', 'matrix', 'reading', 'maze', 'reliance']);
+export function isGeneratedRecord(r) { return !!(r && GENERATED_TYPES.has(r.type)); }
 const _avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
 const _round2 = (x) => (x == null ? null : Math.round(x * 100) / 100);
 function _clean(records) {
@@ -122,11 +131,16 @@ export function itemDiscrimination(records, minN = ITEM_MIN_N) {
 }
 
 // TEST-RETEST: per domain, stability of a person's EARLIEST vs LATEST score; Pearson across persons
-// with >=2 timepoints. Suppressed below minPairs. Pass GENERATED-task records (n-back/flanker/span/etc.)
-// for a clean retest — keyed banks are confounded by exhaustion, so they must not be pooled in here.
-export function testRetest(records, minPairs = RETEST_MIN_PAIRS) {
+// with >=2 timepoints. Suppressed below minPairs. Keyed banks are confounded by exhaustion, so they
+// must not be pooled in here — this function now ENFORCES that itself (v334, forma-validity: the rule
+// lived only in this docstring; nothing filtered, so a recall-confounded keyed score could be laundered
+// into a reliability coefficient). Default = generated tasks only; opts.includeKeyed runs a DELIBERATE,
+// labeled keyed analysis. A record's `type` is the bucket signal (carried by research.js buildEvent).
+export function testRetest(records, minPairs = RETEST_MIN_PAIRS, opts = {}) {
   const P = {};
-  for (const r of _clean(records).filter((r) => r.day)) {
+  // Default: generated only. includeKeyed adds the KEYED banks too (a deliberate, labeled analysis) —
+  // NOT a blanket "include everything": unknown/AI-judged/self-report types still stay out (Codex review).
+  for (const r of _clean(records).filter((r) => r.day && (isGeneratedRecord(r) || (opts.includeKeyed && KEYED_TYPES.has(r.type))))) {
     ((P[r.installId] || (P[r.installId] = {}))[r.domain] || (P[r.installId][r.domain] = [])).push({ day: r.day, score: r.score });
   }
   const domains = {};
