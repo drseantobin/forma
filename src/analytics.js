@@ -78,6 +78,14 @@ export const RETEST_MIN_PAIRS = 50;  // person-pairs before a test-retest r is t
 export const GENERATED_TYPES = new Set(['nback', 'series', 'span', 'mathfluency', 'vigilance', 'pursuit', 'flanker', 'memory', 'digitspan', 'stream']);
 export const KEYED_TYPES = new Set(['crt', 'decision', 'tradeoff', 'stem', 'comm', 'attend', 'steu', 'matrix', 'reading', 'maze', 'reliance']);
 export function isGeneratedRecord(r) { return !!(r && GENERATED_TYPES.has(r.type)); }
+
+// FIXED-ITEM types: those whose `item` id RECURS across people, so classical item analysis (difficulty,
+// discrimination) is meaningful — the keyed banks plus the fixed-prompt AI-judged banks (each prompt has a
+// stable id served to many people). Item analysis is allow-listed to these (Codex review: an allowlist, not
+// "anything not generated", so an unknown/malformed type can't slip in as an n=1 ghost). Ambiguous types
+// (stay/meaning) are conservatively left out — losing an unwired builder stat is harmless; a false item isn't.
+export const FIXED_ITEM_TYPES = new Set([...KEYED_TYPES, 'vignette', 'sentence', 'reflection']);
+export function isFixedItemRecord(r) { return !!(r && FIXED_ITEM_TYPES.has(r.type)); }
 const _avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
 const _round2 = (x) => (x == null ? null : Math.round(x * 100) / 100);
 function _clean(records) {
@@ -93,13 +101,17 @@ function _pearson(xs, ys) {
   return cov / Math.sqrt(vx * vy);
 }
 
-// Item DIFFICULTY: per keyed item, how hard it is (mean score; lower = harder). Suppressed below minN.
+// Item DIFFICULTY: per fixed item, how hard it is (mean score; lower = harder). Suppressed below minN.
+// Item analysis is a FIXED-item method; generated tasks carry a fresh per-serve exerciseId (each serve a
+// unique n=1 ghost) and so are routed out via the FIXED_ITEM_TYPES allowlist (v334 family, forma-validity).
+// Each row carries its `type` so a future dashboard can separate keyed-task hardness from how the AI judge
+// tends to rate a given prompt (vignette/sentence/reflection) — they're different senses of "difficulty".
 export function itemDifficulty(records, minN = ITEM_MIN_N) {
   const byItem = {};
-  for (const r of _clean(records)) { (byItem[r.item] || (byItem[r.item] = { domain: r.domain, scores: [] })).scores.push(r.score); }
+  for (const r of _clean(records).filter(isFixedItemRecord)) { (byItem[r.item] || (byItem[r.item] = { domain: r.domain, type: r.type, scores: [] })).scores.push(r.score); }
   return Object.keys(byItem).map((item) => {
     const g = byItem[item], n = g.scores.length;
-    return { item, domain: g.domain, n, meanScore: Math.round(_avg(g.scores)), suppressed: n < minN };
+    return { item, domain: g.domain, type: g.type, n, meanScore: Math.round(_avg(g.scores)), suppressed: n < minN };
   }).sort((a, b) => a.meanScore - b.meanScore);
 }
 
@@ -107,12 +119,12 @@ export function itemDifficulty(records, minN = ITEM_MIN_N) {
 // THIS item track doing well on the domain's OTHER items? Per person, pair their item score with the
 // mean of their other items in that domain; Pearson across persons. Suppressed below minN persons.
 export function itemDiscrimination(records, minN = ITEM_MIN_N) {
-  const recs = _clean(records);
-  const P = {}, itemDom = {};
+  const recs = _clean(records).filter(isFixedItemRecord); // fixed-item method — generated singletons can't discriminate (v334 family, allowlisted)
+  const P = {}, itemDom = {}, itemType = {};
   for (const r of recs) {
     const dom = ((P[r.installId] || (P[r.installId] = {}))[r.domain] || (P[r.installId][r.domain] = {}));
     (dom[r.item] || (dom[r.item] = [])).push(r.score);
-    itemDom[r.item] = r.domain;
+    itemDom[r.item] = r.domain; itemType[r.item] = r.type;
   }
   return Object.keys(itemDom).map((item) => {
     const domain = itemDom[item];
@@ -126,7 +138,7 @@ export function itemDiscrimination(records, minN = ITEM_MIN_N) {
       ys.push(_avg(others.map((it) => _avg(dom[it]))));
     }
     const n = xs.length;
-    return { item, domain, n, discrimination: n >= minN ? _round2(_pearson(xs, ys)) : null, suppressed: n < minN };
+    return { item, domain, type: itemType[item], n, discrimination: n >= minN ? _round2(_pearson(xs, ys)) : null, suppressed: n < minN };
   }).sort((a, b) => (b.discrimination == null ? -2 : b.discrimination) - (a.discrimination == null ? -2 : a.discrimination));
 }
 
