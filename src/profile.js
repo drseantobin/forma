@@ -94,8 +94,11 @@ export function applyBaseline(profile, domainScores, responses) {
 // from behavior/accuracy on the task. Recorded per session for honest downstream analysis.
 const AI_JUDGED_TYPES = ['reflection', 'vignette', 'sentence'];
 const SELF_REPORT_TYPES = ['meaning', 'contemplation'];
-export function scoreSourceFor(type) {
-  if (AI_JUDGED_TYPES.includes(type)) return 'ai-judged';
+// Response-aware (v326, per Codex): an AI-judged type that produced NO aiScore (no key / fail) is
+// 'unscored' — never mislabel a keyless self-rating as an 'ai-judged' measurement (which would let it
+// silently move the EMA/confidence). Only a real AI placement counts as 'ai-judged'.
+export function scoreSourceFor(type, response = {}) {
+  if (AI_JUDGED_TYPES.includes(type)) return (response && response.aiScore != null) ? 'ai-judged' : 'unscored';
   if (SELF_REPORT_TYPES.includes(type)) return 'self-report';
   return 'performance';
 }
@@ -175,7 +178,7 @@ export function applySession(profile, exercise, response, opts = {}) {
     newDomainScore,
     priorBandPeak,
     unscored: !measured,
-    scoreSource: scoreSourceFor(exercise.type),
+    scoreSource: scoreSourceFor(exercise.type, response),
     response: summarizeResponse(exercise, response),
   };
   p.sessions.push(session);

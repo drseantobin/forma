@@ -3856,8 +3856,17 @@ function renderReflection() {
   });
   document.getElementById('fin').onclick = async () => {
     const text = (s.response.text || '').trim();
-    // With a live key and a real reflection, let AI judge the CONTENT (the score); the self-rating
-    // is the keyless fallback. Distress is escalated inside scoreReflection before any API call.
+    // SAFETY (v326): a keyless reflection never reaches scoreReflection's distress guard, so check
+    // HERE before the key gate — a crisis disclosure must always escalate to a human, key or not,
+    // and is never scored or transmitted.
+    if (text && Coach.looksLikeDistress(text)) {
+      s.response.aiScore = null;
+      s.response.feedback = Coach.ESCALATION_MESSAGE;
+      completeSession();
+      return;
+    }
+    // With a live key and a real reflection, AI judges the CONTENT (the score). Keyless → unscored
+    // (the self-rating never moves the scale); scoreReflection also re-checks distress before any API call.
     if (Coach.hasKey(state.profile) && text.length >= 15) {
       s._scoringRef = true; render();
       const rub = rubricFor(ex.domain);

@@ -417,10 +417,11 @@ export function scoreExercise(exercise, response) {
     case 'pursuit':
       return scorePursuit(response.onFrames || 0, response.totalFrames || 0);
     case 'reflection':
-      // Prefer AI judgment of the WRITTEN reflection (v320). The self-rating is only the keyless
-      // fallback — never the headline when the content was actually read. null aiScore (no key /
-      // API fail / unparseable) falls through to the honest self-rating rather than fabricating.
-      return response.aiScore != null ? clamp(round(response.aiScore)) : scoreSelfRating(response.selfRating || 3);
+      // AI judgment of the WRITTEN reflection is the ONLY thing that scores it (v326, per Codex). A
+      // keyless reflection is UNSCORED (null) — a single "how did you do" self-rating must never move
+      // a longitudinal scale (the whole reason this thread started). The self-rating is kept only as
+      // private practice metadata in summarizeResponse, never as the headline.
+      return response.aiScore != null ? clamp(round(response.aiScore)) : null;
     default:
       return 0;
   }
