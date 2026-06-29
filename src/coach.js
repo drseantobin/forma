@@ -24,6 +24,7 @@ import { domainTrend } from './progress.js';
 import { providerFor } from './llm.js';
 import { GROWTH_GUIDE, growthFor } from './growth.js';
 import { rubricScaleText, rubricFor } from './rubrics.js';
+import { writingFeatures, fluencyCap, styleNote } from './writing.js';
 
 export const DEFAULT_MODEL = 'claude-opus-4-8';
 
@@ -732,10 +733,14 @@ export async function scoreVignette(vignette, transcript, profile) {
   // null score as "not measured" and leave the domain scale untouched.
   const soft = { score: null, feedback: "I couldn't fully read that one this time — but showing up to a hard conversation is the rep. Next time, try naming what the other person might be feeling before you respond to it." };
   try {
+    // Style note only for the vignette (Codex review): a produced reply is judged on attuned responding,
+    // so "concrete autobiographical detail" is the wrong cap target — the prompt + style note down-weight
+    // generic therapy-speak without a hard score cap.
+    const feats = writingFeatures(transcript);
     const text = await complete(profile, {
       system: VIGNETTE_SYSTEM,
       maxTokens: 500,
-      messages: [{ role: 'user', content: `Scenario: ${vignette.scenario}\n\nThe prompt they answered: ${vignette.prompt}${scaleBlockFor('communication')}\n\nTheir response: "${transcript}"\n\nScore it.` }],
+      messages: [{ role: 'user', content: `Scenario: ${vignette.scenario}\n\nThe prompt they answered: ${vignette.prompt}${scaleBlockFor('communication')}\n\n${styleNote(feats)}\n\nTheir response: "${transcript}"\n\nScore it.` }],
     });
     return parseVignette(text) || soft;
   } catch {
@@ -777,7 +782,7 @@ export async function scoreSentences(stems, completions, profile) {
 // the reflection and scores the actual evidence of the capacity, with the self-rating kept only
 // as a keyless fallback (scoreExercise). Same guardrails as scoreVignette: distress-escalation
 // before any API call, key-gated, and NULL (never a fabricated number) when it can't truly judge.
-const REFLECTION_SYSTEM = `You are scoring a Forma formation reflection. You are NOT diagnosing — never use clinical or pathologizing language. A person wrote a few honest sentences reflecting on a human capacity they are forming. Rate 0–100 how much the reflection shows GENUINE evidence of that capacity at work: honest self-awareness, concrete specifics from real life (a real situation, choice, tension, or feeling named — not platitudes), and ownership over deflection. Reward candor and concreteness over polish or length; a short but specific, honest reflection outscores a long generic one. Judge the SUBSTANCE, never the writing quality. Blank, vague, or evasive answers score lower — but gently.
+const REFLECTION_SYSTEM = `You are scoring a Forma formation reflection. You are NOT diagnosing — never use clinical or pathologizing language. A person wrote a few honest sentences reflecting on a human capacity they are forming. Rate 0–100 how much the reflection shows GENUINE evidence of that capacity at work: honest self-awareness, concrete specifics from real life (a real situation, choice, tension, or feeling named — not platitudes), and ownership over deflection. Reward candor and concreteness over polish or length; a short but specific, honest reflection outscores a long generic one. Judge the SUBSTANCE, never the writing quality. PENALIZE eloquent psychobabble — broad insight claims, elevated vocabulary, abstraction, or therapeutic terminology WITHOUT a specific situation, choice, cost, action, or felt detail. Blunt, plain, specific lived evidence outranks polished interpretation every time. Blank, vague, or evasive answers score lower — but gently.
 
 If a DEVELOPMENTAL SCALE is given, PLACE the reflection on it and let that anchor your score: Emerging → 0–39, Developing → 40–59, Strong → 60–79, Thriving → 80–100. A reflection too short or thin to show real evidence cannot score above Developing — there is not enough there to judge Strong or Thriving. In your feedback, name in plain words where they are on that path now and what the next level up would actually look like in real life — a direction, never a verdict.
 
@@ -795,11 +800,26 @@ function scaleBlockFor(rubricId) {
   return `\n\nDevelopmental scale for this capacity (place them on it):\n${scale}${note}`;
 }
 
+// Apply the style fluency cap to a parsed {score, feedback} (Codex review, v327): if the writing leaned
+// on abstraction without lived evidence, lower the score to the cap AND say why — so the number and the
+// prose never disagree (a capped 59 with "you were deeply present" feedback would be incoherent). Never
+// raises a score; a no-op when uncapped.
+function applyFluencyCap(parsed, feats) {
+  if (!parsed || parsed.score == null) return parsed;
+  const cap = fluencyCap(feats);
+  if (cap >= parsed.score) return parsed;
+  return {
+    score: cap,
+    originalScore: parsed.score,
+    feedback: `${parsed.feedback ? parsed.feedback + ' ' : ''}One honest note: this stayed mostly abstract — name the actual moment, what you did, and what it cost, and the next read will have more to stand on.`,
+  };
+}
+
 export async function scoreReflection(context, text, profile) {
   // Safety guardrail: a reflection can carry a crisis disclosure. Escalate BEFORE any API call or
   // scoring, and before the key gate (protects keyless users too) — never transmit/score distress.
   if (looksLikeDistress(text)) return { score: null, feedback: ESCALATION_MESSAGE, escalated: true };
-  if (!hasKey(profile)) return null; // keyless → caller falls back to the self-rating
+  if (!hasKey(profile)) return null; // keyless → UNSCORED (v326); a self-rating never moves the scale
   const soft = { score: null, feedback: "Saved — adding an API key in Settings lets the coach read what you wrote and reflect it back. Either way, the honest looking is the rep." };
   try {
     const scale = (context && context.markers) ? rubricScaleText(context.markers) : '';
@@ -807,12 +827,17 @@ export async function scoreReflection(context, text, profile) {
     // Capacity-specific judge guidance grounded in the source instrument — e.g. Values requires a
     // named concrete action; Self-knowledge caps over-certainty (confident self-narration ≠ insight).
     const noteBlock = (context && context.judgeNote) ? `\n\nCapacity-specific scoring guidance: ${context.judgeNote}` : '';
+    // Style control (v327): tell the judge what the response actually contains, so eloquence can't
+    // stand in for evidence — then cap the parsed score so pure abstraction can't reach the top bands.
+    const feats = writingFeatures(text);
     const out = await complete(profile, {
       system: REFLECTION_SYSTEM,
       maxTokens: 500,
-      messages: [{ role: 'user', content: `Capacity being formed: ${(context && context.capacity) || 'this capacity'}\n\nThe reflection prompt: ${(context && context.prompt) || ''}${scaleBlock}${noteBlock}\n\nWhat they wrote: "${text}"\n\nScore it.` }],
+      messages: [{ role: 'user', content: `Capacity being formed: ${(context && context.capacity) || 'this capacity'}\n\nThe reflection prompt: ${(context && context.prompt) || ''}${scaleBlock}${noteBlock}\n\n${styleNote(feats)}\n\nWhat they wrote: "${text}"\n\nScore it.` }],
     });
-    return parseVignette(out) || soft; // reuses the shared {score,feedback} JSON parser
+    const parsed = parseVignette(out); // reuses the shared {score,feedback} JSON parser
+    return applyFluencyCap(parsed, feats) || soft; // cap + cap-aware feedback when abstraction lacks evidence
+
   } catch {
     return soft;
   }
