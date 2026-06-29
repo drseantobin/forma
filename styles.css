@@ -428,6 +428,9 @@ button { font-family: inherit; cursor: pointer; }
 .index-ring.soft .index-num::before { content: "\2248"; font-size: .62em; opacity: .55; vertical-align: middle; margin-right: 1px; }
 .trust-note { border-left: 3px solid color-mix(in srgb, var(--ink-faint) 40%, transparent); margin-top: 12px; }
 .deepen-card { border-left: 3px solid color-mix(in srgb, var(--amber-ink) 45%, transparent); margin-top: 12px; }
+/* Recent AI-judged reads, drawn (v332): the trust note says "the trend is the signal" — so show the
+   trend. Shares the trust-note's hairline so trust-note + reads + ladder read as one calm group. */
+.recentreads { border-left: 3px solid color-mix(in srgb, var(--ink-faint) 40%, transparent); margin-top: 12px; }
 
 .demo-banner-actions { flex: none; display: flex; align-items: center; gap: 14px; }
 .demo-banner-tour { flex: none; background: var(--amber-ink); color: var(--amber-soft); border: none; font: inherit; font-weight: 700; cursor: pointer; padding: 4px 12px; white-space: nowrap; border-radius: 999px; font-size: .8rem; }

@@ -5164,10 +5164,24 @@ function recentReadsLine(ex) {
   const rows = (state.profile.sessions || [])
     .filter((r) => r && !r.unscored && r.scoreSource === 'ai-judged' && r.type === ex.type && r.domain === ex.domain && r.rawScore != null);
   if (rows.length < 2) return ''; // need at least two reads before a trend means anything
-  const recent = rows.slice(-5).map((r) => r.rawScore);
+  // Coerce to finite numbers (Codex review): a corrupt/imported/legacy session could carry "82" or NaN,
+  // which would feed NaN coordinates into the sparkline path. Re-guard the count after filtering.
+  const recent = rows.slice(-5).map((r) => Number(r.rawScore)).filter((n) => Number.isFinite(n));
+  if (recent.length < 2) return '';
   const rub = rubricForExercise(ex);
   const label = rub ? rub.label : (getDomain(ex.domain) ? getDomain(ex.domain).name : 'this capacity');
-  return `<p class="muted small center" style="margin:8px 0 0;">Your recent ${esc(label)} reads: <strong>${recent.join(' → ')}</strong>. One read is a data point — the line is the signal.</p>`;
+  // The trust note asserts "the trend over weeks is the signal" — so SHOW the trend, don't just say it
+  // (v332, forma-design). Dashed + ink-faint, never a solid band line: a settled EMA trajectory (the
+  // per-capacity page) is drawn solid in band.color; these are AI-judged single reads — the SAME
+  // lower-certainty class the soft dashed ring already marks, so they get the dashed treatment too.
+  // Caption text preserved verbatim (the data is also there for non-SVG/SR users, plus aria-label).
+  return `<div class="card recentreads">
+      <div class="k">Your recent ${esc(label)} reads</div>
+      <svg viewBox="0 0 320 48" width="100%" style="margin-top:8px; max-width:440px;" role="img" aria-label="Your recent ${esc(label)} reads: ${recent.join(', ')} out of 100">
+        <path d="${sparklinePath(recent, 320, 48, 6)}" fill="none" stroke="var(--ink-faint)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 5"/>
+      </svg>
+      <p class="muted small" style="margin:6px 0 0;">${recent.join(' → ')}. One read is a data point — the line is the signal.</p>
+    </div>`;
 }
 
 // Keyless Practice Mode (v328): a keyless reflection is unscored (v326), so instead of a dead end the
