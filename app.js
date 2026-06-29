@@ -212,14 +212,14 @@ async function talkThrough(ctx) {
   const dkey = (ctx && ctx.domain && getDomain(ctx.domain) && ctx.domain !== 'interior') ? ctx.domain : 'general';
   state.coachThread = dkey;
   const log = coachThreadLog(p, dkey);
-  // Drop the rule-based opener in immediately so the Coach is never blank...
-  const opener = { role: 'assistant', content: Coach.solutionFocusedOpener(p, ctx), ts: Date.now(), opener: true };
+  // Drop the rule-based opener in immediately so the Coach is never blank (a v331 deeper probe IS the opener).
+  const opener = { role: 'assistant', content: (ctx && ctx.deepen) ? ctx.deepen : Coach.solutionFocusedOpener(p, ctx), ts: Date.now(), opener: true };
   log.push(opener);
   save();
   go('coach');
   // ...then, with a key, replace it with a live opener tied to this exact
   // session + insight — but only if the person hasn't already started talking.
-  if (Coach.hasKey(p)) {
+  if (Coach.hasKey(p) && !(ctx && ctx.deepen)) {
     const live = await raceTimeout(Coach.sessionOpener(p, ctx), 9000, null);
     const last = log[log.length - 1];
     if (live && live.live && live.text && state.route === 'coach' && last === opener) {
@@ -3865,15 +3865,32 @@ function renderReflection() {
       completeSession();
       return;
     }
+    // PRIVACY WALL (v331, Codex review): INTERIOR_REFLECTIONS are type 'reflection', domain 'interior'
+    // — so without this gate a Spiritual-Life reflection would be sent to the live API for scoring AND
+    // the deeper probe, breaking the screen-promised guarantee that the interior track never leaves the
+    // device, and AI-judging the interior (which the brand walls). Route it to on-device practice, key
+    // or not — never scored, never transmitted. (Same class as the v267 coach-domain leak.)
+    if (ex.domain === 'interior') {
+      s.response.practice = true;
+      completeSession();
+      return;
+    }
     // With a live key and a real reflection, AI judges the CONTENT (the score). Keyless → unscored
     // (the self-rating never moves the scale); scoreReflection also re-checks distress before any API call.
     if (Coach.hasKey(state.profile) && text.length >= 15) {
       s._scoringRef = true; render();
       const rub = rubricFor(ex.domain);
-      const ctx = { capacity: getDomain(ex.domain) ? getDomain(ex.domain).name : 'this capacity', prompt: ex.prompt, markers: rub ? rub.markers : null, judgeNote: rub ? rub.judgeNote : null };
-      const result = await Coach.scoreReflection(ctx, text, state.profile);
+      const ctx = { domain: ex.domain, capacity: getDomain(ex.domain) ? getDomain(ex.domain).name : 'this capacity', prompt: ex.prompt, markers: rub ? rub.markers : null, judgeNote: rub ? rub.judgeNote : null };
+      // Score the substance AND (v331) draw one formative deeper question in the same beat — the probe
+      // is never scored, just offered; a failed/empty probe simply isn't shown (no fabrication).
+      const [result, deepen] = await Promise.all([
+        Coach.scoreReflection(ctx, text, state.profile),
+        Coach.deepenReflection(ctx, text, state.profile),
+      ]);
       s.response.aiScore = (result && result.score != null) ? result.score : null;
       if (result && result.feedback) s.response.feedback = result.feedback;
+      // Don't pair a deeper probe with a crisis escalation — that path should stay purely supportive.
+      if (deepen && !(result && result.escalated)) s.response.deepen = deepen;
       s._scoringRef = false;
       completeSession();
     } else {
@@ -3964,6 +3981,7 @@ async function completeSession() {
       </div>
       ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? aiTrustNote(s.exercise) + rubricLadder(s.exercise, rawScore) + recentReadsLine(s.exercise) : ''}
       ${(s.exercise.type === 'reflection' && s.response.practice && (s.response.text || '').trim() && rubricForExercise(s.exercise)) ? practiceLadder(s.exercise) : ''}
+      ${s.response.deepen ? deepenCard(s.response.deepen) : ''}
       ${milestoneBanner}
       <div class="card" id="insight" aria-live="polite">
         <div class="row"><span class="spinner"></span> <span class="muted">${s.response.practice ? 'Saving your practice…' : 'Your coach is reading the session…'}</span></div>
@@ -3995,6 +4013,14 @@ async function completeSession() {
       score: rawScore,
       insight: state.profile._lastInsight && state.profile._lastInsight.text,
     };
+    state.session = null;
+    talkThrough(ctx);
+  };
+  const dg = document.getElementById('deepengo');
+  if (dg) dg.onclick = () => {
+    // Carry the formative probe straight into the coach as its opening question (v331) — not scored,
+    // just a place to keep going. talkThrough seeds ctx.deepen verbatim as the opener.
+    const ctx = { kind: 'session', domain: s.exercise.domain, exerciseLabel: s.exercise.title || s.exercise.type, deepen: s.response.deepen };
     state.session = null;
     talkThrough(ctx);
   };
@@ -5158,6 +5184,18 @@ function practiceLadder(ex) {
       <div class="k">What growth looks like · ${esc(rub.label)}</div>
       <div class="ladder">${rungs}</div>
       <p class="muted small" style="margin:10px 0 0;">You wrote honestly — that’s the practice. Read down the markers and notice where you’d place yourself. Add an AI key in Settings and Forma will read your words back against them; without one, the looking itself is the rep.</p>
+    </div>`;
+}
+
+// Sequential probing, formative form (v331): a single deeper question to carry, never scored. It
+// answers the panel's #1 critique (reflections reward fluency over the real capacity) by moving the
+// work from "say it well" to "go look at the actual moment." Quiet card, optional, anti-gamification.
+function deepenCard(q) {
+  return `<div class="card deepen-card">
+      <div class="k">A question to carry</div>
+      <p style="font-size:1.05rem; margin:6px 0 12px;">${esc(q)}</p>
+      <button class="btn ghost" id="deepengo">Take it to the coach →</button>
+      <p class="muted small" style="margin:10px 0 0;">Not scored — there’s no right answer to score. The point is the looking, whether here or just in your own head on the walk home.</p>
     </div>`;
 }
 

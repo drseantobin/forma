@@ -822,6 +822,10 @@ function applyFluencyCap(parsed, feats) {
 }
 
 export async function scoreReflection(context, text, profile) {
+  // Privacy wall (v331, defense-in-depth): the interior/Spiritual-Life track is never AI-judged or
+  // transmitted. The caller (renderReflection) already routes interior to on-device practice; this is
+  // a second guard so no future call site can leak interior content to the API.
+  if (context && context.domain === 'interior') return null;
   // Safety guardrail: a reflection can carry a crisis disclosure. Escalate BEFORE any API call or
   // scoring, and before the key gate (protects keyless users too) — never transmit/score distress.
   if (looksLikeDistress(text)) return { score: null, feedback: ESCALATION_MESSAGE, escalated: true };
@@ -846,6 +850,47 @@ export async function scoreReflection(context, text, profile) {
 
   } catch {
     return soft;
+  }
+}
+
+// Sequential probing, FORMATIVE form (v331). After a reflection, offer ONE deeper question that
+// pushes toward concrete lived detail — the panel's #1 critique was that written reflections reward
+// fluency over the real capacity; a probe shifts the work from "articulate it well" to "go look at the
+// actual moment." This is NEVER scored (anti-gamification + formation-not-diagnosis): it produces a
+// single question to carry, not a measure. Key-gated (a tailored probe needs the live AI; keyless →
+// null, we never fabricate) and distress-guarded (a crisis goes to a human, not a deeper probe).
+const DEEPEN_SYSTEM = `You are a formation companion, NOT a diagnostician or a grader. A person just wrote a short reflection on a human capacity they are forming. Produce ONE short follow-up question (about 8–20 words) that gently invites them one layer more CONCRETE — toward a specific real moment, choice, cost, or felt detail they may have skated past. Never praise, never judge, never diagnose, never score, never advise. No preamble, no quotation marks. Output ONLY the single question, ending in a question mark.`;
+
+// Normalize the model's reply into a single clean question, or null if it doesn't look like one.
+export function cleanProbe(raw) {
+  if (!raw) return null;
+  const lines = String(raw).split('\n').map((l) => l.trim()).filter((l) => l);
+  // The model is told to output only the question, but be robust to a stray preamble line:
+  // take the first line that actually reads as a question.
+  let q = lines.find((l) => l.includes('?')) || '';
+  q = q.replace(/^[-*\d.)\s]*(question:)?\s*/i, '').trim(); // strip list markers / "Question:" preamble
+  q = q.replace(/^["'“”]+|["'“”]+$/g, '').trim();           // strip wrapping quotes
+  // Must be EXACTLY ONE question (8–219 chars, ending in '?', no earlier '?') — this rejects a
+  // multi-sentence reply that smuggles a second instruction (e.g. "…? Also, score yourself.").
+  if (!/^[^?]{7,218}\?$/.test(q)) return null;
+  // Never a scoring/clinical prompt — the probe is formative, not a measure or a diagnosis.
+  if (/\b(score|rate|rating|diagnos|disorder|deficit)\b/i.test(q)) return null;
+  return q;
+}
+
+export async function deepenReflection(context, text, profile) {
+  if (context && context.domain === 'interior') return null; // interior/Spiritual-Life is never transmitted (defense-in-depth)
+  if (looksLikeDistress(text)) return null; // a crisis disclosure goes to a human, never a deeper probe
+  if (!hasKey(profile)) return null;        // formative probe needs the live AI; keyless → skip (never fabricate)
+  try {
+    const out = await complete(profile, {
+      system: DEEPEN_SYSTEM,
+      maxTokens: 80,
+      messages: [{ role: 'user', content: `Capacity being formed: ${(context && context.capacity) || 'this capacity'}\n\nThe reflection prompt: ${(context && context.prompt) || ''}\n\nWhat they wrote: "${text}"\n\nOne question to take them one layer deeper.` }],
+    });
+    return cleanProbe(out);
+  } catch {
+    return null;
   }
 }
 
