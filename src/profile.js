@@ -457,8 +457,12 @@ export function saveProfile(profile) {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
     }
+    return true;
   } catch {
-    /* storage full or unavailable — fail quietly; data is best-effort local */
+    // Storage full or unavailable. Still best-effort — but SILENT loss is the one failure a
+    // local-first app can't afford (quota/private-mode hits exactly the long-tenured users the
+    // app courts). Return false so the UI can surface "not saving — export a backup now" (v342).
+    return false;
   }
 }
 

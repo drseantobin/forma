@@ -71,7 +71,33 @@ if (state.profile && state.profile.settings && state.profile.settings.faithTrack
 // profile is showing, save() is a no-op — nothing the visitor does (navigating,
 // chatting with the coach, "completing" an exercise) ever reaches the real
 // profile in localStorage. The sample lives only in memory.
-function save() { if (state.demo) return; Profile.saveProfile(state.profile); }
+function save() {
+  if (state.demo) return;
+  // Surface persistence failure ONCE per session (v342, reliability): a quota/private-mode failure
+  // used to be swallowed — the app kept running and the person lost sessions on reload without ever
+  // knowing. One calm, sticky banner with the exit that always works: export a backup.
+  const ok = Profile.saveProfile(state.profile);
+  if (ok === false && !state._saveFailShown) {
+    state._saveFailShown = true;
+    const b = document.createElement('div');
+    b.id = 'savefail';
+    b.setAttribute('role', 'alert');
+    b.style.cssText = 'position:fixed;bottom:calc(84px + env(safe-area-inset-bottom, 0px));left:50%;transform:translateX(-50%);z-index:9000;max-width:480px;width:calc(100% - 32px);background:var(--card);border:1px solid var(--red);border-radius:14px;box-shadow:var(--shadow-lg);padding:12px 16px;font-size:.9rem;';
+    b.innerHTML = `<strong>Your data isn’t saving on this device.</strong> The browser is blocking storage (often private browsing or a full disk). Your progress will be lost when you close this tab — <button class="inlinelink" id="savefailexport">export a backup now</button>.`;
+    document.body.appendChild(b);
+    const ex = document.getElementById('savefailexport');
+    if (ex) ex.onclick = () => {
+      const blob = new Blob([Profile.exportProfile(state.profile)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `forma-backup-${todayStr()}.json`;
+      a.click(); URL.revokeObjectURL(a.href);
+    };
+  } else if (ok !== false) {
+    const b = document.getElementById('savefail');
+    if (b) { b.remove(); state._saveFailShown = false; } // storage recovered — clear the alarm
+  }
+}
 
 // ---- Demo Mode ---------------------------------------------------------------
 // A populated SAMPLE profile so investors / prospective users can tour the whole
