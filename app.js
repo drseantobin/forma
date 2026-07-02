@@ -1540,8 +1540,22 @@ function startDomainSession(domain) {
 // (daily "Today I'll…" vs situational "Next time…") + an optional WOOP obstacle line — which the
 // person edits and adopts → becomes a commitment (reuses composeCommitment + addGoal + setCoping).
 // Honest: real-life practice, never "raises your score"; a situational no-trigger day isn't a miss.
+// v343 (program review, behavior #2): the MEASUREMENT rotates daily (psychometric breadth), but the
+// real-life PRACTICE pins to the WEEK'S THEME — a habit forms only from the SAME cue-behavior repeated
+// in a stable context (Lally 2010; Wood & Neal 2007). Rotating the practice daily made seven orphans
+// and zero habits, and made the v340 daily check-in chase a moving target. Now one practice, one cue,
+// all week — and the check-in tracks that one commitment. Falls back to the day's focus if no plan yet.
+function practiceFocusFor(p) {
+  // Validate the stored theme against the CURRENTLY active domains (Codex): an imported/older profile
+  // with faithTrack off but plan.theme:'interior' would otherwise surface a Spiritual Life practice on
+  // Home — the interior wall must hold even through a stale plan.
+  const theme = p.plan && p.plan.theme;
+  const active = activeDomainIds(p.settings && p.settings.faithTrack);
+  if (theme && active.includes(theme)) return theme;
+  return Planner.focusForToday(p) || recommendFocus(p);
+}
 function todaysPracticeCard(p) {
-  const focus = Planner.focusForToday(p) || recommendFocus(p);
+  const focus = practiceFocusFor(p);
   const d = getDomain(focus);
   const practice = practiceFor(focus);
   if (!d || !practice) return '';
