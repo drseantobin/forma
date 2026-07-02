@@ -103,9 +103,17 @@ export function overclaimPooled(claims, banks = OVERCLAIM_BANK) {
 // Honest, growth-framed, DIRECTIONAL reading of the bias index (never a verdict). More negative
 // c = more readily claims familiarity (incl. with things that don't exist). Not a deficit — a
 // gentle mirror toward intellectual humility, Forma's "engagement over performance" ethos.
-export function selfEnhancementReading(biasC) {
+// VALIDITY (v339, found by running the tool): biasC alone conflates "claims few things overall"
+// with "claims carefully" — someone who ticks only five items but includes a FOIL still computes
+// a conservative c, and was being told they were "careful about what they claimed to know" while
+// having claimed something that doesn't exist. The reading now takes claimedFoil so the cautious
+// note can't assert a falsehood; the tone stays gentle (the foil is a noticing, not a fault).
+export function selfEnhancementReading(biasC, claimedFoil = 0) {
   if (typeof biasC !== 'number' || !isFinite(biasC)) return { level: 'unknown', note: 'Not enough to read yet.' };
   if (biasC <= -0.6) return { level: 'claims-broadly', note: 'You leaned toward claiming familiarity widely — including with a few things that were made up. Worth noticing where you actually know vs. recognize.' };
-  if (biasC >= 0.4) return { level: 'cautious', note: 'You were careful about what you claimed to know — a sign of intellectual humility.' };
+  if (biasC >= 0.4) {
+    if (claimedFoil > 0) return { level: 'cautious-with-slip', note: `You claimed sparingly — and still, ${claimedFoil === 1 ? 'one of the made-up ones' : 'a few of the made-up ones'} slipped in. That mix is the interesting part: careful in volume, yet nodding at something that doesn’t exist. Worth noticing which familiarity was real.` };
+    return { level: 'cautious', note: 'You were careful about what you claimed to know — a sign of intellectual humility.' };
+  }
   return { level: 'balanced', note: 'Your familiarity claims tracked what is real reasonably well.' };
 }

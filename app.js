@@ -4999,7 +4999,8 @@ function renderEpistemicCheck() {
 
   // Reveal: name the made-up items neutrally (let people locate themselves — no per-item
   // red ✗), then a numberless directional reading. No bias-c / d′ on screen by design.
-  const reading = selfEnhancementReading(overclaimPooled(e.selected).biasC);
+  const pooled = overclaimPooled(e.selected);
+  const reading = selfEnhancementReading(pooled.biasC, pooled.claimedFoil); // claimedFoil: a "cautious" read can't assert carefulness over a claimed foil (v339)
   const foils = e.items.filter((it) => it.foil);
   app.innerHTML = `
     <div class="fade-in">
