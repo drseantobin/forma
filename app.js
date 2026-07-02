@@ -3952,6 +3952,26 @@ async function completeSession() {
   const tomorrowNudge = _td
     ? `<p class="muted small center" style="margin:2px 0 12px;">Tomorrow: <strong>${_td.icon} ${esc(_td.name)}</strong> — ${esc(_td.short.toLowerCase())}.</p>`
     : '';
+  // RETURN RITUAL (v341, program review): attrition front-loads (Eysenbach 2005) and the .ics
+  // reminder was reachable only via Settings — a screen a new user never visits. Ask ONCE or twice,
+  // on the first two reveals only: "When tomorrow?" — a planning prompt for the return itself
+  // (Milkman 2011). One tap hands a recurring reminder to the person's own calendar; declining is
+  // one tap and permanent. Everything stays on-device (reminder.js builds the .ics locally).
+  const _asks = (profile.settings && profile.settings.reminderAsks) || 0;
+  const showReturnRitual = !state.demo && (profile.sessions || []).length <= 2 && !(profile.settings && profile.settings.reminderAdded) && _asks < 2;
+  if (showReturnRitual) { state.profile.settings.reminderAsks = _asks + 1; save(); }
+  const returnRitual = showReturnRitual
+    ? `<div class="card" id="ritualcard">
+        <div class="k">Make tomorrow easy to keep</div>
+        <p class="muted small" style="margin:6px 0 10px;">A few minutes works best at the same time each day. When tomorrow?</p>
+        <div class="row" style="gap:8px; align-items:center; flex-wrap:wrap;">
+          <input id="ritualtime" type="time" value="08:00" aria-label="Reminder time" style="width:auto;" />
+          <button class="btn sm" id="ritualadd" style="width:auto;">Add to my calendar →</button>
+          <button class="btn ghost sm" id="ritualskip" style="width:auto;">No thanks</button>
+        </div>
+        <p class="muted small" style="margin:8px 0 0;">Built on this device, handed to your own calendar — nothing is sent anywhere.</p>
+      </div>`
+    : '';
 
   // Reveal score (count-up), then fetch the one insight. An unscored AI session
   // (rawScore null) shows no number/band — we never display a fabricated score —
@@ -3999,6 +4019,7 @@ async function completeSession() {
         <button class="inlinelink" id="talkthrough">Talk it through with the coach →</button>
       </div>
       ${tomorrowNudge}
+      ${returnRitual}
       <button class="btn amber" id="home">Done →</button>
     </div>`;
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };
@@ -4021,6 +4042,24 @@ async function completeSession() {
     talkThrough(ctx);
   };
   if (dueGoal) wireCheckin(dueGoal);
+  const ra = document.getElementById('ritualadd');
+  if (ra) ra.onclick = () => {
+    const time = (document.getElementById('ritualtime').value || '08:00');
+    const blob = new Blob([buildReminderIcs({ time, cadence: 'daily' })], { type: 'text/calendar' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'forma-reminder.ics';
+    a.click(); URL.revokeObjectURL(a.href);
+    state.profile.settings.reminderAdded = true; save();
+    const card = document.getElementById('ritualcard');
+    if (card) card.innerHTML = `<div class="k">Make tomorrow easy to keep</div><p class="muted" style="margin:6px 0 0;">Open the download to add it to your calendar. Tomorrow is handled.</p>`;
+    announce('Reminder created. Open the download to add it to your calendar.');
+  };
+  const rs = document.getElementById('ritualskip');
+  if (rs) rs.onclick = () => {
+    state.profile.settings.reminderAsks = 2; save(); // permanent quiet no — never asked again
+    const card = document.getElementById('ritualcard'); if (card) card.remove();
+  };
   const dg = document.getElementById('deepengo');
   if (dg) dg.onclick = () => {
     // Carry the formative probe straight into the coach as its opening question (v331) — not scored,
@@ -5943,6 +5982,8 @@ function renderSettings() {
     a.href = URL.createObjectURL(blob);
     a.download = 'forma-reminder.ics';
     a.click();
+    // Remember a reminder exists so the first-run reveal never double-asks (v341, Codex).
+    state.profile.settings.reminderAdded = true; save();
     announce(`${reminderSummary(time, cadence)} Open it to add it to your calendar.`);
   };
   document.getElementById('savecontact').onclick = () => {
