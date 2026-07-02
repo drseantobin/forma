@@ -3979,7 +3979,7 @@ async function completeSession() {
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
         ${conftag ? `<div class="muted small" style="margin-top:4px;">${esc(conftag)}</div>` : ''}`}
       </div>
-      ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? aiTrustNote(s.exercise) + rubricLadder(s.exercise, rawScore) + recentReadsLine(s.exercise) : ''}
+      ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? `<div class="read-zone">` + aiTrustNote(s.exercise) + rubricLadder(s.exercise, rawScore) + recentReadsLine(s.exercise) + `</div>` : ''}
       ${(s.exercise.type === 'reflection' && s.response.practice && (s.response.text || '').trim() && rubricForExercise(s.exercise)) ? practiceLadder(s.exercise) : ''}
       ${s.response.deepen ? deepenCard(s.response.deepen) : ''}
       ${milestoneBanner}
