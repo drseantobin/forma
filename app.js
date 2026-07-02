@@ -3969,6 +3969,9 @@ async function completeSession() {
   // helps most — not "more of the same." Calm + optional; "Done" stays the amber default below.
   const nextFocusId = recommendFocus(state.profile);
   const nfx = getDomain(nextFocusId);
+  // Close yesterday's loop before opening today's (v340): one due commitment, asked here because
+  // the reveal is the one screen every active user reliably sees.
+  const dueGoal = checkinDue(state.profile);
   app.innerHTML = `
     <div class="fade-in">
       <div class="score-reveal">
@@ -3979,6 +3982,7 @@ async function completeSession() {
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
         ${conftag ? `<div class="muted small" style="margin-top:4px;">${esc(conftag)}</div>` : ''}`}
       </div>
+      ${dueGoal ? commitCheckinCard(dueGoal) : ''}
       ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? `<div class="read-zone">` + aiTrustNote(s.exercise) + rubricLadder(s.exercise, rawScore) + recentReadsLine(s.exercise) + `</div>` : ''}
       ${(s.exercise.type === 'reflection' && s.response.practice && (s.response.text || '').trim() && rubricForExercise(s.exercise)) ? practiceLadder(s.exercise) : ''}
       ${s.response.deepen ? deepenCard(s.response.deepen) : ''}
@@ -4016,6 +4020,7 @@ async function completeSession() {
     state.session = null;
     talkThrough(ctx);
   };
+  if (dueGoal) wireCheckin(dueGoal);
   const dg = document.getElementById('deepengo');
   if (dg) dg.onclick = () => {
     // Carry the formative probe straight into the coach as its opening question (v331) — not scored,
@@ -5201,6 +5206,68 @@ function practiceLadder(ex) {
       <div class="ladder">${rungs}</div>
       <p class="muted small" style="margin:10px 0 0;">You wrote honestly — that’s the practice. Read down the markers and notice where you’d place yourself. Add an AI key in Settings and Forma will read your words back against them; without one, the looking itself is the rep.</p>
     </div>`;
+}
+
+// Commitment CHECK-IN (v340 — the keystone from the full-program review): the reveal is the one
+// screen every active user sees, so it's where the app CLOSES yesterday's loop instead of only
+// opening new ones. One commitment, one question, three honest answers — a day when the cue never
+// arose is never a miss. A miss opens the hard-day plan inline (every lapse → a sharper if-then,
+// not guilt). Prompted monitoring is itself an active ingredient (Harkin et al. 2016, d≈.40).
+function checkinDue(p) {
+  const today = todayStr();
+  const open = (p.goals || []).filter((g) => !g.done && g.askedOn !== today && !(g.checkins || []).includes(today) && (g.createdAt || '').slice(0, 10) !== today);
+  if (!open.length) return null;
+  // Prefer the commitment for the domain just practiced; otherwise the least-recently-asked.
+  const dom = state.session && state.session.exercise && state.session.exercise.domain;
+  return open.find((g) => g.domain === dom) || open.slice().sort((a, b) => String(a.askedOn || '').localeCompare(String(b.askedOn || '')))[0];
+}
+function commitCheckinCard(g) {
+  return `<div class="card checkin-card" id="checkincard">
+      <div class="k">Yesterday’s commitment</div>
+      <p style="font-size:1.05rem; margin:6px 0 12px;">“${esc(g.text)}” — did the moment come?</p>
+      <div class="row" style="gap:8px; flex-wrap:wrap;">
+        <button class="btn sm" id="ck-kept" style="width:auto;">Kept</button>
+        <button class="btn ghost sm" id="ck-nomoment" style="width:auto;">The moment didn’t come</button>
+        <button class="btn ghost sm" id="ck-missed" style="width:auto;">Not this time</button>
+      </div>
+    </div>`;
+}
+function wireCheckin(g) {
+  const card = document.getElementById('checkincard');
+  if (!card) return;
+  const answer = (result) => {
+    state.profile = Profile.checkinGoal(state.profile, g.id, todayStr(), result);
+    save();
+    if (result === 'kept') {
+      card.innerHTML = `<div class="k">Yesterday’s commitment</div><p class="muted" style="margin:6px 0 0;">Kept — that’s the rep that counts. ${(g.checkins || []).length + 1 > 1 ? `${(g.checkins || []).length + 1}× now.` : ''}</p>`;
+    } else if (result === 'no-moment') {
+      card.innerHTML = `<div class="k">Yesterday’s commitment</div><p class="muted" style="margin:6px 0 0;">Fair — no moment, no miss. The plan stays armed.</p>`;
+    } else {
+      // A miss becomes a sharper plan, on the spot (reuses the existing coping-plan model).
+      const c = g.coping;
+      card.innerHTML = `<div class="k">Yesterday’s commitment</div>
+        <p class="muted" style="margin:6px 0 10px;">Named, not judged. Naming what got in the way — and the move for next time — is how the plan gets sharper.</p>
+        <label class="coping-field"><span class="muted small">What got in the way?</span>
+          <input id="ckwhen" type="text" maxlength="120" value="${c ? esc(c.when) : ''}" placeholder="e.g. the afternoon filled up…" /></label>
+        <label class="coping-field"><span class="muted small">Next time that happens, I’ll:</span>
+          <input id="ckthen" type="text" maxlength="120" value="${c ? esc(c.then) : ''}" placeholder="e.g. do the 2-minute version" /></label>
+        <div class="row coping-actions" style="margin-top:8px;">
+          <button class="btn sm" id="cksave" style="width:auto;">Save the sharper plan</button>
+          <button class="btn ghost sm" id="ckskip" style="width:auto;">Leave it for now</button>
+        </div>`;
+      const done = (saved) => { card.innerHTML = `<div class="k">Yesterday’s commitment</div><p class="muted" style="margin:6px 0 0;">${saved ? 'Plan sharpened — it’s armed for next time.' : 'Left as is — the commitment stays armed.'}</p>`; };
+      document.getElementById('cksave').onclick = () => {
+        const w = (document.getElementById('ckwhen').value || '').trim();
+        const t = (document.getElementById('ckthen').value || '').trim();
+        if (w && t) { state.profile = Profile.setCoping(state.profile, g.id, w, t); save(); }
+        done(w && t);
+      };
+      document.getElementById('ckskip').onclick = () => done(false);
+    }
+  };
+  const k = document.getElementById('ck-kept'); if (k) k.onclick = () => answer('kept');
+  const n = document.getElementById('ck-nomoment'); if (n) n.onclick = () => answer('no-moment');
+  const m = document.getElementById('ck-missed'); if (m) m.onclick = () => answer('missed');
 }
 
 // Sequential probing, formative form (v331): a single deeper question to carry, never scored. It
