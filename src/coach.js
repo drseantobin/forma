@@ -316,7 +316,30 @@ export function profileSummary(profile, focusDomain = null) {
   }
   if (profile.streak?.current) lines.push(`Current streak: ${profile.streak.current} day(s).`);
   const openGoals = (profile.goals || []).filter((g) => !g.done);
-  if (openGoals.length) lines.push(`Active goals: ${openGoals.map((g) => g.coping ? `${g.text} (if-then plan: if ${g.coping.when}, I’ll ${g.coping.then})` : g.text).join(' | ')}`);
+  // Commitments are LOAD-BEARING coach context (v340): kept/missed recency travels with each goal
+  // so the coach can close the loop the app opened — following up on a real promise is the most
+  // person-specific thing it can do, and the follow-up itself drives change (Harkin 2016).
+  if (openGoals.length) {
+    const goalLine = (g) => {
+      const kept = (g.checkins || []).length;
+      const lastKept = kept ? (g.checkins || [])[(g.checkins || []).length - 1] : null;
+      const lastMiss = (g.misses || []).length ? g.misses[g.misses.length - 1] : null;
+      const status = lastMiss && (!lastKept || lastMiss > lastKept)
+        ? `last check-in: it didn’t happen (${lastMiss})${g.coping ? ' — they have a hard-day plan' : ''}`
+        : (lastKept ? `kept ${kept}×, last on ${lastKept}` : 'not yet tried');
+      return `${g.text} [${status}]${g.coping ? ` (if-then: if ${g.coping.when}, I’ll ${g.coping.then})` : ''}`;
+    };
+    // Cap at the 6 most relevant (recent miss first, then recent kept, then recently asked) so many
+    // open commitments can't bloat the context or dilute the follow-up instruction (Codex, v340).
+    const relevance = (g) => {
+      const lastMiss = (g.misses || [])[(g.misses || []).length - 1] || '';
+      const lastKept = (g.checkins || [])[(g.checkins || []).length - 1] || '';
+      return [lastMiss, lastKept, g.askedOn || ''].sort().reverse()[0];
+    };
+    const top = openGoals.slice().sort((a, b) => relevance(b).localeCompare(relevance(a))).slice(0, 6);
+    const omitted = openGoals.length - top.length;
+    lines.push(`Active commitments — FOLLOW UP on these before offering anything new; a kept one deserves naming, a missed one deserves curiosity not a fix: ${top.map(goalLine).join(' | ')}${omitted > 0 ? ` (+${omitted} older open commitment${omitted === 1 ? '' : 's'} omitted)` : ''}`);
+  }
   lines.push('');
   lines.push(growthReference());
   return lines.join('\n');
@@ -677,10 +700,22 @@ export function offlineCoachReply(userText, profile, opts = {}) {
 
   // 5) Open commitment? Follow up on it — solution-focused work is built on the
   // small next steps a person chose for themselves, so a check-in beats a generic
-  // prompt. (Ties the commitments a person sets on Home back into the coaching.)
+  // prompt. v340: the offline coach now reads the SAME kept/missed record the live one does —
+  // a recorded miss gets curiosity (never a fix), a kept one gets named, else the open ask.
   const openGoals = (profile.goals || []).filter((g) => !g.done);
   if (openGoals.length) {
-    const g = openGoals[0];
+    const last = (a) => (Array.isArray(a) && a.length ? a[a.length - 1] : '');
+    const g = openGoals.slice().sort((a, b) => [last(b.misses), last(b.checkins), b.askedOn || ''].sort().reverse()[0]
+      .localeCompare([last(a.misses), last(a.checkins), a.askedOn || ''].sort().reverse()[0]))[0];
+    const lastMiss = last(g.misses), lastKept = last(g.checkins);
+    if (lastMiss && lastMiss >= lastKept) {
+      return `You noted “${g.text}” didn’t happen last time — no judgment in that, it’s information. `
+        + `What was the moment actually like when it came (or didn’t)? Sometimes the plan needs a smaller first move, sometimes a different cue. What do you think it was?`;
+    }
+    if (lastKept) {
+      return `You kept “${g.text}” — worth pausing on, because that’s the rep that changes things. `
+        + `What made it possible that day? Whatever that was, it’s yours to reuse.`;
+    }
     return `Before we go wider — you set a commitment for yourself: “${g.text}”. How has that been going? `
       + `Think of a moment this week it went even a little the way you wanted — what was different then? We build from that, not from pressure.`;
   }

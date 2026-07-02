@@ -3952,6 +3952,26 @@ async function completeSession() {
   const tomorrowNudge = _td
     ? `<p class="muted small center" style="margin:2px 0 12px;">Tomorrow: <strong>${_td.icon} ${esc(_td.name)}</strong> — ${esc(_td.short.toLowerCase())}.</p>`
     : '';
+  // RETURN RITUAL (v341, program review): attrition front-loads (Eysenbach 2005) and the .ics
+  // reminder was reachable only via Settings — a screen a new user never visits. Ask ONCE or twice,
+  // on the first two reveals only: "When tomorrow?" — a planning prompt for the return itself
+  // (Milkman 2011). One tap hands a recurring reminder to the person's own calendar; declining is
+  // one tap and permanent. Everything stays on-device (reminder.js builds the .ics locally).
+  const _asks = (profile.settings && profile.settings.reminderAsks) || 0;
+  const showReturnRitual = !state.demo && (profile.sessions || []).length <= 2 && !(profile.settings && profile.settings.reminderAdded) && _asks < 2;
+  if (showReturnRitual) { state.profile.settings.reminderAsks = _asks + 1; save(); }
+  const returnRitual = showReturnRitual
+    ? `<div class="card" id="ritualcard">
+        <div class="k">Make tomorrow easy to keep</div>
+        <p class="muted small" style="margin:6px 0 10px;">A few minutes works best at the same time each day. When tomorrow?</p>
+        <div class="row" style="gap:8px; align-items:center; flex-wrap:wrap;">
+          <input id="ritualtime" type="time" value="08:00" aria-label="Reminder time" style="width:auto;" />
+          <button class="btn sm" id="ritualadd" style="width:auto;">Add to my calendar →</button>
+          <button class="btn ghost sm" id="ritualskip" style="width:auto;">No thanks</button>
+        </div>
+        <p class="muted small" style="margin:8px 0 0;">Built on this device, handed to your own calendar — nothing is sent anywhere.</p>
+      </div>`
+    : '';
 
   // Reveal score (count-up), then fetch the one insight. An unscored AI session
   // (rawScore null) shows no number/band — we never display a fabricated score —
@@ -3969,6 +3989,9 @@ async function completeSession() {
   // helps most — not "more of the same." Calm + optional; "Done" stays the amber default below.
   const nextFocusId = recommendFocus(state.profile);
   const nfx = getDomain(nextFocusId);
+  // Close yesterday's loop before opening today's (v340): one due commitment, asked here because
+  // the reveal is the one screen every active user reliably sees.
+  const dueGoal = checkinDue(state.profile);
   app.innerHTML = `
     <div class="fade-in">
       <div class="score-reveal">
@@ -3979,6 +4002,7 @@ async function completeSession() {
         <div class="lbl">${esc(getDomain(s.exercise.domain).name)} · ${band.label}</div>
         ${conftag ? `<div class="muted small" style="margin-top:4px;">${esc(conftag)}</div>` : ''}`}
       </div>
+      ${dueGoal ? commitCheckinCard(dueGoal) : ''}
       ${(s.response.aiScore != null && rubricForExercise(s.exercise)) ? `<div class="read-zone">` + aiTrustNote(s.exercise) + rubricLadder(s.exercise, rawScore) + recentReadsLine(s.exercise) + `</div>` : ''}
       ${(s.exercise.type === 'reflection' && s.response.practice && (s.response.text || '').trim() && rubricForExercise(s.exercise)) ? practiceLadder(s.exercise) : ''}
       ${s.response.deepen ? deepenCard(s.response.deepen) : ''}
@@ -3995,6 +4019,7 @@ async function completeSession() {
         <button class="inlinelink" id="talkthrough">Talk it through with the coach →</button>
       </div>
       ${tomorrowNudge}
+      ${returnRitual}
       <button class="btn amber" id="home">Done →</button>
     </div>`;
   document.getElementById('home').onclick = () => { state.session = null; go('home'); };
@@ -4015,6 +4040,25 @@ async function completeSession() {
     };
     state.session = null;
     talkThrough(ctx);
+  };
+  if (dueGoal) wireCheckin(dueGoal);
+  const ra = document.getElementById('ritualadd');
+  if (ra) ra.onclick = () => {
+    const time = (document.getElementById('ritualtime').value || '08:00');
+    const blob = new Blob([buildReminderIcs({ time, cadence: 'daily' })], { type: 'text/calendar' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'forma-reminder.ics';
+    a.click(); URL.revokeObjectURL(a.href);
+    state.profile.settings.reminderAdded = true; save();
+    const card = document.getElementById('ritualcard');
+    if (card) card.innerHTML = `<div class="k">Make tomorrow easy to keep</div><p class="muted" style="margin:6px 0 0;">Open the download to add it to your calendar. Tomorrow is handled.</p>`;
+    announce('Reminder created. Open the download to add it to your calendar.');
+  };
+  const rs = document.getElementById('ritualskip');
+  if (rs) rs.onclick = () => {
+    state.profile.settings.reminderAsks = 2; save(); // permanent quiet no — never asked again
+    const card = document.getElementById('ritualcard'); if (card) card.remove();
   };
   const dg = document.getElementById('deepengo');
   if (dg) dg.onclick = () => {
@@ -5203,6 +5247,68 @@ function practiceLadder(ex) {
     </div>`;
 }
 
+// Commitment CHECK-IN (v340 — the keystone from the full-program review): the reveal is the one
+// screen every active user sees, so it's where the app CLOSES yesterday's loop instead of only
+// opening new ones. One commitment, one question, three honest answers — a day when the cue never
+// arose is never a miss. A miss opens the hard-day plan inline (every lapse → a sharper if-then,
+// not guilt). Prompted monitoring is itself an active ingredient (Harkin et al. 2016, d≈.40).
+function checkinDue(p) {
+  const today = todayStr();
+  const open = (p.goals || []).filter((g) => !g.done && g.askedOn !== today && !(g.checkins || []).includes(today) && (g.createdAt || '').slice(0, 10) !== today);
+  if (!open.length) return null;
+  // Prefer the commitment for the domain just practiced; otherwise the least-recently-asked.
+  const dom = state.session && state.session.exercise && state.session.exercise.domain;
+  return open.find((g) => g.domain === dom) || open.slice().sort((a, b) => String(a.askedOn || '').localeCompare(String(b.askedOn || '')))[0];
+}
+function commitCheckinCard(g) {
+  return `<div class="card checkin-card" id="checkincard">
+      <div class="k">Yesterday’s commitment</div>
+      <p style="font-size:1.05rem; margin:6px 0 12px;">“${esc(g.text)}” — did the moment come?</p>
+      <div class="row" style="gap:8px; flex-wrap:wrap;">
+        <button class="btn sm" id="ck-kept" style="width:auto;">Kept</button>
+        <button class="btn ghost sm" id="ck-nomoment" style="width:auto;">The moment didn’t come</button>
+        <button class="btn ghost sm" id="ck-missed" style="width:auto;">Not this time</button>
+      </div>
+    </div>`;
+}
+function wireCheckin(g) {
+  const card = document.getElementById('checkincard');
+  if (!card) return;
+  const answer = (result) => {
+    state.profile = Profile.checkinGoal(state.profile, g.id, todayStr(), result);
+    save();
+    if (result === 'kept') {
+      card.innerHTML = `<div class="k">Yesterday’s commitment</div><p class="muted" style="margin:6px 0 0;">Kept — that’s the rep that counts. ${(g.checkins || []).length + 1 > 1 ? `${(g.checkins || []).length + 1}× now.` : ''}</p>`;
+    } else if (result === 'no-moment') {
+      card.innerHTML = `<div class="k">Yesterday’s commitment</div><p class="muted" style="margin:6px 0 0;">Fair — no moment, no miss. The plan stays armed.</p>`;
+    } else {
+      // A miss becomes a sharper plan, on the spot (reuses the existing coping-plan model).
+      const c = g.coping;
+      card.innerHTML = `<div class="k">Yesterday’s commitment</div>
+        <p class="muted" style="margin:6px 0 10px;">Named, not judged. Naming what got in the way — and the move for next time — is how the plan gets sharper.</p>
+        <label class="coping-field"><span class="muted small">What got in the way?</span>
+          <input id="ckwhen" type="text" maxlength="120" value="${c ? esc(c.when) : ''}" placeholder="e.g. the afternoon filled up…" /></label>
+        <label class="coping-field"><span class="muted small">Next time that happens, I’ll:</span>
+          <input id="ckthen" type="text" maxlength="120" value="${c ? esc(c.then) : ''}" placeholder="e.g. do the 2-minute version" /></label>
+        <div class="row coping-actions" style="margin-top:8px;">
+          <button class="btn sm" id="cksave" style="width:auto;">Save the sharper plan</button>
+          <button class="btn ghost sm" id="ckskip" style="width:auto;">Leave it for now</button>
+        </div>`;
+      const done = (saved) => { card.innerHTML = `<div class="k">Yesterday’s commitment</div><p class="muted" style="margin:6px 0 0;">${saved ? 'Plan sharpened — it’s armed for next time.' : 'Left as is — the commitment stays armed.'}</p>`; };
+      document.getElementById('cksave').onclick = () => {
+        const w = (document.getElementById('ckwhen').value || '').trim();
+        const t = (document.getElementById('ckthen').value || '').trim();
+        if (w && t) { state.profile = Profile.setCoping(state.profile, g.id, w, t); save(); }
+        done(w && t);
+      };
+      document.getElementById('ckskip').onclick = () => done(false);
+    }
+  };
+  const k = document.getElementById('ck-kept'); if (k) k.onclick = () => answer('kept');
+  const n = document.getElementById('ck-nomoment'); if (n) n.onclick = () => answer('no-moment');
+  const m = document.getElementById('ck-missed'); if (m) m.onclick = () => answer('missed');
+}
+
 // Sequential probing, formative form (v331): a single deeper question to carry, never scored. It
 // answers the panel's #1 critique (reflections reward fluency over the real capacity) by moving the
 // work from "say it well" to "go look at the actual moment." Quiet card, optional, anti-gamification.
@@ -5876,6 +5982,8 @@ function renderSettings() {
     a.href = URL.createObjectURL(blob);
     a.download = 'forma-reminder.ics';
     a.click();
+    // Remember a reminder exists so the first-run reveal never double-asks (v341, Codex).
+    state.profile.settings.reminderAdded = true; save();
     announce(`${reminderSummary(time, cadence)} Open it to add it to your calendar.`);
   };
   document.getElementById('savecontact').onclick = () => {

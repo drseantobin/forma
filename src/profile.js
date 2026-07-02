@@ -298,6 +298,25 @@ export function toggleGoal(profile, goalId) {
   return p;
 }
 
+// The commitment CHECK-IN (v340 — the keystone from the full-program review): the app asks, the
+// person answers, three-state so a day when the cue never arose is NEVER counted as a miss
+// (practice.js's own honesty rule). 'kept' lands in checkins (the same record the weekly review
+// and coach read); 'missed' lands in misses (fuel for a sharper if-then, not guilt); 'no-moment'
+// records only that we asked. askedOn stops the reveal from re-asking the same day.
+// Prompted progress-monitoring is itself an active ingredient (Harkin et al. 2016, d≈.40).
+export function checkinGoal(profile, goalId, dateStr, result) {
+  const p = clone(profile);
+  const g = p.goals.find((x) => x.id === goalId);
+  if (g) {
+    g.checkins = Array.isArray(g.checkins) ? g.checkins : [];
+    g.misses = Array.isArray(g.misses) ? g.misses : [];
+    if (result === 'kept' && !g.checkins.includes(dateStr)) g.checkins.push(dateStr);
+    if (result === 'missed' && !g.misses.includes(dateStr)) g.misses.push(dateStr);
+    g.askedOn = dateStr;
+  }
+  return p;
+}
+
 // Track a commitment over time: toggle today's check-in (kept / un-kept). The
 // commitment STAYS in the list — tracking is recurring, not one-and-done.
 export function trackGoal(profile, goalId, dateStr) {
